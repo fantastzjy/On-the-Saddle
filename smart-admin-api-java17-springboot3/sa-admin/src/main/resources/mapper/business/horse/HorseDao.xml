@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.horse.dao.HorseDao">
+
+    <select id="queryByPage" resultType="net.lab1024.sa.admin.module.business.horse.domain.vo.HorseListVO">
+        SELECT
+            h.horse_id,
+            h.club_id,
+            c.club_name,
+            h.horse_name,
+            h.horse_code,
+            h.breed,
+            h.gender,
+            h.color,
+            h.birth_date,
+            h.chip_no,
+            h.passport_no,
+            h.horse_type,
+            h.owner_id,
+            owner.actual_name as owner_name,
+            h.responsible_coach_id,
+            coach.coach_name as responsible_coach_name,
+            h.health_status,
+            h.work_status,
+            h.create_time,
+            h.create_by
+        FROM m_horse h
+        LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
+        LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
+        LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_active = 1
+        <where>
+            h.is_delete = #{query.isDelete} AND h.is_valid = #{query.isValid}
+            <if test="query.keywords != null and query.keywords != ''">
+                AND (h.horse_name LIKE CONCAT('%', #{query.keywords}, '%')
+                OR h.horse_code LIKE CONCAT('%', #{query.keywords}, '%')
+                OR h.chip_no LIKE CONCAT('%', #{query.keywords}, '%'))
+            </if>
+            <if test="query.clubId != null">
+                AND h.club_id = #{query.clubId}
+            </if>
+            <if test="query.breed != null and query.breed != ''">
+                AND h.breed LIKE CONCAT('%', #{query.breed}, '%')
+            </if>
+            <if test="query.gender != null">
+                AND h.gender = #{query.gender}
+            </if>
+            <if test="query.horseType != null">
+                AND h.horse_type = #{query.horseType}
+            </if>
+            <if test="query.ownerId != null">
+                AND h.owner_id = #{query.ownerId}
+            </if>
+            <if test="query.responsibleCoachId != null">
+                AND h.responsible_coach_id = #{query.responsibleCoachId}
+            </if>
+            <if test="query.healthStatus != null">
+                AND h.health_status = #{query.healthStatus}
+            </if>
+            <if test="query.workStatus != null">
+                AND h.work_status = #{query.workStatus}
+            </if>
+            <if test="query.startDate != null">
+                AND h.create_time >= #{query.startDate}
+            </if>
+            <if test="query.endDate != null">
+                AND h.create_time &lt;= #{query.endDate}
+            </if>
+        </where>
+        ORDER BY h.create_time DESC
+    </select>
+
+    <select id="getDetail" resultType="net.lab1024.sa.admin.module.business.horse.domain.vo.HorseVO">
+        SELECT
+            h.horse_id,
+            h.club_id,
+            c.club_name,
+            h.horse_name,
+            h.horse_code,
+            h.breed,
+            h.gender,
+            h.color,
+            h.birth_date,
+            h.chip_no,
+            h.passport_no,
+            h.pedigree_cert_url,
+            h.horse_type,
+            h.owner_id,
+            owner.actual_name as owner_name,
+            h.responsible_coach_id,
+            coach.coach_name as responsible_coach_name,
+            h.responsible_groom_id,
+            groom.actual_name as responsible_groom_name,
+            h.boarding_start_date,
+            h.boarding_end_date,
+            h.health_status,
+            h.work_status,
+            h.horse_data,
+            h.create_time,
+            h.create_by,
+            h.update_time,
+            h.update_by
+        FROM m_horse h
+        LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
+        LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
+        LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_active = 1
+        LEFT JOIN t_employee groom ON h.responsible_groom_id = groom.employee_id AND groom.deleted_flag = 0
+        WHERE h.horse_id = #{horseId} AND h.is_delete = 0 AND h.is_valid = 1
+    </select>
+
+    <select id="queryList" resultType="net.lab1024.sa.admin.module.business.horse.domain.vo.HorseListVO">
+        SELECT
+            h.horse_id,
+            h.club_id,
+            c.club_name,
+            h.horse_name,
+            h.horse_code,
+            h.breed,
+            h.gender,
+            h.color,
+            h.birth_date,
+            h.chip_no,
+            h.passport_no,
+            h.horse_type,
+            h.owner_id,
+            owner.actual_name as owner_name,
+            h.responsible_coach_id,
+            coach.coach_name as responsible_coach_name,
+            h.health_status,
+            h.work_status,
+            h.create_time,
+            h.create_by
+        FROM m_horse h
+        LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
+        LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
+        LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_active = 1
+        WHERE h.is_delete = 0 AND h.is_valid = 1
+        <if test="clubId != null">
+            AND h.club_id = #{clubId}
+        </if>
+        <if test="horseType != null">
+            AND h.horse_type = #{horseType}
+        </if>
+        ORDER BY h.horse_name ASC
+    </select>
+
+    <select id="selectByHorseCode" resultType="net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity">
+        SELECT * FROM m_horse
+        WHERE horse_code = #{horseCode} AND club_id = #{clubId} AND is_delete = 0 AND is_valid = 1
+    </select>
+
+    <select id="selectByChipNo" resultType="net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity">
+        SELECT * FROM m_horse
+        WHERE chip_no = #{chipNo} AND is_delete = 0 AND is_valid = 1
+    </select>
+
+    <select id="selectByHorseCodeExcludeId" resultType="net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity">
+        SELECT * FROM m_horse
+        WHERE horse_code = #{horseCode} AND club_id = #{clubId} AND horse_id != #{excludeHorseId} AND is_delete = 0 AND is_valid = 1
+    </select>
+
+    <select id="selectByChipNoExcludeId" resultType="net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity">
+        SELECT * FROM m_horse
+        WHERE chip_no = #{chipNo} AND horse_id != #{excludeHorseId} AND is_delete = 0 AND is_valid = 1
+    </select>
+
+</mapper>

@@ -43,6 +43,21 @@ public enum DataTracerTypeEnum implements BaseEnum {
      */
     CLUB_COACH(301, "教练管理"),
 
+    /**
+     * 马匹
+     */
+    CLUB_HORSE(302, "马匹管理"),
+
+    /**
+     * 马匹健康计划
+     */
+    CLUB_HORSE_HEALTH_PLAN(303, "马匹健康计划"),
+
+    /**
+     * 马匹健康记录
+     */
+    CLUB_HORSE_HEALTH_RECORD(304, "马匹健康记录"),
+
     ;
 
     private final Integer value;

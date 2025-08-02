@@ -32,6 +32,15 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
         // 教练管理
         public static final String CLUB_COACH = "教练管理";
 
+        // 马匹管理
+        public static final String CLUB_HORSE = "马匹管理";
+
+        // 马匹健康计划
+        public static final String CLUB_HORSE_HEALTH_PLAN = "马匹健康计划";
+
+        // 马匹健康记录
+        public static final String CLUB_HORSE_HEALTH_RECORD = "马匹健康记录";
+
     }
 
 

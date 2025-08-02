@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.horse.dao.HorseHealthPlanDao">
+
+    <select id="queryByPage" resultType="net.lab1024.sa.admin.module.business.horse.domain.vo.HorseHealthPlanListVO">
+        SELECT
+            hp.id,
+            hp.horse_id,
+            h.horse_name,
+            h.horse_code,
+            c.club_name,
+            hp.plan_type,
+            hp.plan_name,
+            hp.cycle_days,
+            hp.last_date,
+            hp.next_date,
+            hp.reminder_days,
+            DATEDIFF(hp.next_date, NOW()) as remaining_days,
+            CASE
+                WHEN DATEDIFF(hp.next_date, NOW()) > 7 THEN 1
+                WHEN DATEDIFF(hp.next_date, NOW()) BETWEEN 3 AND 7 THEN 2
+                WHEN DATEDIFF(hp.next_date, NOW()) BETWEEN 0 AND 3 THEN 3
+                ELSE 4
+            END as reminder_status,
+            hp.create_time,
+            hp.create_by
+        FROM m_horse_health_plan hp
+        LEFT JOIN m_horse h ON hp.horse_id = h.horse_id AND h.is_delete = 0 AND h.is_valid = 1
+        LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
+        <where>
+            hp.is_delete = #{query.isDelete} AND hp.is_valid = #{query.isValid}
+            <if test="query.horseId != null">
+                AND hp.horse_id = #{query.horseId}
+            </if>
+            <if test="query.planType != null and query.planType != ''">
+                AND hp.plan_type = #{query.planType}
+            </if>
+            <if test="query.planName != null and query.planName != ''">
+                AND hp.plan_name LIKE CONCAT('%', #{query.planName}, '%')
+            </if>
+            <if test="query.nextDateStart != null">
+                AND hp.next_date >= #{query.nextDateStart}
+            </if>
+            <if test="query.nextDateEnd != null">
+                AND hp.next_date &lt;= #{query.nextDateEnd}
+            </if>
+            <if test="query.needReminder != null and query.needReminder">
+                AND DATEDIFF(hp.next_date, NOW()) &lt;= hp.reminder_days
+            </if>
+        </where>
+        ORDER BY hp.next_date ASC, hp.create_time DESC
+    </select>
+
+    <select id="queryByHorseId" resultType="net.lab1024.sa.admin.module.business.horse.domain.vo.HorseHealthPlanListVO">
+        SELECT
+            hp.id,
+            hp.horse_id,
+            h.horse_name,
+            h.horse_code,
+            c.club_name,
+            hp.plan_type,
+            hp.plan_name,
+            hp.cycle_days,
+            hp.last_date,
+            hp.next_date,
+            hp.reminder_days,
+            DATEDIFF(hp.next_date, NOW()) as remaining_days,
+            CASE
+                WHEN DATEDIFF(hp.next_date, NOW()) > 7 THEN 1
+                WHEN DATEDIFF(hp.next_date, NOW()) BETWEEN 3 AND 7 THEN 2
+                WHEN DATEDIFF(hp.next_date, NOW()) BETWEEN 0 AND 3 THEN 3
+                ELSE 4
+            END as reminder_status,
+            hp.create_time,
+            hp.create_by
+        FROM m_horse_health_plan hp
+        LEFT JOIN m_horse h ON hp.horse_id = h.horse_id AND h.is_delete = 0 AND h.is_valid = 1
+        LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
+        WHERE hp.horse_id = #{horseId} AND hp.is_delete = 0 AND hp.is_valid = 1
+        ORDER BY hp.next_date ASC
+    </select>
+
+    <select id="queryNeedReminder" resultType="net.lab1024.sa.admin.module.business.horse.domain.vo.HorseHealthPlanListVO">
+        SELECT
+            hp.id,
+            hp.horse_id,
+            h.horse_name,
+            h.horse_code,
+            c.club_name,
+            hp.plan_type,
+            hp.plan_name,
+            hp.cycle_days,
+            hp.last_date,
+            hp.next_date,
+            hp.reminder_days,
+            DATEDIFF(hp.next_date, NOW()) as remaining_days,
+            CASE
+                WHEN DATEDIFF(hp.next_date, NOW()) > 7 THEN 1
+                WHEN DATEDIFF(hp.next_date, NOW()) BETWEEN 3 AND 7 THEN 2
+                WHEN DATEDIFF(hp.next_date, NOW()) BETWEEN 0 AND 3 THEN 3
+                ELSE 4
+            END as reminder_status,
+            hp.create_time,
+            hp.create_by
+        FROM m_horse_health_plan hp
+        LEFT JOIN m_horse h ON hp.horse_id = h.horse_id AND h.is_delete = 0 AND h.is_valid = 1
+        LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
+        WHERE hp.is_delete = 0 AND hp.is_valid = 1
+        AND DATEDIFF(hp.next_date, #{reminderDate}) &lt;= hp.reminder_days
+        ORDER BY hp.next_date ASC
+    </select>
+
+    <update id="updateNextDate">
+        UPDATE m_horse_health_plan
+        SET next_date = #{nextDate},
+            last_date = #{lastDate},
+            update_time = NOW()
+        WHERE id = #{planId} AND is_delete = 0 AND is_valid = 1
+    </update>
+
+</mapper>
