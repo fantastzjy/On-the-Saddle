@@ -95,7 +95,7 @@ public class ClubService {
         clubDao.insert(clubEntity);
 
         // 记录数据变动
-        dataTracerService.insert(clubEntity.getClubId(), DataTracerTypeEnum.MCLUB_CLUB);
+        dataTracerService.insert(clubEntity.getClubId(), DataTracerTypeEnum.CLUB_CLUB);
 
         return ResponseDTO.ok();
     }
@@ -131,7 +131,7 @@ public class ClubService {
         clubDao.updateById(clubEntity);
 
         // 记录数据变动
-        dataTracerService.update(clubEntity.getClubId(), DataTracerTypeEnum.MCLUB_CLUB, oldClubEntity, clubEntity);
+        dataTracerService.update(clubEntity.getClubId(), DataTracerTypeEnum.CLUB_CLUB, oldClubEntity, clubEntity);
 
         return ResponseDTO.ok();
     }
@@ -152,7 +152,7 @@ public class ClubService {
         clubDao.updateById(clubEntity);
 
         // 记录数据变动
-        dataTracerService.delete(clubId, DataTracerTypeEnum.MCLUB_CLUB);
+        dataTracerService.delete(clubId, DataTracerTypeEnum.CLUB_CLUB);
 
         return ResponseDTO.ok();
     }

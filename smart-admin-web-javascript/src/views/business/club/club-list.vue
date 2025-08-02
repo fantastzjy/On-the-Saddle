@@ -8,7 +8,7 @@
   * @Copyright  1024创新实验室 （ https://1024lab.net ），Since 2012
 -->
 <template>
-  <a-form class="smart-query-form" v-privilege="'mclub:club:query'">
+  <a-form class="smart-query-form" v-privilege="'club:club:query'">
     <a-row class="smart-query-form-row">
       <a-form-item label="关键字" class="smart-query-form-item">
         <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="俱乐部名称/联系人/电话" />
@@ -57,7 +57,7 @@
   <a-card size="small" :bordered="false" :hoverable="true">
     <a-row class="smart-table-btn-block">
       <div class="smart-table-operate-block">
-        <a-button @click="add()" v-privilege="'mclub:club:add'" type="primary">
+        <a-button @click="add()" v-privilege="'club:club:add'" type="primary">
           <template #icon>
             <PlusOutlined />
           </template>
@@ -65,7 +65,7 @@
         </a-button>
       </div>
       <div class="smart-table-setting-block">
-        <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.MCLUB.CLUB" :refresh="ajaxQuery" />
+        <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.CLUB.CLUB" :refresh="ajaxQuery" />
       </div>
     </a-row>
 
@@ -86,7 +86,7 @@
           </a-tag>
         </template>
         <template v-if="column.dataIndex === 'clubName'">
-          <a-button type="link" @click="detail(record.clubId)" :disabled="!$privilege('mclub:club:detail')">
+          <a-button type="link" @click="detail(record.clubId)" :disabled="!$privilege('club:club:detail')">
             {{ record.clubName }}
           </a-button>
         </template>
@@ -102,8 +102,8 @@
         </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
-            <a-button @click="update(record.clubId)" size="small" v-privilege="'mclub:club:update'" type="link">编辑</a-button>
-            <a-button @click="confirmDelete(record.clubId)" size="small" danger v-privilege="'mclub:club:delete'" type="link">删除</a-button>
+            <a-button @click="update(record.clubId)" size="small" v-privilege="'club:club:update'" type="link">编辑</a-button>
+            <a-button @click="confirmDelete(record.clubId)" size="small" danger v-privilege="'club:club:delete'" type="link">删除</a-button>
           </div>
         </template>
       </template>
@@ -286,7 +286,7 @@ function update(clubId) {
 }
 
 function detail(clubId) {
-  window.open(`#/mclub/club/club-detail?clubId=${clubId}`, '_blank');
+  window.open(`#/club/club/club-detail?clubId=${clubId}`, '_blank');
 }
 
 async function confirmDelete(clubId) {

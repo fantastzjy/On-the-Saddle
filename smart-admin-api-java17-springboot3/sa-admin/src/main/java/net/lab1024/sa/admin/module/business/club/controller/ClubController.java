@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@Tag(name = AdminSwaggerTagConst.Business.MCLUB_CLUB)
+@Tag(name = AdminSwaggerTagConst.Business.CLUB_CLUB)
 @OperateLog
 public class ClubController {
 
@@ -39,43 +39,43 @@ public class ClubController {
     private ClubService clubService;
 
     @Operation(summary = "分页查询俱乐部")
-    @PostMapping("/mclub/club/page/query")
-    @SaCheckPermission("mclub:club:query")
+    @PostMapping("/club/club/page/query")
+    @SaCheckPermission("club:club:query")
     public ResponseDTO<PageResult<ClubListVO>> queryByPage(@RequestBody @Valid ClubQueryForm queryForm) {
         return clubService.queryByPage(queryForm);
     }
 
     @Operation(summary = "查询俱乐部详情")
-    @GetMapping("/mclub/club/get/{clubId}")
-    @SaCheckPermission("mclub:club:detail")
+    @GetMapping("/club/club/get/{clubId}")
+    @SaCheckPermission("club:club:detail")
     public ResponseDTO<ClubVO> getDetail(@PathVariable Long clubId) {
         return clubService.getDetail(clubId);
     }
 
     @Operation(summary = "新建俱乐部")
-    @PostMapping("/mclub/club/create")
-    @SaCheckPermission("mclub:club:add")
+    @PostMapping("/club/club/create")
+    @SaCheckPermission("club:club:add")
     public ResponseDTO<String> create(@RequestBody @Valid ClubCreateForm createForm) {
         return clubService.create(createForm);
     }
 
     @Operation(summary = "更新俱乐部")
-    @PostMapping("/mclub/club/update")
-    @SaCheckPermission("mclub:club:update")
+    @PostMapping("/club/club/update")
+    @SaCheckPermission("club:club:update")
     public ResponseDTO<String> update(@RequestBody @Valid ClubUpdateForm updateForm) {
         return clubService.update(updateForm);
     }
 
     @Operation(summary = "删除俱乐部")
-    @GetMapping("/mclub/club/delete/{clubId}")
-    @SaCheckPermission("mclub:club:delete")
+    @GetMapping("/club/club/delete/{clubId}")
+    @SaCheckPermission("club:club:delete")
     public ResponseDTO<String> delete(@PathVariable Long clubId) {
         return clubService.delete(clubId);
     }
 
     @Operation(summary = "俱乐部列表查询")
-    @GetMapping("/mclub/club/query/list")
-    @SaCheckPermission("mclub:club:query")
+    @GetMapping("/club/club/query/list")
+    @SaCheckPermission("club:club:query")
     public ResponseDTO<List<ClubListVO>> queryList(@RequestParam(required = false) Boolean isValid) {
         return clubService.queryList(isValid);
     }

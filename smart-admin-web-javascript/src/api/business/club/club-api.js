@@ -12,27 +12,27 @@ import { postRequest, getRequest } from '/@/lib/axios';
 export const clubApi = {
   // 分页查询俱乐部
   pageQuery: (param) => {
-    return postRequest('/mclub/club/page/query', param);
+    return postRequest('/club/club/page/query', param);
   },
 
   // 查询俱乐部详情
   detail: (clubId) => {
-    return getRequest(`/mclub/club/get/${clubId}`);
+    return getRequest(`/club/club/get/${clubId}`);
   },
 
   // 新建俱乐部
   create: (param) => {
-    return postRequest('/mclub/club/create', param);
+    return postRequest('/club/club/create', param);
   },
 
   // 更新俱乐部
   update: (param) => {
-    return postRequest('/mclub/club/update', param);
+    return postRequest('/club/club/update', param);
   },
 
   // 删除俱乐部
   delete: (clubId) => {
-    return getRequest(`/mclub/club/delete/${clubId}`);
+    return getRequest(`/club/club/delete/${clubId}`);
   },
 
   // 俱乐部列表查询
@@ -41,6 +41,6 @@ export const clubApi = {
     if (isValid !== undefined && isValid !== null) {
       query = `?isValid=${isValid}`;
     }
-    return getRequest(`/mclub/club/query/list${query}`);
+    return getRequest(`/club/club/query/list${query}`);
   },
 };

@@ -17,7 +17,7 @@
     </template>
 
     <template #extra>
-      <a-button @click="edit" v-privilege="'mclub:club:update'" type="primary">
+      <a-button @click="edit" v-privilege="'club:club:update'" type="primary">
         <template #icon>
           <EditOutlined />
         </template>

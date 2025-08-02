@@ -1,5 +1,5 @@
 -- ============================================
--- 马术俱乐部SaaS系统 - m_club模块相关SQL
+-- 俱乐部SaaS系统 - club模块相关SQL
 -- 基于Smart Admin v3架构设计
 -- ============================================
 
@@ -55,37 +55,37 @@ INSERT INTO `m_club` VALUES
 -- 添加菜单权限数据
 -- ----------------------------
 
--- 插入一级菜单：马术俱乐部管理
+-- 插入一级菜单：俱乐部管理
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`) 
-VALUES (400, '马术管理', 1, 0, 2, '/mclub', NULL, NULL, NULL, NULL, 'CrownOutlined', NULL, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
+VALUES (400, '俱乐部管理', 1, 0, 2, '/club', NULL, NULL, NULL, NULL, 'CrownOutlined', NULL, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
 
 -- 插入二级菜单：俱乐部管理
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`) 
-VALUES (401, '俱乐部管理', 2, 400, 1, '/mclub/club/club-list', '/business/club/club-list.vue', NULL, NULL, NULL, 'ShopOutlined', NULL, 0, NULL, 1, 1, 0, 0, 1, NOW(), 1, NOW());
+VALUES (401, '俱乐部管理', 2, 400, 1, '/club/club/club-list', '/business/club/club-list.vue', NULL, NULL, NULL, 'ShopOutlined', NULL, 0, NULL, 1, 1, 0, 0, 1, NOW(), 1, NOW());
 
 -- 插入功能点：查询
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`) 
-VALUES (402, '查询', 3, 401, 1, NULL, NULL, 1, 'mclub:club:query', 'mclub:club:query', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
+VALUES (402, '查询', 3, 401, 1, NULL, NULL, 1, 'club:club:query', 'club:club:query', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
 
 -- 插入功能点：新建
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`) 
-VALUES (403, '新建', 3, 401, 2, NULL, NULL, 1, 'mclub:club:add', 'mclub:club:add', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
+VALUES (403, '新建', 3, 401, 2, NULL, NULL, 1, 'club:club:add', 'club:club:add', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
 
 -- 插入功能点：编辑
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`) 
-VALUES (404, '编辑', 3, 401, 3, NULL, NULL, 1, 'mclub:club:update', 'mclub:club:update', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
+VALUES (404, '编辑', 3, 401, 3, NULL, NULL, 1, 'club:club:update', 'club:club:update', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
 
 -- 插入功能点：删除
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`) 
-VALUES (405, '删除', 3, 401, 4, NULL, NULL, 1, 'mclub:club:delete', 'mclub:club:delete', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
+VALUES (405, '删除', 3, 401, 4, NULL, NULL, 1, 'club:club:delete', 'club:club:delete', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
 
 -- 插入功能点：详情
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`) 
-VALUES (406, '详情', 3, 401, 5, NULL, NULL, 1, 'mclub:club:detail', 'mclub:club:detail', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
+VALUES (406, '详情', 3, 401, 5, NULL, NULL, 1, 'club:club:detail', 'club:club:detail', NULL, 401, 0, NULL, 0, 1, 0, 0, 1, NOW(), 1, NOW());
 
 -- 插入隐藏页面：俱乐部详情页面
 INSERT INTO `t_menu` (`menu_id`, `menu_name`, `menu_type`, `parent_id`, `sort`, `path`, `component`, `perms_type`, `api_perms`, `web_perms`, `icon`, `context_menu_id`, `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, `deleted_flag`, `create_user_id`, `create_time`, `update_user_id`, `update_time`) 
-VALUES (407, '俱乐部详情页', 2, 400, 2, '/mclub/club/club-detail', '/business/club/club-detail.vue', NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 0, 0, 0, 1, NOW(), 1, NOW());
+VALUES (407, '俱乐部详情页', 2, 400, 2, '/club/club/club-detail', '/business/club/club-detail.vue', NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 0, 0, 0, 1, NOW(), 1, NOW());
 
 -- ----------------------------
 -- 为技术总监角色分配权限

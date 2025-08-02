@@ -34,9 +34,9 @@ public enum DataTracerTypeEnum implements BaseEnum {
     OA_ENTERPRISE(3, "OA-企业信息"),
 
     /**
-     * 马术俱乐部
+     * 俱乐部
      */
-    MCLUB_CLUB(300, "俱乐部管理"),
+    CLUB_CLUB(300, "俱乐部管理"),
 
     ;
 
