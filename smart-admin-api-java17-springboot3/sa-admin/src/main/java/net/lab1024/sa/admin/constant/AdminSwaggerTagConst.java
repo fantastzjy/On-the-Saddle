@@ -29,6 +29,9 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
         // 俱乐部管理
         public static final String CLUB_CLUB = "俱乐部管理";
 
+        // 教练管理
+        public static final String CLUB_COACH = "教练管理";
+
     }
 
 

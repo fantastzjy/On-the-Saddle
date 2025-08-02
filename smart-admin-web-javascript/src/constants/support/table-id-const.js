@@ -36,6 +36,7 @@ export const TABLE_ID_CONST = {
     },
     CLUB: {
       CLUB: businessClubInitTableId + 1, //俱乐部管理
+      COACH: businessClubInitTableId + 2, //教练管理
     },
   },
 

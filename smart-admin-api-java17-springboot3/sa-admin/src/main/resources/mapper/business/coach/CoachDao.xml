@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.coach.dao.CoachDao">
+
+    <!-- 分页查询教练 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.coach.domain.vo.CoachListVO">
+        SELECT
+            c.coach_id,
+            c.coach_name,
+            c.coach_code,
+            c.gender,
+            c.phone,
+            c.email,
+            c.avatar_url,
+            c.professional_level,
+            c.speciality,
+            c.years_experience,
+            c.club_id,
+            club.club_name,
+            c.salary,
+            c.entry_date,
+            c.emergency_contact,
+            c.emergency_phone,
+            c.create_by,
+            c.create_time,
+            c.is_active
+        FROM m_coach c
+        LEFT JOIN m_club club ON c.club_id = club.club_id AND club.is_delete = 0
+        <where>
+            c.is_delete = #{queryForm.isDelete}
+            <if test="queryForm.keywords != null and queryForm.keywords != ''">
+                AND (
+                    INSTR(c.coach_name, #{queryForm.keywords})
+                    OR INSTR(c.coach_code, #{queryForm.keywords})
+                    OR INSTR(c.phone, #{queryForm.keywords})
+                )
+            </if>
+            <if test="queryForm.gender != null">
+                AND c.gender = #{queryForm.gender}
+            </if>
+            <if test="queryForm.professionalLevel != null and queryForm.professionalLevel != ''">
+                AND c.professional_level = #{queryForm.professionalLevel}
+            </if>
+            <if test="queryForm.clubId != null">
+                AND c.club_id = #{queryForm.clubId}
+            </if>
+            <if test="queryForm.startDate != null and queryForm.startDate != ''">
+                AND DATE_FORMAT(c.create_time, '%Y-%m-%d') &gt;= #{queryForm.startDate}
+            </if>
+            <if test="queryForm.endDate != null and queryForm.endDate != ''">
+                AND DATE_FORMAT(c.create_time, '%Y-%m-%d') &lt;= #{queryForm.endDate}
+            </if>
+            <if test="queryForm.isActive != null">
+                AND c.is_active = #{queryForm.isActive}
+            </if>
+        </where>
+        <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
+            ORDER BY c.create_time DESC
+        </if>
+    </select>
+
+    <!-- 根据教练编号查询 -->
+    <select id="selectByCoachCode" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT * FROM m_coach
+        WHERE coach_code = #{coachCode} AND is_delete = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据身份证号查询 -->
+    <select id="selectByIdCard" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT * FROM m_coach
+        WHERE id_card = #{idCard} AND is_delete = 0
+        LIMIT 1
+    </select>
+
+    <!-- 查询教练详情 -->
+    <select id="getDetail" resultType="net.lab1024.sa.admin.module.business.coach.domain.vo.CoachVO">
+        SELECT
+            c.coach_id,
+            c.coach_name,
+            c.coach_code,
+            c.gender,
+            c.birth_date,
+            c.phone,
+            c.email,
+            c.id_card,
+            c.avatar_url,
+            c.professional_level,
+            c.speciality,
+            c.years_experience,
+            c.certification,
+            c.club_id,
+            club.club_name,
+            c.salary,
+            c.entry_date,
+            c.address,
+            c.emergency_contact,
+            c.emergency_phone,
+            c.description,
+            c.achievements,
+            c.teaching_style,
+            c.create_by,
+            c.create_time,
+            c.update_by,
+            c.update_time,
+            c.is_active
+        FROM m_coach c
+        LEFT JOIN m_club club ON c.club_id = club.club_id AND club.is_delete = 0
+        WHERE c.coach_id = #{coachId} AND c.is_delete = 0
+    </select>
+
+    <!-- 教练列表查询 -->
+    <select id="queryList" resultType="net.lab1024.sa.admin.module.business.coach.domain.vo.CoachListVO">
+        SELECT
+            c.coach_id,
+            c.coach_name,
+            c.coach_code,
+            c.gender,
+            c.phone,
+            c.email,
+            c.avatar_url,
+            c.professional_level,
+            c.speciality,
+            c.years_experience,
+            c.club_id,
+            club.club_name,
+            c.salary,
+            c.entry_date,
+            c.emergency_contact,
+            c.emergency_phone,
+            c.create_by,
+            c.create_time,
+            c.is_active
+        FROM m_coach c
+        LEFT JOIN m_club club ON c.club_id = club.club_id AND club.is_delete = 0
+        WHERE c.is_delete = 0
+        <if test="isActive != null">
+            AND c.is_active = #{isActive}
+        </if>
+        <if test="clubId != null">
+            AND c.club_id = #{clubId}
+        </if>
+        ORDER BY c.create_time DESC
+    </select>
+
+</mapper>
