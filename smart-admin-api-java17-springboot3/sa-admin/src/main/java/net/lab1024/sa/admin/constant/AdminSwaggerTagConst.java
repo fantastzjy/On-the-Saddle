@@ -26,6 +26,9 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
 
         public static final String OA_NOTICE = "OA办公-通知公告";
 
+        // 马术俱乐部管理
+        public static final String MCLUB_CLUB = "马术俱乐部管理";
+
     }
 
 

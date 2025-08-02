@@ -17,6 +17,8 @@ let businessOAInitTableId = 30000;
 
 let businessERPInitTableId = 40000;
 
+let businessMClubInitTableId = 50000;
+
 export const TABLE_ID_CONST = {
   /**
    * 业务
@@ -31,6 +33,9 @@ export const TABLE_ID_CONST = {
     },
     ERP: {
       GOODS: businessERPInitTableId + 1, //商品管理
+    },
+    MCLUB: {
+      CLUB: businessMClubInitTableId + 1, //俱乐部管理
     },
   },
 
