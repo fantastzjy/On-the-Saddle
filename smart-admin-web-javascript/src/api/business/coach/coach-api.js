@@ -36,11 +36,11 @@ export const coachApi = {
   },
 
   // 教练列表查询
-  queryList: (isActive, clubId) => {
+  queryList: (isValid, clubId) => {
     let query = '';
     const params = [];
-    if (isActive !== undefined && isActive !== null) {
-      params.push(`isActive=${isActive}`);
+    if (isValid !== undefined && isValid !== null) {
+      params.push(`isValid=${isValid}`);
     }
     if (clubId !== undefined && clubId !== null) {
       params.push(`clubId=${clubId}`);

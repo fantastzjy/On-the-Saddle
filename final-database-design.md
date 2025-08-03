@@ -1,133 +1,151 @@
-# 马术俱乐部SaaS系统数据库设计终版方案
+# 马术俱乐部SaaS系统数据库设计终版方案（优化版）
 
+## 一、核心设计原则
 
+1. **统一用户体系**：所有用户（注册/未注册）都在用户表中有记录
+2. **简化家庭管理**：通过家庭组统一管理复杂的家庭关系
+3. **避免数据迁移**：注册时只需激活用户，无需数据迁移
+4. **保持现有架构**：基于Smart Admin v3进行扩展
 
-
-## 一、统一审计字段标准
+## 二、统一审计字段标准
 
 所有业务表统一使用以下审计字段：
 
 ```sql
 -- 标准审计字段
-create_by
-varchar(50)    default ''                not null comment '创建人',
-create_time              datetime       default CURRENT_TIMESTAMP not null comment '创建时间',
-update_by                varchar(50)    default ''                not null comment '更新人',
-update_time              datetime       default CURRENT_TIMESTAMP not null on
-update CURRENT_TIMESTAMP comment '更新时间',
-    is_valid int default 1 not null comment '是否有效;1=有效;0=无效;',
-    is_delete int default 0 not null comment '是否删除;1=已删除;0=未删除;'
+create_by               varchar(50)    default ''                not null comment '创建人',
+create_time             datetime       default CURRENT_TIMESTAMP not null comment '创建时间',
+update_by               varchar(50)    default ''                not null comment '更新人',
+update_time             datetime       default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+is_valid                int default 1 not null comment '是否有效;1=有效;0=无效;',
+is_delete               int default 0 not null comment '是否删除;1=已删除;0=未删除;'
 ```
 
-## 二、优化说明
+## 三、优化要点
 
-### 2.1 优化要点
+### 3.1 核心优化策略
 
-1. **移除冗余status字段**: 
-   - 俱乐部表 m_club 移除 status 字段，使用 is_valid 替代
-   - 课程时间段表 m_course_time_slot 移除 status 字段
-   - 用户课时包表 m_user_package 移除 status 字段
-   - 马匹表 m_horse 移除 status 字段
-   - 马匹健康计划表 m_horse_health_plan 移除 status 字段
-   - 订单评价表 m_order_evaluation 移除 status 字段
+1. **预创建用户记录**：
+   - 未注册家庭成员也在用户表中创建记录
+   - 使用 `registration_status` 区分用户激活状态
+   - 避免复杂的数据迁移流程
 
-2. **移除俱乐部管理员表**:
-   - 删除 m_club_manager 表，直接使用Smart Admin v3的RBAC系统
-   - 通过 m_user_profile 表的 club_id 字段关联用户和俱乐部
-   - 使用现有的角色权限体系管理俱乐部管理员权限
+2. **统一用户管理**：
+   - 所有业务操作统一使用 user_id
+   - 订单、课时包等业务表直接关联用户表
+   - 简化权限控制和数据查询逻辑
 
-3. **优化马匹分类管理**:
-   - m_horse 表的马类型增加教练马选项: 1-俱乐部马 2-马主马 3-教练马
-   - 支持教练拥有专属教学用马的管理需求
+3. **家庭组概念**：
+   - 支持多对多的复杂家庭关系
+   - 精细化的权限控制（预约权限、支付权限等）
+   - 便于管理重组家庭、隔代抚养等场景
 
-4. **俱乐部营业时间优化**:
-   - m_club 表的 business_hours 字段拆分为 business_start_time 和 business_end_time
-   - 使用TIME类型精确存储开始和结束时间
-   - 便于系统进行营业时间判断和课程安排
+### 3.2 技术优化
 
-5. **统一JSON字段类型为TEXT**:
-   - 所有 JSON 类型字段改为 TEXT 类型
-   - 在注释中明确标注为 "JSON格式"
-   - 提高数据库兼容性，便于数据处理
+- **移除冗余状态字段**：优先使用 is_valid 和 is_delete 管理状态
+- **统一JSON字段为TEXT**：提高数据库兼容性
+- **统一时间字段为DATETIME**：除营业时间外，统一时间精度
+- **统一图片字段命名**：所有图片字段使用 _url 后缀
 
-6. **统一时间字段为DATETIME类型**:
-   - 所有 DATE 类型的时间字段更改为 DATETIME
-   - 所有 TIME 类型的时间字段更改为 DATETIME（除营业时间外）
-   - 统一时间精度，支持具体到秒级别
+## 四、完整数据库表设计
 
-7. **统一图片字段命名**:
-   - 所有图片相关字段统一使用 _url 后缀
-   - 如：logo → logo_url，banner → banner_url，avatar → avatar_url，images → img_url
-   - 明确表示存储的是图片地址而非二进制数据
-
-8. **简化状态管理**:
-   - 优先使用 is_valid 和 is_delete 字段管理状态
-   - 只在必要时保留业务状态字段（如订单状态、支付状态）
-   - 减少状态字段冗余，简化逻辑
-
-### 2.2 优化效果
-
-- **数据一致性**: 统一的字段命名和类型规范
-- **简化维护**: 减少冗余状态字段，降低维护复杂度  
-- **提高性能**: 统一时间类型，优化查询效率
-- **增强可读性**: 明确的字段命名，提高代码可读性
-- **权限统一**: 使用RBAC系统管理所有用户权限，避免重复建设
-- **兼容性提升**: TEXT类型支持更好的跨数据库兼容性
-- **业务扩展**: 支持教练马分类和精确营业时间管理
-
-## 三、完整数据库表设计
-
-### 3.1 用户扩展模块
+### 4.1 用户管理模块（基于现有RBAC体系扩展）
 
 ```sql
+-- 修改现有用户表，增加注册状态
+ALTER TABLE `t_employee` 
+ADD COLUMN `registration_status` TINYINT NOT NULL DEFAULT 1 
+COMMENT '注册状态: 0-未激活 1-已注册';
+
 -- 用户扩展表 - 基于现有RBAC体系的扩展
 CREATE TABLE `m_user_profile`
 (
-    `id`           BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-    `user_id`      BIGINT                                NOT NULL COMMENT '关联t_employee.employee_id',
-    `user_type`    TINYINT                               NOT NULL COMMENT '用户类型: 1-系统员工 2-俱乐部会员 3-马主 4-教练',
-    `club_id`      BIGINT COMMENT '所属俱乐部ID',
-    `profile_data` TEXT COMMENT '扩展数据JSON格式',
-    `create_by`    VARCHAR(50) DEFAULT ''                NOT NULL COMMENT '创建人',
-    `create_time`  DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
-    `update_by`    VARCHAR(50) DEFAULT ''                NOT NULL COMMENT '更新人',
-    `update_time`  DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_valid`     INT         DEFAULT 1                 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
-    `is_delete`    INT         DEFAULT 0                 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
+    `id`                  BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+    `user_id`             BIGINT                                NOT NULL COMMENT '关联t_employee.employee_id',
+    `user_type`           TINYINT                               NOT NULL COMMENT '用户类型: 1-系统员工 2-俱乐部会员 3-马主 4-教练',
+    `club_id`             BIGINT COMMENT '所属俱乐部ID',
+    `created_by_guardian` TINYINT DEFAULT 0 COMMENT '是否由监护人创建: 1-是 0-否',
+    `profile_data`        TEXT COMMENT '扩展数据JSON格式',
+    `create_by`           VARCHAR(50) DEFAULT ''                NOT NULL COMMENT '创建人',
+    `create_time`         DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    `update_by`           VARCHAR(50) DEFAULT ''                NOT NULL COMMENT '更新人',
+    `update_time`         DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_valid`            INT         DEFAULT 1                 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
+    `is_delete`           INT         DEFAULT 0                 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
     UNIQUE KEY `uk_user_type` (`user_id`, `user_type`),
-    INDEX          `idx_user_id` (`user_id`),
-    INDEX          `idx_club_id` (`club_id`),
-    INDEX          `idx_user_type` (`user_type`)
+    INDEX                 `idx_user_id` (`user_id`),
+    INDEX                 `idx_club_id` (`club_id`),
+    INDEX                 `idx_user_type` (`user_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户扩展信息表';
-
--- 家庭成员表
-CREATE TABLE `m_family_member`
-(
-    `id`                   BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-    `parent_user_id`       BIGINT                                NOT NULL COMMENT '家长用户ID',
-    `member_name`          VARCHAR(50)                           NOT NULL COMMENT '成员姓名',
-    `age`                  INT COMMENT '年龄',
-    `gender`               TINYINT COMMENT '性别: 1-男 2-女',
-    `id_card_encrypted`    VARCHAR(255) COMMENT '身份证号(加密)',
-    `rider_cert_no`        VARCHAR(50) COMMENT '骑手证号',
-    `relationship`         VARCHAR(20) COMMENT '关系: child-子女, spouse-配偶',
-    `is_adult`             TINYINT                               NOT NULL DEFAULT 0 COMMENT '是否成年: 1-是 0-否',
-    `guardian_name`        VARCHAR(50) COMMENT '监护人姓名',
-    `guardian_phone`       VARCHAR(20) COMMENT '监护人电话',
-    `default_coach_id`     BIGINT COMMENT '默认教练ID',
-    `default_course_level` VARCHAR(20) COMMENT '默认课程级别',
-    `profile_data`         TEXT COMMENT '扩展信息JSON格式',
-    `create_by`            VARCHAR(50) DEFAULT ''                NOT NULL COMMENT '创建人',
-    `create_time`          DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
-    `update_by`            VARCHAR(50) DEFAULT ''                NOT NULL COMMENT '更新人',
-    `update_time`          DATETIME    DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_valid`             INT         DEFAULT 1                 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
-    `is_delete`            INT         DEFAULT 0                 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
-    INDEX                  `idx_parent_user_id` (`parent_user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='家庭成员表';
 ```
 
-### 3.2 俱乐部管理模块
+### 4.2 家庭管理模块（全新设计）
+
+```sql
+-- 家庭组表
+CREATE TABLE `m_family_group`
+(
+    `family_group_id`   BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '家庭组ID',
+    `family_name`       VARCHAR(50) NOT NULL COMMENT '家庭名称',
+    `club_id`           BIGINT NOT NULL COMMENT '俱乐部ID',
+    `main_contact_id`   BIGINT COMMENT '主要联系人ID',
+    `description`       VARCHAR(200) COMMENT '家庭描述',
+    `create_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '创建人',
+    `create_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    `update_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '更新人',
+    `update_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_valid`          INT DEFAULT 1 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
+    `is_delete`         INT DEFAULT 0 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
+    INDEX `idx_club_id` (`club_id`),
+    INDEX `idx_main_contact_id` (`main_contact_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='家庭组表';
+
+-- 家庭成员关系表（统一管理所有用户）
+CREATE TABLE `m_family_member_relation`
+(
+    `id`                BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+    `family_group_id`   BIGINT NOT NULL COMMENT '家庭组ID',
+    `user_id`           BIGINT NOT NULL COMMENT '用户ID（统一关联t_employee表）',
+    `member_type`       TINYINT NOT NULL COMMENT '成员类型: 1-家长 2-孩子 3-其他',
+    `relationship`      VARCHAR(20) COMMENT '关系: father-父亲, mother-母亲, child-子女, grandparent-祖父母等',
+    `is_guardian`       TINYINT DEFAULT 0 COMMENT '是否监护人: 1-是 0-否',
+    `can_book`          TINYINT DEFAULT 1 COMMENT '是否可预约: 1-可以 0-不可以',
+    `can_pay`           TINYINT DEFAULT 0 COMMENT '是否可支付: 1-可以 0-不可以',
+    `emergency_contact` TINYINT DEFAULT 0 COMMENT '是否紧急联系人: 1-是 0-否',
+    `join_date`         DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '加入家庭日期',
+    `create_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '创建人',
+    `create_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    `update_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '更新人',
+    `update_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_valid`          INT DEFAULT 1 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
+    `is_delete`         INT DEFAULT 0 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
+    UNIQUE KEY `uk_family_user` (`family_group_id`, `user_id`),
+    INDEX `idx_family_group_id` (`family_group_id`),
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_member_type` (`member_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='家庭成员关系表';
+
+-- 未注册成员扩展信息表（仅存储特有信息）
+CREATE TABLE `m_family_member_extra`
+(
+    `id`                   BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+    `user_id`              BIGINT NOT NULL COMMENT '关联用户ID',
+    `guardian_phone`       VARCHAR(20) COMMENT '监护人电话',
+    `guardian_name`        VARCHAR(50) COMMENT '监护人姓名',
+    `rider_cert_no`        VARCHAR(50) COMMENT '骑手证号',
+    `default_coach_id`     BIGINT COMMENT '默认教练ID',
+    `default_course_level` VARCHAR(20) COMMENT '默认课程级别',
+    `create_by`            VARCHAR(50) DEFAULT '' NOT NULL COMMENT '创建人',
+    `create_time`          DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    `update_by`            VARCHAR(50) DEFAULT '' NOT NULL COMMENT '更新人',
+    `update_time`          DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_valid`             INT DEFAULT 1 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
+    `is_delete`            INT DEFAULT 0 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
+    INDEX `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='未注册成员扩展信息表';
+```
+
+### 4.3 俱乐部管理模块
 
 ```sql
 -- 俱乐部表 - 独立设计
@@ -167,7 +185,7 @@ CREATE TABLE `m_club`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='俱乐部表';
 ```
 
-### 3.3 教练管理模块
+### 4.4 教练管理模块
 
 ```sql
 -- 教练表
@@ -178,11 +196,6 @@ CREATE TABLE `m_coach`
     `user_id`                BIGINT                                NOT NULL COMMENT '关联用户ID',
     `coach_no`               VARCHAR(50) COMMENT '教练编号',
     `avatar_url`             VARCHAR(500) COMMENT '头像照片地址',
-    `real_name`              VARCHAR(50)                           NOT NULL COMMENT '真实姓名',
-    `birth_date`             DATETIME COMMENT '生日时间(仅后台展示)',
-    `gender`                 TINYINT COMMENT '性别: 1-男 2-女',
-    `id_card_encrypted`      VARCHAR(255) COMMENT '身份证号码(加密,仅后台)',
-    `phone`                  VARCHAR(20) COMMENT '联系电话',
     `entry_date`             DATETIME COMMENT '入行时间',
     `specialties`            VARCHAR(200) COMMENT '专长领域',
     `introduction`           TEXT COMMENT '个人介绍',
@@ -233,7 +246,7 @@ CREATE TABLE `m_coach_schedule`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='教练课表时间段表';
 ```
 
-### 3.4 商品管理模块 (课程作为商品)
+### 4.5 商品管理模块 (课程作为商品)
 
 ```sql
 -- 扩展现有商品表用于课程管理
@@ -278,18 +291,16 @@ CREATE TABLE `m_course_time_slot`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程时间段表';
 ```
 
-### 3.5 订单管理模块 (替代预约表)
+### 4.6 订单管理模块（统一用户ID）
 
 ```sql
--- 订单表 - 核心业务表
+-- 订单表 - 统一使用user_id
 CREATE TABLE `m_order`
 (
     `order_id`         BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '订单ID',
     `order_no`         VARCHAR(50)                              NOT NULL UNIQUE COMMENT '订单号',
     `club_id`          BIGINT                                   NOT NULL COMMENT '俱乐部ID',
-    `customer_id`      BIGINT                                   NOT NULL COMMENT '客户ID(user_id)',
-    `customer_type`    TINYINT                                  NOT NULL COMMENT '客户类型: 1-会员 2-家庭成员',
-    `family_member_id` BIGINT COMMENT '家庭成员ID',
+    `customer_id`      BIGINT                                   NOT NULL COMMENT '客户ID(统一使用user_id)',
     `order_type`       VARCHAR(50)                              NOT NULL COMMENT '订单类型: course-课程, package-课时包, activity-活动',
     `goods_id`         BIGINT                                   NOT NULL COMMENT '商品ID',
     `goods_name`       VARCHAR(100)                             NOT NULL COMMENT '商品名称',
@@ -304,9 +315,6 @@ CREATE TABLE `m_order`
     `student_count`    INT            DEFAULT 1 COMMENT '学员数量',
     `unit_price`       DECIMAL(10, 2)                           NOT NULL COMMENT '单价',
     `total_amount`     DECIMAL(10, 2)                           NOT NULL COMMENT '总金额',
-    `coach_fee`        DECIMAL(10, 2) COMMENT '教练费',
-    `horse_fee`        DECIMAL(10, 2) COMMENT '马匹费',
-    `discount_amount`  DECIMAL(10, 2) DEFAULT 0 COMMENT '优惠金额',
     `actual_amount`    DECIMAL(10, 2)                           NOT NULL COMMENT '实付金额',
     `payment_method`   VARCHAR(50) COMMENT '支付方式: wechat, alipay, cash, package',
     `package_id`       BIGINT COMMENT '使用的课时包ID',
@@ -314,15 +322,7 @@ CREATE TABLE `m_order`
     `order_status`     TINYINT                                  NOT NULL DEFAULT 0 COMMENT '订单状态: 0-待支付 1-已支付 2-已确认 3-已完成 4-已取消 5-已退款',
     `payment_status`   TINYINT                                  NOT NULL DEFAULT 0 COMMENT '支付状态: 0-未支付 1-已支付 2-已退款',
     `class_status`     TINYINT        DEFAULT 0 COMMENT '上课状态: 0-未开始 1-进行中 2-已完成 3-已取消',
-    `check_in_time`    DATETIME COMMENT '签到时间',
-    `check_in_by`      VARCHAR(50) COMMENT '签到操作人',
-    `finish_time`      DATETIME COMMENT '完成时间',
-    `cancel_time`      DATETIME COMMENT '取消时间',
-    `cancel_reason`    VARCHAR(200) COMMENT '取消原因',
-    `refund_amount`    DECIMAL(10, 2) DEFAULT 0 COMMENT '退款金额',
-    `refund_time`      DATETIME COMMENT '退款时间',
     `remark`           VARCHAR(500) COMMENT '备注',
-    `order_data`       TEXT COMMENT '订单扩展数据JSON格式',
     `create_by`        VARCHAR(50)    DEFAULT ''                NOT NULL COMMENT '创建人',
     `create_time`      DATETIME       DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
     `update_by`        VARCHAR(50)    DEFAULT ''                NOT NULL COMMENT '更新人',
@@ -334,10 +334,7 @@ CREATE TABLE `m_order`
     INDEX              `idx_customer_id` (`customer_id`),
     INDEX              `idx_coach_id` (`coach_id`),
     INDEX              `idx_order_date` (`order_date`),
-    INDEX              `idx_class_date` (`class_date`),
-    INDEX              `idx_order_status` (`order_status`),
-    INDEX              `idx_payment_status` (`payment_status`),
-    INDEX              `idx_create_time` (`create_time`)
+    INDEX              `idx_class_date` (`class_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
 
 -- 订单学员表 (小组课支持多学员)
@@ -386,14 +383,14 @@ CREATE TABLE `m_order_evaluation`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单评价表';
 ```
 
-### 3.6 用户课时包管理
+### 4.7 用户课时包管理
 
 ```sql
--- 用户课时包表
+-- 用户课时包表（统一使用user_id）
 CREATE TABLE `m_user_package`
 (
     `id`                 BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-    `user_id`            BIGINT                                NOT NULL COMMENT '用户ID',
+    `user_id`            BIGINT                                NOT NULL COMMENT '用户ID（统一使用）',
     `package_order_id`   BIGINT                                NOT NULL COMMENT '购买订单ID',
     `package_id`         BIGINT                                NOT NULL COMMENT '课时包商品ID',
     `package_name`       VARCHAR(100)                          NOT NULL COMMENT '课时包名称',
@@ -410,7 +407,6 @@ CREATE TABLE `m_user_package`
     `is_valid`           INT         DEFAULT 1                 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
     `is_delete`          INT         DEFAULT 0                 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
     INDEX                `idx_user_id` (`user_id`),
-    INDEX                `idx_status` (`status`),
     INDEX                `idx_expire_date` (`expire_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户课时包表';
 
@@ -435,10 +431,10 @@ CREATE TABLE `m_package_usage_log`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时包使用记录表';
 ```
 
-### 3.7 马匹管理模块
+### 4.8 马匹管理模块
 
 ```sql
--- 马匹表  ******护照类型   
+-- 马匹表
 CREATE TABLE `m_horse`
 (
     `horse_id`             BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '马匹ID',
@@ -522,7 +518,7 @@ CREATE TABLE `m_horse_health_record`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='马匹健康记录表';
 ```
 
-### 3.8 支付财务模块
+### 4.9 支付财务模块
 
 ```sql
 -- 支付记录表
@@ -589,360 +585,178 @@ CREATE TABLE `m_financial_summary`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='财务统计表';
 ```
 
-## 四、核心业务流程图
+## 五、核心业务流程
 
-### 4.1 用户注册和身份管理流程
+### 5.1 添加未注册家庭成员流程
 
-```mermaid
-graph TD
-    A[用户注册] --> B{用户类型}
-    B -->|会员| C[创建用户档案<br/>type=2会员]
-    B -->|教练| D[创建用户档案<br/>type=4教练]
-    B -->|马主| E[创建用户档案<br/>type=3马主]
+```java
+public Long addUnregisteredFamilyMember(AddFamilyMemberRequest request) {
+    // 1. 创建未激活用户记录
+    User user = new User();
+    user.setLoginName(generateTempLoginName()); // temp_uuid格式
+    user.setActualName(request.getMemberName());
+    user.setPhone(request.getPhone());
+    user.setGender(request.getGender());
+    user.setRegistrationStatus(0); // 未激活
+    user.setDisabledFlag(1); // 禁用登录
+    user.setDeletedFlag(0);
+    user.setDepartmentId(1L); // 默认部门
+    userService.save(user);
     
-    C --> F[完善会员信息<br/>JSON存储]
-    D --> G[创建教练档案<br/>录入认证信息]
-    E --> H[完善马主信息<br/>马匹信息]
+    // 2. 创建用户扩展信息
+    UserProfile profile = new UserProfile();
+    profile.setUserId(user.getEmployeeId());
+    profile.setUserType(2); // 会员
+    profile.setClubId(request.getClubId());
+    profile.setCreatedByGuardian(1); // 由监护人创建
+    profile.setProfileData(buildProfileData(request));
+    userProfileService.save(profile);
     
-    F --> I[可添加家庭成员]
-    I --> J[多子女管理<br/>不同教练课程]
+    // 3. 建立家庭关系
+    FamilyMemberRelation relation = new FamilyMemberRelation();
+    relation.setFamilyGroupId(request.getFamilyGroupId());
+    relation.setUserId(user.getEmployeeId());
+    relation.setMemberType(2); // 孩子
+    relation.setRelationship("child");
+    relation.setCanBook(1);
+    relation.setCanPay(0);
+    familyMemberRelationService.save(relation);
     
-    G --> K[教练排班管理<br/>设置可授课程]
-    H --> L[马匹寄养管理]
+    // 4. 保存扩展信息
+    if (hasExtraInfo(request)) {
+        FamilyMemberExtra extra = new FamilyMemberExtra();
+        extra.setUserId(user.getEmployeeId());
+        extra.setGuardianName(request.getGuardianName());
+        extra.setGuardianPhone(request.getGuardianPhone());
+        extra.setDefaultCoachId(request.getDefaultCoachId());
+        familyMemberExtraService.save(extra);
+    }
+    
+    return user.getEmployeeId();
+}
 ```
 
-### 4.2 教练管理流程
+### 5.2 用户注册激活流程
 
-```mermaid
-graph TD
-    A[录入教练] --> B[基本信息录入<br/>姓名/生日/性别/电话]
-    B --> C[身份认证<br/>身份证号码]
-    C --> D[头像上传]
-    D --> E{职业认证}
+```java
+public void registerAndActivateUser(UserRegistrationRequest request) {
+    // 1. 检查是否有匹配的未激活用户
+    User unactivatedUser = userService.findUnactivatedUserByPhone(request.getPhone());
     
-    E --> F[骑手认证]
-    F --> F1[场地障碍等级选择]
-    F --> F2[盛装舞步等级选择] 
-    F --> F3[三项赛等级选择]
-    F1 --> F4[上传骑手证书图片]
-    F2 --> F4
-    F3 --> F4
+    if (unactivatedUser != null) {
+        // 激活现有用户
+        activateExistingUser(unactivatedUser, request);
+    } else {
+        // 创建新用户
+        createNewRegisteredUser(request);
+    }
+}
+
+private void activateExistingUser(User user, UserRegistrationRequest request) {
+    // 更新用户基本信息
+    user.setLoginName(request.getLoginName());
+    user.setLoginPwd(passwordEncoder.encode(request.getPassword()));
+    user.setEmail(request.getEmail());
+    user.setRegistrationStatus(1); // 已注册
+    user.setDisabledFlag(0); // 启用登录
+    userService.updateById(user);
     
-    E --> G[教练认证]
-    G --> G1[星级教练选择<br/>一星~五星]
-    G1 --> G2[上传教练证书图片]
+    // 更新扩展信息
+    UserProfile profile = userProfileService.getByUserId(user.getEmployeeId());
+    profile.setCreatedByGuardian(0); // 已自主注册
+    // 合并profile_data
+    String newProfileData = mergeProfileData(profile.getProfileData(), request.getExtendedInfo());
+    profile.setProfileData(newProfileData);
+    userProfileService.updateById(profile);
     
-    F4 --> H[入行时间录入]
-    G2 --> H
-    H --> I[个人介绍/专长]
-    I --> J[设置教练课表]
-    J --> K[教练档案完成<br/>支持无限数量教练]
+    // 清理临时信息
+    familyMemberExtraService.deleteByUserId(user.getEmployeeId());
+}
 ```
 
-### 4.3 课程商品管理流程
+### 5.3 统一的业务操作
 
-```mermaid
-graph TD
-    A[俱乐部管理员] --> B[创建课程商品]
-    B --> C[设置课程信息<br/>JSON配置]
-    C --> D[配置时间段]
-    D --> E[分配教练]
-    E --> F[设置价格体系<br/>教练费+马匹费]
-    F --> G[课程上架]
+```java
+// 课程预约 - 统一处理注册和未注册用户
+public void bookCourse(Long userId, BookCourseRequest request) {
+    // 不需要区分用户是否注册，统一使用user_id
+    Order order = new Order();
+    order.setCustomerId(userId); // 统一使用user_id
+    order.setClubId(request.getClubId());
+    order.setGoodsId(request.getCourseId());
+    order.setTimeSlotId(request.getTimeSlotId());
+    // ... 其他业务逻辑
     
-    G --> H[会员浏览课程]
-    H --> I[选择时间段]
-    I --> J[AI语音约课<br/>or手动选择]
+    orderService.save(order);
+}
+
+// 查询家庭成员 - 统一查询接口
+public List<FamilyMemberVO> getFamilyMembers(Long familyGroupId) {
+    List<FamilyMemberRelation> relations = familyMemberRelationService.list(
+        new QueryWrapper<FamilyMemberRelation>()
+            .eq("family_group_id", familyGroupId)
+            .eq("is_delete", 0)
+    );
     
-    J --> K{支付方式}
-    K -->|现金支付| L[生成订单]
-    K -->|课时包| M[扣减课时包]
-    K -->|在线支付| N[第三方支付]
+    List<FamilyMemberVO> result = new ArrayList<>();
+    for (FamilyMemberRelation relation : relations) {
+        User user = userService.getById(relation.getUserId());
+        UserProfile profile = userProfileService.getByUserId(relation.getUserId());
+        
+        FamilyMemberVO vo = new FamilyMemberVO();
+        vo.setUserId(user.getEmployeeId());
+        vo.setMemberName(user.getActualName());
+        vo.setPhone(user.getPhone());
+        vo.setGender(user.getGender());
+        vo.setMemberType(relation.getMemberType());
+        vo.setRelationship(relation.getRelationship());
+        vo.setRegistrationStatus(user.getRegistrationStatus());
+        vo.setCanBook(relation.getCanBook());
+        vo.setCanPay(relation.getCanPay());
+        
+        result.add(vo);
+    }
     
-    L --> O[订单确认]
-    M --> O
-    N --> O
+    return result;
+}
 ```
 
-### 4.4 订单生命周期流程
+## 六、关键技术要点
 
-```mermaid
-graph TD
-    A[创建订单] --> B{支付状态}
-    B -->|30分钟未支付| C[自动取消]
-    B -->|支付成功| D[订单已支付]
-    
-    D --> E[俱乐部确认]
-    E --> F[订单已确认]
-    F --> G[课程当天]
-    G --> H[学员签到]
-    H --> I[开始上课]
-    I --> J[课程结束]
-    J --> K[教练确认完成]
-    K --> L[订单完成]
-    
-    L --> M[24小时内可评价]
-    L --> N[财务结算<br/>教练费分成]
-    
-    C --> O[释放时间段]
-    F --> P{取消申请}
-    P -->|用户取消| Q[退款处理]
-    P -->|无取消| F
-```
+### 6.1 优化方案优势
 
-### 4.5 马匹健康管理流程
+1. **架构统一**：所有用户统一管理，避免双轨制设计
+2. **逻辑简化**：无需复杂的数据迁移和状态转换逻辑
+3. **性能优化**：避免多表JOIN和数据迁移开销
+4. **扩展性强**：基于统一用户体系，便于功能扩展
+5. **维护便利**：减少代码复杂度，降低维护成本
 
-```mermaid
-graph TD
-    A[新马入场] --> B[建立马匹档案]
-    B --> C[制定健康计划]
-    C --> D[设置提醒周期<br/>钉蹄/驱虫/搓牙/疫苗]
-    
-    D --> E[自动提醒系统]
-    E --> F[提前7天通知<br/>马房管理员]
-    F --> G[执行健康护理]
-    G --> H[记录执行结果]
-    H --> I[更新下次时间]
-    I --> E
-    
-    J[马主用户] --> K[查看我的小马]
-    K --> L[实时健康状态]
-    L --> M[下次护理时间]
-    
-    H --> N[月度健康报告]
-    N --> O[马主推送]
-```
-
-### 4.6 AI约课智能流程
-
-```mermaid
-graph TD
-    A[用户语音输入] --> B[语音识别处理]
-    B --> C{识别结果}
-    C -->|信息完整| D[提取关键信息<br/>时间/教练/课程]
-    C -->|信息不完整| E[引导补充信息]
-    
-    D --> F[查询用户习惯<br/>默认教练/课程级别]
-    F --> G[检查时间段可用性]
-    G --> H{时间段状态}
-    H -->|可用| I[生成订单]
-    H -->|冲突| J[推荐其他时间]
-    
-    I --> K[推送确认信息]
-    K --> L[用户确认支付]
-    
-    E --> M[二次语音输入]
-    M --> B
-    
-    J --> N[用户选择新时间]
-    N --> G
-```
-
-### 4.7 多租户数据架构流程
-
-```mermaid
-graph TD
-    A[用户访问] --> B[身份认证]
-    B --> C[获取用户所属俱乐部]
-    C --> D[设置数据隔离<br/>club_id过滤]
-    
-    D --> E[业务操作]
-    E --> F{数据访问}
-    F -->|查询| G[自动添加club_id条件]
-    F -->|新增| H[自动设置club_id]
-    F -->|修改| I[验证club_id权限]
-    F -->|删除| J[软删除<br/>is_delete=1]
-    
-    G --> K[返回隔离数据]
-    H --> L[创建成功]
-    I --> M{权限验证}
-    M -->|通过| N[执行修改]
-    M -->|拒绝| O[权限错误]
-    
-    J --> P[标记删除]
-```
-
-## 五、关键技术要点
-
-### 5.1 数据隔离策略
+### 6.2 数据隔离策略
 
 - **多租户设计**: 所有业务表都包含club_id字段
 - **权限控制**: 基于用户所属俱乐部进行数据过滤
 - **软删除**: 使用is_delete字段而非物理删除
 
-### 5.2 扩展性设计
+### 6.3 扩展性设计
 
 - **JSON字段**: 使用JSON存储不同用户类型的扩展信息
 - **商品化课程**: 课程作为商品管理，支持灵活配置
 - **统一订单**: 课程、活动、课时包统一使用订单表
 
-### 5.3 性能优化
+### 6.4 关键技术点
 
-- **索引策略**: 为高频查询字段建立合适索引
-- **分区表**: 大数据量表按时间分区
-- **缓存机制**: 热点数据Redis缓存
+1. **临时用户名生成**：`temp_` + UUID前8位，确保唯一性
+2. **状态管理**：通过`registration_status`区分用户激活状态
+3. **权限控制**：基于统一的RBAC体系和家庭关系权限
+4. **数据清理**：定期清理长期未激活的临时用户
+5. **业务兼容**：保持与现有Smart Admin v3架构的兼容性
 
-### 5.4 业务特色
+## 七、业务特色
 
 - **AI约课**: 智能识别用户习惯，自动匹配教练和课程
 - **家庭管理**: 支持多子女不同教练和课程级别
 - **马匹健康**: 完整的健康档案和自动提醒机制
 - **财务结算**: 自动化的教练费结算和报表统计
+- **统一用户体系**: 避免数据迁移，简化业务逻辑
 
-## 六、家庭成员关系绑定方案分析
-
-### 6.1 现有设计问题分析
-
-当前的 `m_family_member` 表设计存在以下限制：
-- 使用 `parent_user_id` 单一父级关联，无法处理多个家长的情况
-- 一个孩子只能关联一个家长，不符合实际家庭结构
-- 无法处理复杂的家庭关系（如重组家庭、隔代抚养等）
-
-### 6.2 多对多家庭关系解决方案
-
-#### 方案一：家庭组概念设计（推荐）
-
-```sql
--- 家庭组表
-CREATE TABLE `m_family_group`
-(
-    `family_group_id`   BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '家庭组ID',
-    `family_name`       VARCHAR(50) NOT NULL COMMENT '家庭名称',
-    `club_id`           BIGINT NOT NULL COMMENT '俱乐部ID',
-    `main_contact_id`   BIGINT COMMENT '主要联系人ID',
-    `description`       VARCHAR(200) COMMENT '家庭描述',
-    `create_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '创建人',
-    `create_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
-    `update_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '更新人',
-    `update_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_valid`          INT DEFAULT 1 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
-    `is_delete`         INT DEFAULT 0 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
-    INDEX `idx_club_id` (`club_id`),
-    INDEX `idx_main_contact_id` (`main_contact_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='家庭组表';
-
--- 家庭成员关系表
-CREATE TABLE `m_family_member_relation`
-(
-    `id`                BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-    `family_group_id`   BIGINT NOT NULL COMMENT '家庭组ID',
-    `user_id`           BIGINT NOT NULL COMMENT '用户ID',
-    `member_type`       TINYINT NOT NULL COMMENT '成员类型: 1-家长 2-孩子 3-其他',
-    `relationship`      VARCHAR(20) COMMENT '关系: father-父亲, mother-母亲, child-子女, grandparent-祖父母等',
-    `is_guardian`       TINYINT DEFAULT 0 COMMENT '是否监护人: 1-是 0-否',
-    `can_book`          TINYINT DEFAULT 1 COMMENT '是否可预约: 1-可以 0-不可以',
-    `can_pay`           TINYINT DEFAULT 0 COMMENT '是否可支付: 1-可以 0-不可以',
-    `emergency_contact` TINYINT DEFAULT 0 COMMENT '是否紧急联系人: 1-是 0-否',
-    `join_date`         DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '加入家庭日期',
-    `create_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '创建人',
-    `create_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
-    `update_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '更新人',
-    `update_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_valid`          INT DEFAULT 1 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
-    `is_delete`         INT DEFAULT 0 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
-    UNIQUE KEY `uk_family_user` (`family_group_id`, `user_id`),
-    INDEX `idx_family_group_id` (`family_group_id`),
-    INDEX `idx_user_id` (`user_id`),
-    INDEX `idx_member_type` (`member_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='家庭成员关系表';
-
--- 重新设计的家庭成员表（针对未注册用户）
-CREATE TABLE `m_family_member`
-(
-    `id`                   BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-    `family_group_id`      BIGINT NOT NULL COMMENT '家庭组ID',
-    `member_name`          VARCHAR(50) NOT NULL COMMENT '成员姓名',
-    `birth_date`           DATETIME COMMENT '生日时间',
-    `gender`               TINYINT COMMENT '性别: 1-男 2-女',
-    `id_card_encrypted`    VARCHAR(255) COMMENT '身份证号(加密)',
-    `rider_cert_no`        VARCHAR(50) COMMENT '骑手证号',
-    `phone`                VARCHAR(20) COMMENT '联系电话',
-    `relationship`         VARCHAR(20) COMMENT '关系: child-子女, spouse-配偶等',
-    `is_adult`             TINYINT NOT NULL DEFAULT 0 COMMENT '是否成年: 1-是 0-否',
-    `guardian_user_ids`    TEXT COMMENT '监护人用户ID列表 JSON格式',
-    `default_coach_id`     BIGINT COMMENT '默认教练ID',
-    `default_course_level` VARCHAR(20) COMMENT '默认课程级别',
-    `profile_data`         TEXT COMMENT '扩展信息 JSON格式',
-    `create_by`            VARCHAR(50) DEFAULT '' NOT NULL COMMENT '创建人',
-    `create_time`          DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
-    `update_by`            VARCHAR(50) DEFAULT '' NOT NULL COMMENT '更新人',
-    `update_time`          DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_valid`             INT DEFAULT 1 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
-    `is_delete`            INT DEFAULT 0 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
-    INDEX `idx_family_group_id` (`family_group_id`),
-    INDEX `idx_member_name` (`member_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='家庭成员表';
-```
-
-#### 方案二：扁平化关系表设计
-
-```sql
--- 用户关系表
-CREATE TABLE `m_user_relation`
-(
-    `id`                BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-    `user_id_a`         BIGINT NOT NULL COMMENT '用户A ID',
-    `user_id_b`         BIGINT NOT NULL COMMENT '用户B ID',
-    `relation_type`     VARCHAR(20) NOT NULL COMMENT '关系类型: parent_child-父子, spouse-夫妻等',
-    `relation_detail`   VARCHAR(50) COMMENT '关系详情: father-父亲, mother-母亲等',
-    `club_id`           BIGINT NOT NULL COMMENT '俱乐部ID',
-    `can_book_for`      TINYINT DEFAULT 1 COMMENT 'A是否可为B预约: 1-可以 0-不可以',
-    `can_pay_for`       TINYINT DEFAULT 0 COMMENT 'A是否可为B支付: 1-可以 0-不可以',
-    `is_emergency`      TINYINT DEFAULT 0 COMMENT 'A是否是B的紧急联系人: 1-是 0-否',
-    `create_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '创建人',
-    `create_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
-    `update_by`         VARCHAR(50) DEFAULT '' NOT NULL COMMENT '更新人',
-    `update_time`       DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_valid`          INT DEFAULT 1 NOT NULL COMMENT '是否有效;1=有效;0=无效;',
-    `is_delete`         INT DEFAULT 0 NOT NULL COMMENT '是否删除;1=已删除;0=未删除;',
-    UNIQUE KEY `uk_users_relation` (`user_id_a`, `user_id_b`, `relation_type`),
-    INDEX `idx_user_a` (`user_id_a`),
-    INDEX `idx_user_b` (`user_id_b`),
-    INDEX `idx_club_id` (`club_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户关系表';
-```
-
-### 6.3 方案对比分析
-
-| 特性 | 方案一：家庭组 | 方案二：扁平化关系 |
-|------|---------------|-------------------|
-| 复杂度 | 中等 | 简单 |
-| 扩展性 | 强 | 中等 |
-| 查询性能 | 好 | 一般 |
-| 数据一致性 | 强 | 中等 |
-| 业务理解度 | 高 | 中等 |
-| 权限管理 | 精细 | 相对简单 |
-
-### 6.4 推荐方案及使用场景
-
-**推荐使用方案一（家庭组概念）**，理由如下：
-
-1. **符合业务逻辑**：家庭组概念更贴近现实家庭结构
-2. **权限管理清晰**：可精确控制谁能为谁预约、支付
-3. **扩展性强**：支持复杂家庭关系和未来业务需求
-4. **数据完整性**：通过家庭组统一管理，避免数据冗余
-
-### 6.5 业务流程示例
-
-```mermaid
-graph TD
-    A[家长注册] --> B[创建家庭组]
-    B --> C[设置为主要联系人]
-    C --> D{添加家庭成员}
-    
-    D --> E[添加配偶]
-    E --> E1[设置为家长+监护人+支付权限]
-    
-    D --> F[添加孩子]
-    F --> F1{孩子是否注册用户}
-    F1 -->|是| F2[添加到关系表]
-    F1 -->|否| F3[添加到成员表]
-    
-    F2 --> G[设置权限关系]
-    F3 --> G
-    
-    G --> H[完成家庭绑定]
-    H --> I[支持多家长管理多孩子]
-```
-
-这个方案能够完美解决多对多家庭关系问题，支持复杂的权限控制和业务场景。
+这个优化方案完全避免了数据迁移的复杂性，同时保持了业务逻辑的清晰和系统架构的一致性。通过预创建用户记录的方式，实现了真正的统一用户管理，大幅降低了系统的复杂度和维护成本。

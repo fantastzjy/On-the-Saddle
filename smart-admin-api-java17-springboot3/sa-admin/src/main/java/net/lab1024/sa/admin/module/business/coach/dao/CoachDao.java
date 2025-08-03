@@ -31,12 +31,12 @@ public interface CoachDao extends BaseMapper<CoachEntity> {
     /**
      * 根据教练编号查询
      */
-    CoachEntity selectByCoachCode(@Param("coachCode") String coachCode);
+    CoachEntity selectByCoachNo(@Param("coachNo") String coachNo);
 
     /**
-     * 根据身份证号查询
+     * 根据俱乐部和用户ID查询
      */
-    CoachEntity selectByIdCard(@Param("idCard") String idCard);
+    CoachEntity selectByClubAndUser(@Param("clubId") Long clubId, @Param("userId") Long userId);
 
     /**
      * 查询教练详情
@@ -46,5 +46,5 @@ public interface CoachDao extends BaseMapper<CoachEntity> {
     /**
      * 教练列表查询
      */
-    List<CoachListVO> queryList(@Param("isActive") Boolean isActive, @Param("clubId") Long clubId);
+    List<CoachListVO> queryList(@Param("isValid") Integer isValid, @Param("clubId") Long clubId);
 }

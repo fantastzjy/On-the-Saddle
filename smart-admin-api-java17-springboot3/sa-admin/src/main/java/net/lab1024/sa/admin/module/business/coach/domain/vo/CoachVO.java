@@ -3,8 +3,6 @@ package net.lab1024.sa.admin.module.business.coach.domain.vo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -22,71 +20,59 @@ public class CoachVO {
     @Schema(description = "教练ID")
     private Long coachId;
 
-    @Schema(description = "教练姓名")
-    private String coachName;
-
-    @Schema(description = "教练编号")
-    private String coachCode;
-
-    @Schema(description = "性别")
-    private Integer gender;
-
-    @Schema(description = "出生日期")
-    private LocalDate birthDate;
-
-    @Schema(description = "手机号码")
-    private String phone;
-
-    @Schema(description = "邮箱")
-    private String email;
-
-    @Schema(description = "身份证号")
-    private String idCard;
-
-    @Schema(description = "头像地址")
-    private String avatarUrl;
-
-    @Schema(description = "专业等级")
-    private String professionalLevel;
-
-    @Schema(description = "专业特长")
-    private String speciality;
-
-    @Schema(description = "从业年限")
-    private Integer yearsExperience;
-
-    @Schema(description = "资质证书")
-    private String certification;
-
-    @Schema(description = "所属俱乐部ID")
+    @Schema(description = "俱乐部ID")
     private Long clubId;
 
     @Schema(description = "俱乐部名称")
     private String clubName;
 
-    @Schema(description = "薪资")
-    private BigDecimal salary;
+    @Schema(description = "关联用户ID")
+    private Long userId;
 
-    @Schema(description = "入职日期")
-    private LocalDate entryDate;
+    @Schema(description = "用户姓名")
+    private String userName;
 
-    @Schema(description = "联系地址")
-    private String address;
+    @Schema(description = "教练编号")
+    private String coachNo;
 
-    @Schema(description = "紧急联系人")
-    private String emergencyContact;
+    @Schema(description = "头像照片地址")
+    private String avatarUrl;
 
-    @Schema(description = "紧急联系电话")
-    private String emergencyPhone;
+    @Schema(description = "入行时间")
+    private LocalDateTime entryDate;
 
-    @Schema(description = "个人简介")
-    private String description;
+    @Schema(description = "专长领域")
+    private String specialties;
 
-    @Schema(description = "获奖经历")
-    private String achievements;
+    @Schema(description = "个人介绍")
+    private String introduction;
 
-    @Schema(description = "教学风格")
-    private String teachingStyle;
+    @Schema(description = "骑手证号码")
+    private String riderCertNo;
+
+    @Schema(description = "场地障碍等级")
+    private String riderLevelShowJumping;
+
+    @Schema(description = "盛装舞步等级")
+    private String riderLevelDressage;
+
+    @Schema(description = "三项赛等级")
+    private String riderLevelEventing;
+
+    @Schema(description = "骑手证书图片地址JSON格式")
+    private String riderCertImgUrl;
+
+    @Schema(description = "星级教练证号码")
+    private String coachCertNo;
+
+    @Schema(description = "教练等级")
+    private String coachLevel;
+
+    @Schema(description = "教练证书图片地址JSON格式")
+    private String coachCertImgUrl;
+
+    @Schema(description = "排序")
+    private Integer sortOrder;
 
     @Schema(description = "创建人")
     private String createBy;
@@ -100,6 +86,9 @@ public class CoachVO {
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
 
-    @Schema(description = "是否在职")
-    private Boolean isActive;
+    @Schema(description = "是否有效")
+    private Integer isValid;
+
+    @Schema(description = "是否删除")
+    private Integer isDelete;
 }

@@ -16,17 +16,26 @@ import net.lab1024.sa.base.common.domain.PageParam;
 @Data
 public class CoachQueryForm extends PageParam {
 
-    @Schema(description = "关键字(教练姓名、编号、手机号)")
+    @Schema(description = "关键字(教练编号)")
     private String keywords;
 
-    @Schema(description = "性别")
-    private Integer gender;
-
-    @Schema(description = "专业等级")
-    private String professionalLevel;
-
-    @Schema(description = "所属俱乐部ID")
+    @Schema(description = "俱乐部ID")
     private Long clubId;
+
+    @Schema(description = "关联用户ID")
+    private Long userId;
+
+    @Schema(description = "教练等级")
+    private String coachLevel;
+
+    @Schema(description = "场地障碍等级")
+    private String riderLevelShowJumping;
+
+    @Schema(description = "盛装舞步等级")
+    private String riderLevelDressage;
+
+    @Schema(description = "三项赛等级")
+    private String riderLevelEventing;
 
     @Schema(description = "创建开始日期")
     private String startDate;
@@ -35,8 +44,8 @@ public class CoachQueryForm extends PageParam {
     private String endDate;
 
     @Schema(description = "是否删除")
-    private Boolean isDelete;
+    private Integer isDelete;
 
-    @Schema(description = "是否在职")
-    private Boolean isActive;
+    @Schema(description = "是否有效")
+    private Integer isValid;
 }

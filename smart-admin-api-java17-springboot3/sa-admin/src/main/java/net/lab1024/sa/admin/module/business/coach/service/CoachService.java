@@ -47,7 +47,7 @@ public class CoachService {
      * 分页查询教练
      */
     public ResponseDTO<PageResult<CoachListVO>> queryByPage(CoachQueryForm queryForm) {
-        queryForm.setIsDelete(Boolean.FALSE);
+        queryForm.setIsDelete(0);
         Page<?> page = SmartPageUtil.convert2PageQuery(queryForm);
         List<CoachListVO> coachList = coachDao.queryPage(page, queryForm);
         PageResult<CoachListVO> pageResult = SmartPageUtil.convert2PageResult(page, coachList);
@@ -72,26 +72,29 @@ public class CoachService {
     @OperateLog
     public ResponseDTO<String> create(CoachCreateForm createForm) {
         // 校验教练编号是否重复
-        if (StringUtils.isNotBlank(createForm.getCoachCode())) {
-            CoachEntity existCoach = coachDao.selectByCoachCode(createForm.getCoachCode());
+        if (StringUtils.isNotBlank(createForm.getCoachNo())) {
+            CoachEntity existCoach = coachDao.selectByCoachNo(createForm.getCoachNo());
             if (existCoach != null) {
                 return ResponseDTO.userErrorParam("教练编号已存在");
             }
         }
 
-        // 校验身份证号是否重复
-        if (StringUtils.isNotBlank(createForm.getIdCard())) {
-            CoachEntity existCoachByIdCard = coachDao.selectByIdCard(createForm.getIdCard());
-            if (existCoachByIdCard != null) {
-                return ResponseDTO.userErrorParam("身份证号已存在");
-            }
+        // 校验俱乐部和用户ID的唯一性
+        CoachEntity existCoachByClubUser = coachDao.selectByClubAndUser(createForm.getClubId(), createForm.getUserId());
+        if (existCoachByClubUser != null) {
+            return ResponseDTO.userErrorParam("该用户在此俱乐部已存在教练记录");
         }
 
         CoachEntity coachEntity = SmartBeanUtil.copy(createForm, CoachEntity.class);
         coachEntity.setCreateTime(LocalDateTime.now());
         coachEntity.setUpdateTime(LocalDateTime.now());
-        coachEntity.setIsActive(Boolean.TRUE);
-        coachEntity.setIsDelete(Boolean.FALSE);
+        coachEntity.setIsValid(1);
+        coachEntity.setIsDelete(0);
+        
+        // 设置默认排序
+        if (coachEntity.getSortOrder() == null) {
+            coachEntity.setSortOrder(0);
+        }
 
         coachDao.insert(coachEntity);
 
@@ -108,24 +111,22 @@ public class CoachService {
     @OperateLog
     public ResponseDTO<String> update(CoachUpdateForm updateForm) {
         CoachEntity oldCoachEntity = coachDao.selectById(updateForm.getCoachId());
-        if (oldCoachEntity == null || Boolean.TRUE.equals(oldCoachEntity.getIsDelete())) {
+        if (oldCoachEntity == null || oldCoachEntity.getIsDelete().equals(1)) {
             return ResponseDTO.userErrorParam("教练不存在");
         }
 
         // 校验教练编号是否重复
-        if (StringUtils.isNotBlank(updateForm.getCoachCode())) {
-            CoachEntity existCoach = coachDao.selectByCoachCode(updateForm.getCoachCode());
+        if (StringUtils.isNotBlank(updateForm.getCoachNo())) {
+            CoachEntity existCoach = coachDao.selectByCoachNo(updateForm.getCoachNo());
             if (existCoach != null && !existCoach.getCoachId().equals(updateForm.getCoachId())) {
                 return ResponseDTO.userErrorParam("教练编号已存在");
             }
         }
 
-        // 校验身份证号是否重复
-        if (StringUtils.isNotBlank(updateForm.getIdCard())) {
-            CoachEntity existCoachByIdCard = coachDao.selectByIdCard(updateForm.getIdCard());
-            if (existCoachByIdCard != null && !existCoachByIdCard.getCoachId().equals(updateForm.getCoachId())) {
-                return ResponseDTO.userErrorParam("身份证号已存在");
-            }
+        // 校验俱乐部和用户ID的唯一性
+        CoachEntity existCoachByClubUser = coachDao.selectByClubAndUser(updateForm.getClubId(), updateForm.getUserId());
+        if (existCoachByClubUser != null && !existCoachByClubUser.getCoachId().equals(updateForm.getCoachId())) {
+            return ResponseDTO.userErrorParam("该用户在此俱乐部已存在教练记录");
         }
 
         CoachEntity coachEntity = SmartBeanUtil.copy(updateForm, CoachEntity.class);
@@ -146,11 +147,11 @@ public class CoachService {
     @OperateLog
     public ResponseDTO<String> delete(Long coachId) {
         CoachEntity coachEntity = coachDao.selectById(coachId);
-        if (coachEntity == null || Boolean.TRUE.equals(coachEntity.getIsDelete())) {
+        if (coachEntity == null || coachEntity.getIsDelete().equals(1)) {
             return ResponseDTO.userErrorParam("教练不存在");
         }
 
-        coachEntity.setIsDelete(Boolean.TRUE);
+        coachEntity.setIsDelete(1);
         coachEntity.setUpdateTime(LocalDateTime.now());
         coachDao.updateById(coachEntity);
 
@@ -163,8 +164,8 @@ public class CoachService {
     /**
      * 教练列表查询
      */
-    public ResponseDTO<List<CoachListVO>> queryList(Boolean isActive, Long clubId) {
-        List<CoachListVO> coachList = coachDao.queryList(isActive, clubId);
+    public ResponseDTO<List<CoachListVO>> queryList(Integer isValid, Long clubId) {
+        List<CoachListVO> coachList = coachDao.queryList(isValid, clubId);
         return ResponseDTO.ok(coachList);
     }
 }

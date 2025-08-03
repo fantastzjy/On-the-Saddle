@@ -11,18 +11,7 @@
   <a-form class="smart-query-form" v-privilege="'club:coach:query'">
     <a-row class="smart-query-form-row">
       <a-form-item label="关键字" class="smart-query-form-item">
-        <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="教练姓名/编号/手机号" />
-      </a-form-item>
-
-      <a-form-item label="性别" class="smart-query-form-item">
-        <a-select style="width: 120px" v-model:value="queryForm.gender" placeholder="性别" allowClear>
-          <a-select-option :value="1">男</a-select-option>
-          <a-select-option :value="2">女</a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item label="专业等级" class="smart-query-form-item">
-        <a-input style="width: 150px" v-model:value="queryForm.professionalLevel" placeholder="专业等级" />
+        <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="教练编号" />
       </a-form-item>
 
       <a-form-item label="所属俱乐部" class="smart-query-form-item">
@@ -33,10 +22,26 @@
         </a-select>
       </a-form-item>
 
-      <a-form-item label="在职状态" class="smart-query-form-item">
-        <a-select style="width: 120px" v-model:value="queryForm.isActive" placeholder="状态" allowClear>
-          <a-select-option :value="true">在职</a-select-option>
-          <a-select-option :value="false">离职</a-select-option>
+      <a-form-item label="教练等级" class="smart-query-form-item">
+        <a-select style="width: 120px" v-model:value="queryForm.coachLevel" placeholder="教练等级" allowClear>
+          <a-select-option v-for="level in coachLevels" :key="level" :value="level">
+            {{ level }}
+          </a-select-option>
+        </a-select>
+      </a-form-item>
+
+      <a-form-item label="场地障碍" class="smart-query-form-item">
+        <a-select style="width: 120px" v-model:value="queryForm.riderLevelShowJumping" placeholder="场地障碍等级" allowClear>
+          <a-select-option v-for="level in riderLevels" :key="level" :value="level">
+            {{ level }}
+          </a-select-option>
+        </a-select>
+      </a-form-item>
+
+      <a-form-item label="有效状态" class="smart-query-form-item">
+        <a-select style="width: 120px" v-model:value="queryForm.isValid" placeholder="状态" allowClear>
+          <a-select-option :value="1">有效</a-select-option>
+          <a-select-option :value="0">无效</a-select-option>
         </a-select>
       </a-form-item>
 
@@ -91,29 +96,23 @@
       bordered
     >
       <template #bodyCell="{ column, record, text }">
-        <template v-if="column.dataIndex === 'isActive'">
-          <a-tag :color="text ? 'green' : 'red'">
-            {{ text ? '在职' : '离职' }}
+        <template v-if="column.dataIndex === 'isValid'">
+          <a-tag :color="text === 1 ? 'green' : 'red'">
+            {{ text === 1 ? '有效' : '无效' }}
           </a-tag>
         </template>
-        <template v-if="column.dataIndex === 'coachName'">
+        <template v-if="column.dataIndex === 'userName'">
           <a-button type="link" @click="detail(record.coachId)" :disabled="!$privilege('club:coach:detail')">
-            {{ record.coachName }}
+            {{ record.userName }}
           </a-button>
         </template>
         <template v-if="column.dataIndex === 'avatarUrl'">
           <img v-if="text" :src="text" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;" />
           <span v-else>-</span>
         </template>
-        <template v-if="column.dataIndex === 'gender'">
-          <span>{{ text === 1 ? '男' : text === 2 ? '女' : '-' }}</span>
-        </template>
-        <template v-if="column.dataIndex === 'salary'">
-          <span v-if="text">¥{{ text }}</span>
-          <span v-else>-</span>
-        </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
+            <a-button @click="detail(record.coachId)" size="small" v-privilege="'club:coach:detail'" type="link">详情</a-button>
             <a-button @click="update(record.coachId)" size="small" v-privilege="'club:coach:update'" type="link">编辑</a-button>
             <a-button @click="confirmDelete(record.coachId)" size="small" danger v-privilege="'club:coach:delete'" type="link">删除</a-button>
           </div>
@@ -159,15 +158,18 @@ import CoachFormModal from './components/coach-form-modal.vue';
 
 const queryFormState = {
   keywords: null,
-  gender: null,
-  professionalLevel: null,
   clubId: null,
+  userId: null,
+  coachLevel: null,
+  riderLevelShowJumping: null,
+  riderLevelDressage: null,
+  riderLevelEventing: null,
   startDate: null,
   endDate: null,
   pageNum: 1,
   pageSize: 10,
-  isDelete: false,
-  isActive: null,
+  isDelete: 0,
+  isValid: null,
 };
 
 const queryForm = reactive({ ...queryFormState });
@@ -176,6 +178,10 @@ const tableData = ref([]);
 const total = ref(0);
 const searchDate = ref();
 const clubList = ref([]);
+
+// 等级选项
+const riderLevels = ['初三', '初二', '初一', '中三', '中二', '中一', '国三', '国二', '国一', '健将级'];
+const coachLevels = ['一星', '二星', '三星', '四星', '五星'];
 
 function resetQuery() {
   Object.assign(queryForm, queryFormState);
@@ -222,14 +228,14 @@ async function loadClubList() {
 
 const columns = ref([
   {
-    title: '教练姓名',
-    dataIndex: 'coachName',
+    title: '用户姓名',
+    dataIndex: 'userName',
     width: 120,
     fixed: 'left',
   },
   {
     title: '教练编号',
-    dataIndex: 'coachCode',
+    dataIndex: 'coachNo',
     width: 120,
   },
   {
@@ -238,66 +244,60 @@ const columns = ref([
     width: 80,
   },
   {
-    title: '性别',
-    dataIndex: 'gender',
-    width: 80,
-  },
-  {
-    title: '手机号码',
-    dataIndex: 'phone',
-    width: 120,
-  },
-  {
-    title: '邮箱',
-    dataIndex: 'email',
-    width: 150,
-    ellipsis: true,
-  },
-  {
-    title: '专业等级',
-    dataIndex: 'professionalLevel',
-    width: 100,
-  },
-  {
-    title: '专业特长',
-    dataIndex: 'speciality',
-    width: 150,
-    ellipsis: true,
-  },
-  {
-    title: '从业年限',
-    dataIndex: 'yearsExperience',
-    width: 100,
-  },
-  {
     title: '所属俱乐部',
     dataIndex: 'clubName',
     width: 150,
     ellipsis: true,
   },
   {
-    title: '薪资',
-    dataIndex: 'salary',
+    title: '入行时间',
+    dataIndex: 'entryDate',
+    width: 150,
+  },
+  {
+    title: '专长领域',
+    dataIndex: 'specialties',
+    width: 150,
+    ellipsis: true,
+  },
+  {
+    title: '骑手证号',
+    dataIndex: 'riderCertNo',
+    width: 120,
+  },
+  {
+    title: '场地障碍等级',
+    dataIndex: 'riderLevelShowJumping',
+    width: 120,
+  },
+  {
+    title: '盛装舞步等级',
+    dataIndex: 'riderLevelDressage',
+    width: 120,
+  },
+  {
+    title: '三项赛等级',
+    dataIndex: 'riderLevelEventing',
+    width: 120,
+  },
+  {
+    title: '教练证号',
+    dataIndex: 'coachCertNo',
+    width: 120,
+  },
+  {
+    title: '教练等级',
+    dataIndex: 'coachLevel',
     width: 100,
   },
   {
-    title: '入职日期',
-    dataIndex: 'entryDate',
-    width: 120,
+    title: '排序',
+    dataIndex: 'sortOrder',
+    width: 80,
   },
   {
-    title: '紧急联系人',
-    dataIndex: 'emergencyContact',
-    width: 120,
-  },
-  {
-    title: '紧急联系电话',
-    dataIndex: 'emergencyPhone',
-    width: 130,
-  },
-  {
-    title: '在职状态',
-    dataIndex: 'isActive',
+    title: '有效状态',
+    dataIndex: 'isValid',
     width: 100,
   },
   {
@@ -309,7 +309,7 @@ const columns = ref([
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
-    width: 120,
+    width: 150,
   },
 ]);
 

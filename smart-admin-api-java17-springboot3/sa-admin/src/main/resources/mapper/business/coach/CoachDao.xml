@@ -6,43 +6,51 @@
     <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.coach.domain.vo.CoachListVO">
         SELECT
             c.coach_id,
-            c.coach_name,
-            c.coach_code,
-            c.gender,
-            c.phone,
-            c.email,
-            c.avatar_url,
-            c.professional_level,
-            c.speciality,
-            c.years_experience,
             c.club_id,
             club.club_name,
-            c.salary,
+            c.user_id,
+            u.actual_name as user_name,
+            c.coach_no,
+            c.avatar_url,
             c.entry_date,
-            c.emergency_contact,
-            c.emergency_phone,
+            c.specialties,
+            c.rider_cert_no,
+            c.rider_level_show_jumping,
+            c.rider_level_dressage,
+            c.rider_level_eventing,
+            c.coach_cert_no,
+            c.coach_level,
+            c.sort_order,
             c.create_by,
             c.create_time,
-            c.is_active
+            c.is_valid
         FROM m_coach c
         LEFT JOIN m_club club ON c.club_id = club.club_id AND club.is_delete = 0
+        LEFT JOIN t_employee u ON c.user_id = u.employee_id AND u.deleted_flag = 0
         <where>
             c.is_delete = #{queryForm.isDelete}
             <if test="queryForm.keywords != null and queryForm.keywords != ''">
                 AND (
-                    INSTR(c.coach_name, #{queryForm.keywords})
-                    OR INSTR(c.coach_code, #{queryForm.keywords})
-                    OR INSTR(c.phone, #{queryForm.keywords})
+                    INSTR(c.coach_no, #{queryForm.keywords})
                 )
-            </if>
-            <if test="queryForm.gender != null">
-                AND c.gender = #{queryForm.gender}
-            </if>
-            <if test="queryForm.professionalLevel != null and queryForm.professionalLevel != ''">
-                AND c.professional_level = #{queryForm.professionalLevel}
             </if>
             <if test="queryForm.clubId != null">
                 AND c.club_id = #{queryForm.clubId}
+            </if>
+            <if test="queryForm.userId != null">
+                AND c.user_id = #{queryForm.userId}
+            </if>
+            <if test="queryForm.coachLevel != null and queryForm.coachLevel != ''">
+                AND c.coach_level = #{queryForm.coachLevel}
+            </if>
+            <if test="queryForm.riderLevelShowJumping != null and queryForm.riderLevelShowJumping != ''">
+                AND c.rider_level_show_jumping = #{queryForm.riderLevelShowJumping}
+            </if>
+            <if test="queryForm.riderLevelDressage != null and queryForm.riderLevelDressage != ''">
+                AND c.rider_level_dressage = #{queryForm.riderLevelDressage}
+            </if>
+            <if test="queryForm.riderLevelEventing != null and queryForm.riderLevelEventing != ''">
+                AND c.rider_level_eventing = #{queryForm.riderLevelEventing}
             </if>
             <if test="queryForm.startDate != null and queryForm.startDate != ''">
                 AND DATE_FORMAT(c.create_time, '%Y-%m-%d') &gt;= #{queryForm.startDate}
@@ -50,26 +58,26 @@
             <if test="queryForm.endDate != null and queryForm.endDate != ''">
                 AND DATE_FORMAT(c.create_time, '%Y-%m-%d') &lt;= #{queryForm.endDate}
             </if>
-            <if test="queryForm.isActive != null">
-                AND c.is_active = #{queryForm.isActive}
+            <if test="queryForm.isValid != null">
+                AND c.is_valid = #{queryForm.isValid}
             </if>
         </where>
         <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
-            ORDER BY c.create_time DESC
+            ORDER BY c.sort_order ASC, c.create_time DESC
         </if>
     </select>
 
     <!-- 根据教练编号查询 -->
-    <select id="selectByCoachCode" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+    <select id="selectByCoachNo" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
         SELECT * FROM m_coach
-        WHERE coach_code = #{coachCode} AND is_delete = 0
+        WHERE coach_no = #{coachNo} AND is_delete = 0
         LIMIT 1
     </select>
 
-    <!-- 根据身份证号查询 -->
-    <select id="selectByIdCard" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+    <!-- 根据俱乐部和用户ID查询 -->
+    <select id="selectByClubAndUser" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
         SELECT * FROM m_coach
-        WHERE id_card = #{idCard} AND is_delete = 0
+        WHERE club_id = #{clubId} AND user_id = #{userId} AND is_delete = 0
         LIMIT 1
     </select>
 
@@ -77,35 +85,33 @@
     <select id="getDetail" resultType="net.lab1024.sa.admin.module.business.coach.domain.vo.CoachVO">
         SELECT
             c.coach_id,
-            c.coach_name,
-            c.coach_code,
-            c.gender,
-            c.birth_date,
-            c.phone,
-            c.email,
-            c.id_card,
-            c.avatar_url,
-            c.professional_level,
-            c.speciality,
-            c.years_experience,
-            c.certification,
             c.club_id,
             club.club_name,
-            c.salary,
+            c.user_id,
+            u.actual_name as user_name,
+            c.coach_no,
+            c.avatar_url,
             c.entry_date,
-            c.address,
-            c.emergency_contact,
-            c.emergency_phone,
-            c.description,
-            c.achievements,
-            c.teaching_style,
+            c.specialties,
+            c.introduction,
+            c.rider_cert_no,
+            c.rider_level_show_jumping,
+            c.rider_level_dressage,
+            c.rider_level_eventing,
+            c.rider_cert_img_url,
+            c.coach_cert_no,
+            c.coach_level,
+            c.coach_cert_img_url,
+            c.sort_order,
             c.create_by,
             c.create_time,
             c.update_by,
             c.update_time,
-            c.is_active
+            c.is_valid,
+            c.is_delete
         FROM m_coach c
         LEFT JOIN m_club club ON c.club_id = club.club_id AND club.is_delete = 0
+        LEFT JOIN t_employee u ON c.user_id = u.employee_id AND u.deleted_flag = 0
         WHERE c.coach_id = #{coachId} AND c.is_delete = 0
     </select>
 
@@ -113,34 +119,35 @@
     <select id="queryList" resultType="net.lab1024.sa.admin.module.business.coach.domain.vo.CoachListVO">
         SELECT
             c.coach_id,
-            c.coach_name,
-            c.coach_code,
-            c.gender,
-            c.phone,
-            c.email,
-            c.avatar_url,
-            c.professional_level,
-            c.speciality,
-            c.years_experience,
             c.club_id,
             club.club_name,
-            c.salary,
+            c.user_id,
+            u.actual_name as user_name,
+            c.coach_no,
+            c.avatar_url,
             c.entry_date,
-            c.emergency_contact,
-            c.emergency_phone,
+            c.specialties,
+            c.rider_cert_no,
+            c.rider_level_show_jumping,
+            c.rider_level_dressage,
+            c.rider_level_eventing,
+            c.coach_cert_no,
+            c.coach_level,
+            c.sort_order,
             c.create_by,
             c.create_time,
-            c.is_active
+            c.is_valid
         FROM m_coach c
         LEFT JOIN m_club club ON c.club_id = club.club_id AND club.is_delete = 0
+        LEFT JOIN t_employee u ON c.user_id = u.employee_id AND u.deleted_flag = 0
         WHERE c.is_delete = 0
-        <if test="isActive != null">
-            AND c.is_active = #{isActive}
+        <if test="isValid != null">
+            AND c.is_valid = #{isValid}
         </if>
         <if test="clubId != null">
             AND c.club_id = #{clubId}
         </if>
-        ORDER BY c.create_time DESC
+        ORDER BY c.sort_order ASC, c.create_time DESC
     </select>
 
 </mapper>

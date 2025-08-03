@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import net.lab1024.sa.base.module.support.datatracer.annoation.DataTracerFieldLabel;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -26,68 +24,53 @@ public class CoachEntity {
     @TableId(type = IdType.AUTO)
     private Long coachId;
 
-    @DataTracerFieldLabel("教练姓名")
-    private String coachName;
-
-    @DataTracerFieldLabel("教练编号")
-    private String coachCode;
-
-    @DataTracerFieldLabel("性别")
-    private Integer gender;
-
-    @DataTracerFieldLabel("出生日期")
-    private LocalDate birthDate;
-
-    @DataTracerFieldLabel("手机号码")
-    private String phone;
-
-    @DataTracerFieldLabel("邮箱")
-    private String email;
-
-    @DataTracerFieldLabel("身份证号")
-    private String idCard;
-
-    @DataTracerFieldLabel("头像地址")
-    private String avatarUrl;
-
-    @DataTracerFieldLabel("专业等级")
-    private String professionalLevel;
-
-    @DataTracerFieldLabel("专业特长")
-    private String speciality;
-
-    @DataTracerFieldLabel("从业年限")
-    private Integer yearsExperience;
-
-    @DataTracerFieldLabel("资质证书")
-    private String certification;
-
-    @DataTracerFieldLabel("所属俱乐部ID")
+    @DataTracerFieldLabel("俱乐部ID")
     private Long clubId;
 
-    @DataTracerFieldLabel("薪资")
-    private BigDecimal salary;
+    @DataTracerFieldLabel("关联用户ID")
+    private Long userId;
 
-    @DataTracerFieldLabel("入职日期")
-    private LocalDate entryDate;
+    @DataTracerFieldLabel("教练编号")
+    private String coachNo;
 
-    @DataTracerFieldLabel("联系地址")
-    private String address;
+    @DataTracerFieldLabel("头像照片地址")
+    private String avatarUrl;
 
-    @DataTracerFieldLabel("紧急联系人")
-    private String emergencyContact;
+    @DataTracerFieldLabel("入行时间")
+    private LocalDateTime entryDate;
 
-    @DataTracerFieldLabel("紧急联系电话")
-    private String emergencyPhone;
+    @DataTracerFieldLabel("专长领域")
+    private String specialties;
 
-    @DataTracerFieldLabel("个人简介")
-    private String description;
+    @DataTracerFieldLabel("个人介绍")
+    private String introduction;
 
-    @DataTracerFieldLabel("获奖经历")
-    private String achievements;
+    @DataTracerFieldLabel("骑手证号码")
+    private String riderCertNo;
 
-    @DataTracerFieldLabel("教学风格")
-    private String teachingStyle;
+    @DataTracerFieldLabel("场地障碍等级")
+    private String riderLevelShowJumping;
+
+    @DataTracerFieldLabel("盛装舞步等级")
+    private String riderLevelDressage;
+
+    @DataTracerFieldLabel("三项赛等级")
+    private String riderLevelEventing;
+
+    @DataTracerFieldLabel("骑手证书图片地址JSON格式")
+    private String riderCertImgUrl;
+
+    @DataTracerFieldLabel("星级教练证号码")
+    private String coachCertNo;
+
+    @DataTracerFieldLabel("教练等级")
+    private String coachLevel;
+
+    @DataTracerFieldLabel("教练证书图片地址JSON格式")
+    private String coachCertImgUrl;
+
+    @DataTracerFieldLabel("排序")
+    private Integer sortOrder;
 
     private String createBy;
 
@@ -97,7 +80,9 @@ public class CoachEntity {
 
     private LocalDateTime updateTime;
 
-    private Boolean isActive;
+    @DataTracerFieldLabel("是否有效")
+    private Integer isValid;
 
-    private Boolean isDelete;
+    @DataTracerFieldLabel("是否删除")
+    private Integer isDelete;
 }

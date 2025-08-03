@@ -10,7 +10,7 @@
 <template>
   <a-page-header
     :ghost="false"
-    :title="`教练详情 - ${coach.coachName || ''}`"
+    :title="`教练详情 - ${coach.userName || ''}`"
     @back="() => $router.go(-1)"
   >
     <template #extra>
@@ -29,29 +29,25 @@
       <a-col :span="12">
         <a-card title="基本信息" size="small">
           <a-descriptions :column="1" bordered size="small">
-            <a-descriptions-item label="教练姓名">
-              {{ coach.coachName || '-' }}
+            <a-descriptions-item label="用户姓名">
+              {{ coach.userName || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="教练编号">
-              {{ coach.coachCode || '-' }}
+              {{ coach.coachNo || '-' }}
             </a-descriptions-item>
-            <a-descriptions-item label="性别">
-              {{ coach.gender === 1 ? '男' : coach.gender === 2 ? '女' : '-' }}
+            <a-descriptions-item label="所属俱乐部">
+              {{ coach.clubName || '-' }}
             </a-descriptions-item>
-            <a-descriptions-item label="出生日期">
-              {{ coach.birthDate || '-' }}
+            <a-descriptions-item label="入行时间">
+              {{ coach.entryDate || '-' }}
             </a-descriptions-item>
-            <a-descriptions-item label="手机号码">
-              {{ coach.phone || '-' }}
+            <a-descriptions-item label="排序">
+              {{ coach.sortOrder || 0 }}
             </a-descriptions-item>
-            <a-descriptions-item label="邮箱">
-              {{ coach.email || '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="紧急联系人">
-              {{ coach.emergencyContact || '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="紧急联系电话">
-              {{ coach.emergencyPhone || '-' }}
+            <a-descriptions-item label="有效状态">
+              <a-tag :color="coach.isValid === 1 ? 'green' : 'red'">
+                {{ coach.isValid === 1 ? '有效' : '无效' }}
+              </a-tag>
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
@@ -73,84 +69,109 @@
     </a-row>
 
     <a-row :gutter="24" style="margin-top: 16px;">
-      <!-- 职业信息 -->
+      <!-- 骑手等级信息 -->
       <a-col :span="12">
-        <a-card title="职业信息" size="small">
+        <a-card title="骑手等级信息" size="small">
           <a-descriptions :column="1" bordered size="small">
-            <a-descriptions-item label="专业等级">
-              {{ coach.professionalLevel || '-' }}
+            <a-descriptions-item label="骑手证号码">
+              {{ coach.riderCertNo || '-' }}
             </a-descriptions-item>
-            <a-descriptions-item label="从业年限">
-              {{ coach.yearsExperience ? `${coach.yearsExperience}年` : '-' }}
+            <a-descriptions-item label="场地障碍等级">
+              {{ coach.riderLevelShowJumping || '-' }}
             </a-descriptions-item>
-            <a-descriptions-item label="所属俱乐部">
-              {{ coach.clubName || '-' }}
+            <a-descriptions-item label="盛装舞步等级">
+              {{ coach.riderLevelDressage || '-' }}
             </a-descriptions-item>
-            <a-descriptions-item label="入职日期">
-              {{ coach.entryDate || '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="薪资">
-              {{ coach.salary ? `¥${coach.salary}` : '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="在职状态">
-              <a-tag :color="coach.isActive ? 'green' : 'red'">
-                {{ coach.isActive ? '在职' : '离职' }}
-              </a-tag>
+            <a-descriptions-item label="三项赛等级">
+              {{ coach.riderLevelEventing || '-' }}
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
       </a-col>
 
-      <!-- 其他信息 -->
+      <!-- 教练等级信息 -->
       <a-col :span="12">
-        <a-card title="其他信息" size="small">
+        <a-card title="教练等级信息" size="small">
           <a-descriptions :column="1" bordered size="small">
+            <a-descriptions-item label="星级教练证号码">
+              {{ coach.coachCertNo || '-' }}
+            </a-descriptions-item>
+            <a-descriptions-item label="教练等级">
+              {{ coach.coachLevel || '-' }}
+            </a-descriptions-item>
             <a-descriptions-item label="创建时间">
               {{ coach.createTime || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="更新时间">
               {{ coach.updateTime || '-' }}
             </a-descriptions-item>
-            <a-descriptions-item label="创建人">
-              {{ coach.createUserName || '-' }}
-            </a-descriptions-item>
-            <a-descriptions-item label="更新人">
-              {{ coach.updateUserName || '-' }}
-            </a-descriptions-item>
           </a-descriptions>
         </a-card>
       </a-col>
     </a-row>
 
     <a-row :gutter="24" style="margin-top: 16px;">
-      <!-- 专业特长 -->
+      <!-- 专长领域 -->
       <a-col :span="24">
-        <a-card title="专业特长" size="small">
+        <a-card title="专长领域" size="small">
           <div style="white-space: pre-wrap; line-height: 1.6;">
-            {{ coach.speciality || '暂无' }}
+            {{ coach.specialties || '暂无' }}
           </div>
         </a-card>
       </a-col>
     </a-row>
 
     <a-row :gutter="24" style="margin-top: 16px;">
-      <!-- 个人简介 -->
+      <!-- 个人介绍 -->
       <a-col :span="24">
-        <a-card title="个人简介" size="small">
+        <a-card title="个人介绍" size="small">
           <div style="white-space: pre-wrap; line-height: 1.6;">
-            {{ coach.bio || '暂无' }}
+            {{ coach.introduction || '暂无' }}
           </div>
         </a-card>
       </a-col>
     </a-row>
 
-    <a-row :gutter="24" style="margin-top: 16px;">
-      <!-- 备注 -->
+    <!-- 证书图片 -->
+    <a-row :gutter="24" style="margin-top: 16px;" v-if="coach.riderCertImgUrl || coach.coachCertImgUrl">
       <a-col :span="24">
-        <a-card title="备注" size="small">
-          <div style="white-space: pre-wrap; line-height: 1.6;">
-            {{ coach.remark || '暂无' }}
-          </div>
+        <a-card title="证书图片" size="small">
+          <a-row :gutter="16">
+            <a-col :span="12" v-if="coach.riderCertImgUrl">
+              <h4>骑手证书</h4>
+              <div v-if="isValidJSON(coach.riderCertImgUrl)">
+                <img 
+                  v-for="(img, index) in parseImageJSON(coach.riderCertImgUrl)" 
+                  :key="index"
+                  :src="img" 
+                  style="width: 200px; height: auto; margin: 8px; border-radius: 4px;" 
+                />
+              </div>
+              <div v-else>
+                <img 
+                  :src="coach.riderCertImgUrl" 
+                  style="width: 200px; height: auto; margin: 8px; border-radius: 4px;" 
+                />
+              </div>
+            </a-col>
+            <a-col :span="12" v-if="coach.coachCertImgUrl">
+              <h4>教练证书</h4>
+              <div v-if="isValidJSON(coach.coachCertImgUrl)">
+                <img 
+                  v-for="(img, index) in parseImageJSON(coach.coachCertImgUrl)" 
+                  :key="index"
+                  :src="img" 
+                  style="width: 200px; height: auto; margin: 8px; border-radius: 4px;" 
+                />
+              </div>
+              <div v-else>
+                <img 
+                  :src="coach.coachCertImgUrl" 
+                  style="width: 200px; height: auto; margin: 8px; border-radius: 4px;" 
+                />
+              </div>
+            </a-col>
+          </a-row>
         </a-card>
       </a-col>
     </a-row>
@@ -197,6 +218,27 @@ async function loadCoachDetail() {
 
 function edit() {
   coachFormModal.value.show(coach.value.coachId);
+}
+
+// 判断是否为有效的JSON字符串
+function isValidJSON(str) {
+  if (!str) return false;
+  try {
+    JSON.parse(str);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// 解析图片JSON字符串
+function parseImageJSON(jsonStr) {
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch (e) {
+    return [];
+  }
 }
 
 // ----------------------- 生命周期 -----------------------

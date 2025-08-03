@@ -76,8 +76,8 @@ public class CoachController {
     @Operation(summary = "教练列表查询")
     @GetMapping("/club/coach/query/list")
     @SaCheckPermission("club:coach:query")
-    public ResponseDTO<List<CoachListVO>> queryList(@RequestParam(required = false) Boolean isActive,
+    public ResponseDTO<List<CoachListVO>> queryList(@RequestParam(required = false) Integer isValid,
                                                     @RequestParam(required = false) Long clubId) {
-        return coachService.queryList(isActive, clubId);
+        return coachService.queryList(isValid, clubId);
     }
 }
