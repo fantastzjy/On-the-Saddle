@@ -46,7 +46,7 @@
 
           <a-descriptions-item label="营业时间" :span="2">
             <span v-if="clubData.businessStartTime && clubData.businessEndTime">
-              {{ clubData.businessStartTime }} - {{ clubData.businessEndTime }}
+              {{ formatTime(clubData.businessStartTime) }} - {{ formatTime(clubData.businessEndTime) }}
             </span>
             <span v-else>-</span>
           </a-descriptions-item>
@@ -164,6 +164,12 @@ function goBack() {
 
 function edit() {
   clubFormModal.value.show(clubId);
+}
+
+function formatTime(timeString) {
+  if (!timeString) return '-';
+  // 如果时间格式是 HH:mm:ss，截取前5位显示 HH:mm
+  return timeString.length > 5 ? timeString.substring(0, 5) : timeString;
 }
 
 async function getDetail() {

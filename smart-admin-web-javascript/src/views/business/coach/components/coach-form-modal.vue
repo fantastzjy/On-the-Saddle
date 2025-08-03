@@ -13,10 +13,10 @@
     :open="visible"
     @cancel="onClose"
     @ok="onSubmit"
-    :width="800"
+    :width="900"
     :confirmLoading="confirmLoading"
   >
-    <a-form ref="formRef" :model="form" :rules="rules" :label-col="{ span: 5 }" :wrapper-col="{ span: 19 }">
+    <a-form ref="formRef" :model="form" :rules="rules" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="教练姓名" name="coachName">

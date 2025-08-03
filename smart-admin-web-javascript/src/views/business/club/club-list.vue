@@ -102,6 +102,7 @@
         </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
+            <a-button @click="detail(record.clubId)" size="small" v-privilege="'club:club:detail'" type="link">详情</a-button>
             <a-button @click="update(record.clubId)" size="small" v-privilege="'club:club:update'" type="link">编辑</a-button>
             <a-button @click="confirmDelete(record.clubId)" size="small" danger v-privilege="'club:club:delete'" type="link">删除</a-button>
           </div>
@@ -269,7 +270,7 @@ const columns = ref([
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
-    width: 120,
+    width: 150,
   },
 ]);
 

@@ -11,7 +11,7 @@
   <a-modal
     :title="form.clubId ? '编辑俱乐部' : '新建俱乐部'"
     v-model:open="visible"
-    :width="800"
+    :width="1200"
     @ok="onSubmit"
     @cancel="onCancel"
     :confirmLoading="confirmLoading"
@@ -21,9 +21,14 @@
       ref="formRef"
       :model="form"
       :rules="rules"
-      :label-col="{ span: 5 }"
-      :wrapper-col="{ span: 19 }"
+      :label-col="{ span: 4 }"
+      :wrapper-col="{ span: 20 }"
     >
+      <!-- 基本信息 -->
+      <a-divider orientation="left">
+        <span style="font-weight: 600; color: #1890ff;">基本信息</span>
+      </a-divider>
+      
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="俱乐部名称" name="clubName">
@@ -39,82 +44,21 @@
 
       <a-row :gutter="24">
         <a-col :span="12">
-          <a-form-item label="LOGO地址" name="logoUrl">
-            <a-input v-model:value="form.logoUrl" placeholder="请输入LOGO地址" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="置顶图片" name="bannerUrl">
-            <a-input v-model:value="form.bannerUrl" placeholder="请输入置顶图片地址" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item label="营业开始时间" name="businessStartTime">
-            <a-time-picker v-model:value="form.businessStartTime" placeholder="选择营业开始时间" format="HH:mm" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="营业结束时间" name="businessEndTime">
-            <a-time-picker v-model:value="form.businessEndTime" placeholder="选择营业结束时间" format="HH:mm" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <a-form-item label="详细地址" name="address">
-        <a-input v-model:value="form.address" placeholder="请输入详细地址" />
-      </a-form-item>
-
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item label="电话" name="phone">
-            <a-input v-model:value="form.phone" placeholder="请输入电话" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="联系电话" name="contactPhone">
-            <a-input v-model:value="form.contactPhone" placeholder="请输入联系电话" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <a-row :gutter="24">
-        <a-col :span="8">
-          <a-form-item label="省份" name="province">
-            <a-input v-model:value="form.province" placeholder="请输入省份" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
-          <a-form-item label="城市" name="city">
-            <a-input v-model:value="form.city" placeholder="请输入城市" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="8">
-          <a-form-item label="区县" name="district">
-            <a-input v-model:value="form.district" placeholder="请输入区县" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item label="联系人" name="contactPerson">
-            <a-input v-model:value="form.contactPerson" placeholder="请输入联系人" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="邮箱" name="email">
-            <a-input v-model:value="form.email" placeholder="请输入邮箱" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item label="法人代表" name="legalPerson">
-            <a-input v-model:value="form.legalPerson" placeholder="请输入法人代表" />
+          <a-form-item label="营业时间" name="businessTime">
+            <a-input-group compact>
+              <a-time-picker 
+                v-model:value="form.businessStartTime" 
+                placeholder="开始时间" 
+                format="HH:mm" 
+                style="width: 50%" 
+              />
+              <a-time-picker 
+                v-model:value="form.businessEndTime" 
+                placeholder="结束时间" 
+                format="HH:mm" 
+                style="width: 50%" 
+              />
+            </a-input-group>
           </a-form-item>
         </a-col>
         <a-col :span="12">
@@ -130,6 +74,101 @@
         </a-col>
       </a-row>
 
+      <!-- 图片资料 -->
+      <a-divider orientation="left">
+        <span style="font-weight: 600; color: #1890ff;">图片资料</span>
+      </a-divider>
+
+      <a-row :gutter="12" style="align-items: flex-start;">
+        <a-col :span="8">
+          <a-form-item label="LOGO" name="logoUrl" style="margin-bottom: 0;">
+            <a-upload
+              :maxCount="1"
+              accept="image/*"
+              list-type="picture-card"
+              :file-list="logoFileList"
+              :before-upload="beforeUpload"
+              :customRequest="(options) => customUploadRequest(options, 'logoUrl')"
+              @change="(info) => handleUploadChange(info, 'logoUrl')"
+              @preview="handlePreview"
+              style="display: block;"
+            >
+              <div v-if="logoFileList.length === 0">
+                <PlusOutlined />
+                <div style="margin-top: 8px">上传LOGO</div>
+              </div>
+            </a-upload>
+          </a-form-item>
+        </a-col>
+        <a-col :span="8">
+          <a-form-item label="宣传横幅" name="bannerUrl" style="margin-bottom: 0;">
+            <a-upload
+              :maxCount="1"
+              accept="image/*"
+              list-type="picture-card"
+              :file-list="bannerFileList"
+              :before-upload="beforeUpload"
+              :customRequest="(options) => customUploadRequest(options, 'bannerUrl')"
+              @change="(info) => handleUploadChange(info, 'bannerUrl')"
+              @preview="handlePreview"
+              style="display: block;"
+            >
+              <div v-if="bannerFileList.length === 0">
+                <PlusOutlined />
+                <div style="margin-top: 8px">上传横幅</div>
+              </div>
+            </a-upload>
+          </a-form-item>
+        </a-col>
+        <a-col :span="8">
+          <a-form-item label="营业执照" name="businessLicenseUrl" style="margin-bottom: 0;">
+            <a-upload
+              :maxCount="1"
+              accept="image/*"
+              list-type="picture-card"
+              :file-list="licenseFileList"
+              :before-upload="beforeUpload"
+              :customRequest="(options) => customUploadRequest(options, 'businessLicenseUrl')"
+              @change="(info) => handleUploadChange(info, 'businessLicenseUrl')"
+              @preview="handlePreview"
+              style="display: block;"
+            >
+              <div v-if="licenseFileList.length === 0">
+                <PlusOutlined />
+                <div style="margin-top: 8px">上传执照</div>
+              </div>
+            </a-upload>
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <!-- 地址信息 -->
+      <a-divider orientation="left">
+        <span style="font-weight: 600; color: #1890ff;">地址信息</span>
+      </a-divider>
+
+      <a-row :gutter="16">
+        <a-col :span="6">
+          <a-form-item label="省份" name="province">
+            <a-input v-model:value="form.province" placeholder="请输入省份" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="6">
+          <a-form-item label="城市" name="city">
+            <a-input v-model:value="form.city" placeholder="请输入城市" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="6">
+          <a-form-item label="区县" name="district">
+            <a-input v-model:value="form.district" placeholder="请输入区县" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-form-item label="详细地址" name="address">
+        <a-input v-model:value="form.address" placeholder="请输入详细地址" />
+      </a-form-item>
+
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="纬度" name="latitude">
@@ -143,30 +182,84 @@
         </a-col>
       </a-row>
 
-      <a-form-item label="营业执照" name="businessLicenseUrl">
-        <a-input v-model:value="form.businessLicenseUrl" placeholder="请输入营业执照图片地址" />
-      </a-form-item>
+      <!-- 联系方式 -->
+      <a-divider orientation="left">
+        <span style="font-weight: 600; color: #1890ff;">联系方式</span>
+      </a-divider>
+
+      <a-row :gutter="24">
+        <a-col :span="12">
+          <a-form-item label="联系电话" name="phone">
+            <a-input v-model:value="form.phone" placeholder="请输入联系电话" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="邮箱" name="email">
+            <a-input v-model:value="form.email" placeholder="请输入邮箱" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="24">
+        <a-col :span="12">
+          <a-form-item label="联系人" name="contactPerson">
+            <a-input v-model:value="form.contactPerson" placeholder="请输入联系人" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="联系人电话" name="contactPhone">
+            <a-input v-model:value="form.contactPhone" placeholder="请输入联系人电话" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <!-- 企业信息 -->
+      <a-divider orientation="left">
+        <span style="font-weight: 600; color: #1890ff;">企业信息</span>
+      </a-divider>
+
+      <a-row :gutter="24">
+        <a-col :span="12">
+          <a-form-item label="法人代表" name="legalPerson">
+            <a-input v-model:value="form.legalPerson" placeholder="请输入法人代表" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <!-- 详细描述 -->
+      <a-divider orientation="left">
+        <span style="font-weight: 600; color: #1890ff;">详细描述</span>
+      </a-divider>
 
       <a-form-item label="俱乐部详情" name="description">
-        <a-textarea v-model:value="form.description" placeholder="请输入俱乐部详情" :rows="3" />
+        <a-textarea v-model:value="form.description" placeholder="请输入俱乐部详情介绍" :rows="4" />
       </a-form-item>
 
       <a-form-item label="荣誉信息" name="honorInfo">
-        <a-textarea v-model:value="form.honorInfo" placeholder="请输入荣誉信息" :rows="3" />
+        <a-textarea v-model:value="form.honorInfo" placeholder="请输入俱乐部荣誉信息" :rows="3" />
       </a-form-item>
 
       <a-form-item label="约课需知" name="bookingNotice">
-        <a-textarea v-model:value="form.bookingNotice" placeholder="请输入约课需知" :rows="3" />
+        <a-textarea v-model:value="form.bookingNotice" placeholder="请输入约课注意事项和规则" :rows="3" />
       </a-form-item>
     </a-form>
+    
+    <!-- 图片预览模态框 -->
+    <a-modal :footer="null" v-model:open="previewVisible" @cancel="handlePreviewCancel">
+      <img :src="previewUrl" alt="预览图片" style="width: 100%" />
+    </a-modal>
   </a-modal>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
-import { message } from 'ant-design-vue';
+import { reactive, ref, watch } from 'vue';
+import { message, Modal } from 'ant-design-vue';
+import { PlusOutlined } from '@ant-design/icons-vue';
 import { clubApi } from '/@/api/business/club/club-api';
+import { fileApi } from '/@/api/support/file-api';
 import { smartSentry } from '/@/lib/smart-sentry';
+import { SmartLoading } from '/@/components/framework/smart-loading';
+import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
 import dayjs from 'dayjs';
 
 const emits = defineEmits(['refresh']);
@@ -174,6 +267,15 @@ const emits = defineEmits(['refresh']);
 const visible = ref(false);
 const confirmLoading = ref(false);
 const formRef = ref();
+
+// 图片文件列表
+const logoFileList = ref([]);
+const bannerFileList = ref([]);
+const licenseFileList = ref([]);
+
+// 预览相关
+const previewVisible = ref(false);
+const previewUrl = ref('');
 
 const formDefault = {
   clubId: null,
@@ -206,6 +308,7 @@ const form = reactive({ ...formDefault });
 
 const rules = {
   clubName: [{ required: true, message: '请输入俱乐部名称', trigger: 'blur' }],
+  clubCode: [{ required: true, message: '请输入俱乐部编码', trigger: 'blur' }],
   phone: [
     {
       pattern: /^[0-9-()\\s]*$/,
@@ -227,7 +330,126 @@ const rules = {
       trigger: 'blur',
     },
   ],
+  address: [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
 };
+
+// 监听表单URL变化，更新文件列表
+watch(() => form.logoUrl, (newVal) => {
+  if (newVal && logoFileList.value.length === 0) {
+    logoFileList.value = [{
+      uid: 'logo-1',
+      name: 'logo.jpg',
+      status: 'done',
+      url: newVal,
+    }];
+  } else if (!newVal) {
+    logoFileList.value = [];
+  }
+});
+
+watch(() => form.bannerUrl, (newVal) => {
+  if (newVal && bannerFileList.value.length === 0) {
+    bannerFileList.value = [{
+      uid: 'banner-1',
+      name: 'banner.jpg',
+      status: 'done',
+      url: newVal,
+    }];
+  } else if (!newVal) {
+    bannerFileList.value = [];
+  }
+});
+
+watch(() => form.businessLicenseUrl, (newVal) => {
+  if (newVal && licenseFileList.value.length === 0) {
+    licenseFileList.value = [{
+      uid: 'license-1',
+      name: 'license.jpg',
+      status: 'done',
+      url: newVal,
+    }];
+  } else if (!newVal) {
+    licenseFileList.value = [];
+  }
+});
+
+// 上传前验证
+function beforeUpload(file) {
+  const isImage = file.type.startsWith('image/');
+  if (!isImage) {
+    message.error('只能上传图片文件！');
+    return false;
+  }
+  
+  const isLt5M = file.size / 1024 / 1024 < 5;
+  if (!isLt5M) {
+    message.error('图片大小不能超过5MB！');
+    return false;
+  }
+  
+  return true;
+}
+
+// 自定义上传
+async function customUploadRequest(options, fieldName) {
+  SmartLoading.show();
+  try {
+    const formData = new FormData();
+    formData.append('file', options.file);
+    
+    const res = await fileApi.uploadFile(formData, FILE_FOLDER_TYPE_ENUM.COMMON.value);
+    const fileInfo = res.data;
+    
+    // 更新表单字段
+    form[fieldName] = fileInfo.fileUrl;
+    
+    // 更新文件列表
+    const fileItem = {
+      uid: options.file.uid,
+      name: fileInfo.fileName,
+      status: 'done',
+      url: fileInfo.fileUrl,
+      response: fileInfo,
+    };
+    
+    options.onSuccess(fileItem, options.file);
+    
+  } catch (error) {
+    smartSentry.captureError(error);
+    options.onError(error);
+  } finally {
+    SmartLoading.hide();
+  }
+}
+
+// 上传状态变化
+function handleUploadChange(info, fieldName) {
+  const { file, fileList } = info;
+  
+  if (file.status === 'removed') {
+    form[fieldName] = '';
+    
+    // 清空对应的文件列表
+    if (fieldName === 'logoUrl') {
+      logoFileList.value = [];
+    } else if (fieldName === 'bannerUrl') {
+      bannerFileList.value = [];
+    } else if (fieldName === 'businessLicenseUrl') {
+      licenseFileList.value = [];
+    }
+  }
+}
+
+// 预览图片
+function handlePreview(file) {
+  previewUrl.value = file.url || file.preview;
+  previewVisible.value = true;
+}
+
+// 关闭预览
+function handlePreviewCancel() {
+  previewVisible.value = false;
+}
 
 function show(clubId) {
   visible.value = true;
@@ -235,6 +457,10 @@ function show(clubId) {
     getDetail(clubId);
   } else {
     Object.assign(form, formDefault);
+    // 清空文件列表
+    logoFileList.value = [];
+    bannerFileList.value = [];
+    licenseFileList.value = [];
   }
 }
 
@@ -254,6 +480,9 @@ async function getDetail(clubId) {
     if (data.expireDate) {
       form.expireDate = dayjs(data.expireDate);
     }
+    
+    // 设置图片文件列表 - 会通过watch自动更新
+    
   } catch (e) {
     smartSentry.captureError(e);
   }
@@ -297,6 +526,10 @@ async function onSubmit() {
 function onCancel() {
   visible.value = false;
   Object.assign(form, formDefault);
+  // 清空文件列表
+  logoFileList.value = [];
+  bannerFileList.value = [];
+  licenseFileList.value = [];
 }
 
 defineExpose({
