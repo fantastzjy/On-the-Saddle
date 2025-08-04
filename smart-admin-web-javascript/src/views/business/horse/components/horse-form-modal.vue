@@ -35,9 +35,9 @@
         <a-col :span="12">
           <a-form-item label="马匹类型" name="horseType">
             <a-select v-model:value="formState.form.horseType" placeholder="请选择马匹类型" @change="onHorseTypeChange">
-              <a-select-option value="club">俱乐部马匹</a-select-option>
-              <a-select-option value="owner">马主寄养</a-select-option>
-              <a-select-option value="trainer">教练自有</a-select-option>
+              <a-select-option :value="1">俱乐部马</a-select-option>
+              <a-select-option :value="2">马主马</a-select-option>
+              <a-select-option :value="3">教练马</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -45,13 +45,13 @@
 
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-form-item label="芯片号" name="chipNumber">
-            <a-input v-model:value="formState.form.chipNumber" placeholder="请输入芯片号" />
+          <a-form-item label="芯片号" name="chipNo">
+            <a-input v-model:value="formState.form.chipNo" placeholder="请输入芯片号" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="护照号" name="passportNumber">
-            <a-input v-model:value="formState.form.passportNumber" placeholder="请输入护照号" />
+          <a-form-item label="护照号" name="passportNo">
+            <a-input v-model:value="formState.form.passportNo" placeholder="请输入护照号" />
           </a-form-item>
         </a-col>
       </a-row>
@@ -65,9 +65,9 @@
         <a-col :span="12">
           <a-form-item label="性别" name="gender">
             <a-select v-model:value="formState.form.gender" placeholder="请选择性别">
-              <a-select-option value="stallion">种马</a-select-option>
-              <a-select-option value="mare">母马</a-select-option>
-              <a-select-option value="gelding">阉马</a-select-option>
+              <a-select-option :value="1">公马</a-select-option>
+              <a-select-option :value="2">母马</a-select-option>
+              <a-select-option :value="3">骟马</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -111,7 +111,7 @@
         </a-col>
       </a-row>
 
-      <a-row :gutter="20" v-if="formState.form.horseType === 'owner'">
+      <a-row :gutter="20" v-if="formState.form.horseType === 2">
         <a-col :span="12">
           <a-form-item label="马主" name="ownerId">
             <a-select v-model:value="formState.form.ownerId" placeholder="请选择马主" showSearch>
@@ -123,12 +123,12 @@
         </a-col>
       </a-row>
 
-      <a-row :gutter="20" v-if="formState.form.horseType === 'trainer'">
+      <a-row :gutter="20" v-if="formState.form.horseType === 3">
         <a-col :span="12">
           <a-form-item label="所属教练" name="coachId">
             <a-select v-model:value="formState.form.coachId" placeholder="请选择教练" showSearch>
               <a-select-option v-for="coach in coachList" :key="coach.coachId" :value="coach.coachId">
-                {{ coach.coachName }}
+                {{ coach.userName }}
               </a-select-option>
             </a-select>
           </a-form-item>
@@ -140,26 +140,30 @@
           <a-form-item label="责任教练" name="responsibleCoachId">
             <a-select v-model:value="formState.form.responsibleCoachId" placeholder="请选择责任教练" showSearch allowClear>
               <a-select-option v-for="coach in coachList" :key="coach.coachId" :value="coach.coachId">
-                {{ coach.coachName }}
+                {{ coach.userName }}
               </a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="状态" name="status">
-            <a-select v-model:value="formState.form.status" placeholder="请选择状态">
-              <a-select-option value="normal">正常</a-select-option>
-              <a-select-option value="injured">受伤</a-select-option>
-              <a-select-option value="sick">生病</a-select-option>
-              <a-select-option value="retired">退役</a-select-option>
+          <a-form-item label="健康状态" name="healthStatus">
+            <a-select v-model:value="formState.form.healthStatus" placeholder="请选择健康状态">
+              <a-select-option :value="1">健康</a-select-option>
+              <a-select-option :value="2">观察</a-select-option>
+              <a-select-option :value="3">治疗</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="工作状态" name="workStatus">
+            <a-select v-model:value="formState.form.workStatus" placeholder="请选择工作状态">
+              <a-select-option :value="1">可用</a-select-option>
+              <a-select-option :value="2">休息</a-select-option>
+              <a-select-option :value="3">治疗</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
       </a-row>
-
-      <a-form-item label="健康状况" name="healthStatus">
-        <a-textarea v-model:value="formState.form.healthStatus" placeholder="请输入健康状况" :rows="3" />
-      </a-form-item>
 
       <a-form-item label="备注" name="remark">
         <a-textarea v-model:value="formState.form.remark" placeholder="请输入备注" :rows="3" />
@@ -194,20 +198,19 @@ const formState = reactive({
     horseCode: '',
     horseName: '',
     clubId: undefined,
-    horseType: 'club',
-    chipNumber: '',
-    passportNumber: '',
+    horseType: 1,
+    chipNo: '',
+    passportNo: '',
     breed: '',
-    gender: 'gelding',
+    gender: 1,
     color: '',
     birthDate: undefined,
     height: undefined,
     weight: undefined,
     ownerId: undefined,
-    coachId: undefined,
     responsibleCoachId: undefined,
-    status: 'normal',
-    healthStatus: '',
+    healthStatus: 1,
+    workStatus: 1,
     remark: '',
   },
 });
@@ -217,10 +220,11 @@ const formRules = {
   horseName: [{ required: true, message: '请输入马名' }],
   clubId: [{ required: true, message: '请选择俱乐部' }],
   horseType: [{ required: true, message: '请选择马匹类型' }],
-  chipNumber: [{ required: true, message: '请输入芯片号' }],
+  chipNo: [{ required: true, message: '请输入芯片号' }],
   breed: [{ required: true, message: '请输入品种' }],
   gender: [{ required: true, message: '请选择性别' }],
-  status: [{ required: true, message: '请选择状态' }],
+  healthStatus: [{ required: true, message: '请选择健康状态' }],
+  workStatus: [{ required: true, message: '请选择工作状态' }],
 };
 
 function showModal(isCreate, rowData = {}) {
@@ -243,27 +247,25 @@ function resetForm() {
     horseCode: '',
     horseName: '',
     clubId: undefined,
-    horseType: 'club',
-    chipNumber: '',
-    passportNumber: '',
+    horseType: 1,
+    chipNo: '',
+    passportNo: '',
     breed: '',
-    gender: 'gelding',
+    gender: 1,
     color: '',
     birthDate: undefined,
     height: undefined,
     weight: undefined,
     ownerId: undefined,
-    coachId: undefined,
     responsibleCoachId: undefined,
-    status: 'normal',
-    healthStatus: '',
+    healthStatus: 1,
+    workStatus: 1,
     remark: '',
   });
 }
 
 function onHorseTypeChange() {
   formState.form.ownerId = undefined;
-  formState.form.coachId = undefined;
 }
 
 async function onSubmit() {

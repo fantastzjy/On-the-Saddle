@@ -31,8 +31,8 @@ public class ClubVO {
     @Schema(description = "LOGO地址")
     private String logoUrl;
 
-    @Schema(description = "置顶图片地址")
-    private String bannerUrl;
+    @Schema(description = "轮播图片地址列表JSON格式")
+    private String carouselImages;
 
     @Schema(description = "PC端首页图片地址")
     private String pcBannerUrl;
@@ -58,12 +58,6 @@ public class ClubVO {
     @Schema(description = "约课需知")
     private String bookingNotice;
 
-    @Schema(description = "纬度")
-    private BigDecimal latitude;
-
-    @Schema(description = "经度")
-    private BigDecimal longitude;
-
     @Schema(description = "省份")
     private String province;
 
@@ -76,9 +70,6 @@ public class ClubVO {
     @Schema(description = "营业执照图片地址")
     private String businessLicenseUrl;
 
-    @Schema(description = "法人代表")
-    private String legalPerson;
-
     @Schema(description = "联系人")
     private String contactPerson;
 
@@ -87,9 +78,6 @@ public class ClubVO {
 
     @Schema(description = "邮箱")
     private String email;
-
-    @Schema(description = "到期日期时间")
-    private LocalDateTime expireDate;
 
     @Schema(description = "创建人")
     private String createBy;

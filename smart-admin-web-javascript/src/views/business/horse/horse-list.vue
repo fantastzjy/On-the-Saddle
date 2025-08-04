@@ -17,9 +17,9 @@
 
           <a-form-item label="马匹类型" class="smart-query-form-item">
             <a-select style="width: 120px" v-model:value="queryForm.horseType" placeholder="请选择类型" allowClear>
-              <a-select-option value="club">俱乐部马匹</a-select-option>
-              <a-select-option value="owner">马主寄养</a-select-option>
-              <a-select-option value="trainer">教练自有</a-select-option>
+              <a-select-option :value="1">俱乐部马</a-select-option>
+              <a-select-option :value="2">马主马</a-select-option>
+              <a-select-option :value="3">教练马</a-select-option>
             </a-select>
           </a-form-item>
 
@@ -29,9 +29,9 @@
 
           <a-form-item label="性别" class="smart-query-form-item">
             <a-select style="width: 100px" v-model:value="queryForm.gender" placeholder="性别" allowClear>
-              <a-select-option value="stallion">种马</a-select-option>
-              <a-select-option value="mare">母马</a-select-option>
-              <a-select-option value="gelding">阉马</a-select-option>
+              <a-select-option :value="1">公马</a-select-option>
+              <a-select-option :value="2">母马</a-select-option>
+              <a-select-option :value="3">骟马</a-select-option>
             </a-select>
           </a-form-item>
 
@@ -76,14 +76,14 @@
       >
         <template #bodyCell="{ text, record, column }">
           <template v-if="column.dataIndex === 'horseType'">
-            <a-tag v-if="text === 'club'" color="blue">俱乐部马匹</a-tag>
-            <a-tag v-else-if="text === 'owner'" color="green">马主寄养</a-tag>
-            <a-tag v-else-if="text === 'trainer'" color="orange">教练自有</a-tag>
+            <a-tag v-if="text === 1" color="blue">俱乐部马</a-tag>
+            <a-tag v-else-if="text === 2" color="green">马主马</a-tag>
+            <a-tag v-else-if="text === 3" color="orange">教练马</a-tag>
           </template>
           <template v-else-if="column.dataIndex === 'gender'">
-            <span v-if="text === 'stallion'">种马</span>
-            <span v-else-if="text === 'mare'">母马</span>
-            <span v-else-if="text === 'gelding'">阉马</span>
+            <span v-if="text === 1">公马</span>
+            <span v-else-if="text === 2">母马</span>
+            <span v-else-if="text === 3">骟马</span>
           </template>
           <template v-else-if="column.dataIndex === 'birthDate'">
             {{ text ? dayjs(text).format('YYYY-MM-DD') : '-' }}
@@ -144,7 +144,7 @@ const columns = [
   },
   {
     title: '芯片号',
-    dataIndex: 'chipNumber',
+    dataIndex: 'chipNo',
     width: 150,
   },
   {
@@ -179,7 +179,7 @@ const columns = [
   },
   {
     title: '责任教练',
-    dataIndex: 'coachName',
+    dataIndex: 'responsibleCoachName',
     width: 100,
   },
   {

@@ -94,6 +94,23 @@
           <img v-if="text" :src="text" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" />
           <span v-else>-</span>
         </template>
+        <template v-if="column.dataIndex === 'carouselImages'">
+          <div v-if="text" style="display: flex; gap: 2px;">
+            <template v-if="isJsonArray(text)">
+              <img 
+                v-for="(url, index) in JSON.parse(text).slice(0, 3)" 
+                :key="index" 
+                :src="url" 
+                style="width: 20px; height: 20px; object-fit: cover; border-radius: 2px;" 
+              />
+              <span v-if="JSON.parse(text).length > 3" style="font-size: 12px; color: #999;">+{{ JSON.parse(text).length - 3 }}</span>
+            </template>
+            <template v-else>
+              <img :src="text" style="width: 20px; height: 20px; object-fit: cover; border-radius: 2px;" />
+            </template>
+          </div>
+          <span v-else>-</span>
+        </template>
         <template v-if="column.dataIndex === 'businessTime'">
           <span v-if="record.businessStartTime && record.businessEndTime">
             {{ record.businessStartTime }} - {{ record.businessEndTime }}
@@ -164,6 +181,16 @@ const tableData = ref([]);
 const total = ref(0);
 const searchDate = ref();
 
+// 判断字符串是否为JSON数组格式
+function isJsonArray(str) {
+  try {
+    const parsed = JSON.parse(str);
+    return Array.isArray(parsed);
+  } catch (e) {
+    return false;
+  }
+}
+
 function resetQuery() {
   Object.assign(queryForm, queryFormState);
   searchDate.value = [];
@@ -216,9 +243,9 @@ const columns = ref([
     width: 80,
   },
   {
-    title: '营业时间',
-    dataIndex: 'businessTime',
-    width: 180,
+    title: '轮播图片',
+    dataIndex: 'carouselImages',
+    width: 100,
   },
   {
     title: '地址',
@@ -250,11 +277,6 @@ const columns = ref([
     title: '联系电话',
     dataIndex: 'contactPhone',
     width: 120,
-  },
-  {
-    title: '到期时间',
-    dataIndex: 'expireDate',
-    width: 150,
   },
   {
     title: '状态',

@@ -16,7 +16,7 @@
     :width="900"
     :confirmLoading="confirmLoading"
   >
-    <a-form ref="formRef" :model="form" :rules="rules" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+    <a-form ref="formRef" :model="form" :rules="rules" :label-col="{ style: { width: '100px' } }" :wrapper-col="{ style: { marginLeft: '10px' } }">
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="所属俱乐部" name="clubId">
@@ -88,7 +88,7 @@
 
       <!-- 骑手等级信息 -->
       <a-divider orientation="left">骑手等级信息</a-divider>
-      
+
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="骑手证号码" name="riderCertNo">
@@ -245,7 +245,7 @@ async function show(coachId) {
   resetForm();
   await loadClubList();
   await loadUserList();
-  
+
   if (coachId) {
     await loadCoachDetail(coachId);
   }
@@ -290,21 +290,21 @@ async function loadCoachDetail(coachId) {
   try {
     let res = await coachApi.detail(coachId);
     Object.assign(form, res.data);
-    
+
     // 处理日期字段
     if (form.entryDate) {
       form.entryDate = dayjs(form.entryDate);
     }
-    
+
     // 处理图片字段
     if (form.avatarUrl) {
       avatarFileList.value = [{ fileUrl: form.avatarUrl, fileName: '头像.jpg' }];
     }
-    
+
     if (form.riderCertImgUrl) {
       try {
         const riderImages = JSON.parse(form.riderCertImgUrl);
-        riderCertFileList.value = Array.isArray(riderImages) 
+        riderCertFileList.value = Array.isArray(riderImages)
           ? riderImages.map((url, index) => ({ fileUrl: url, fileName: `骑手证书${index + 1}.jpg` }))
           : [{ fileUrl: riderImages, fileName: '骑手证书.jpg' }];
       } catch (e) {
@@ -313,11 +313,11 @@ async function loadCoachDetail(coachId) {
         }
       }
     }
-    
+
     if (form.coachCertImgUrl) {
       try {
         const coachImages = JSON.parse(form.coachCertImgUrl);
-        coachCertFileList.value = Array.isArray(coachImages) 
+        coachCertFileList.value = Array.isArray(coachImages)
           ? coachImages.map((url, index) => ({ fileUrl: url, fileName: `教练证书${index + 1}.jpg` }))
           : [{ fileUrl: coachImages, fileName: '教练证书.jpg' }];
       } catch (e) {
@@ -363,14 +363,14 @@ async function onSubmit() {
   try {
     await formRef.value.validateFields();
     confirmLoading.value = true;
-    
+
     let formData = { ...form };
-    
+
     // 处理日期字段
     if (formData.entryDate) {
       formData.entryDate = dayjs(formData.entryDate).format('YYYY-MM-DD HH:mm:ss');
     }
-    
+
     if (form.coachId) {
       await coachApi.update(formData);
       message.success('更新成功');
@@ -378,7 +378,7 @@ async function onSubmit() {
       await coachApi.create(formData);
       message.success('创建成功');
     }
-    
+
     onClose();
     emit('refresh');
   } catch (e) {

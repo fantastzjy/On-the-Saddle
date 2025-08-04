@@ -39,8 +39,23 @@
             <img v-if="clubData.logoUrl" :src="clubData.logoUrl" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" />
             <span v-else>-</span>
           </a-descriptions-item>
-          <a-descriptions-item label="置顶图片" :span="1">
-            <img v-if="clubData.bannerUrl" :src="clubData.bannerUrl" style="width: 100px; height: 60px; object-fit: cover; border-radius: 8px;" />
+          <a-descriptions-item label="轮播图片" :span="2">
+            <div v-if="clubData.carouselImages" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <template v-if="isJsonArray(clubData.carouselImages)">
+                <img 
+                  v-for="(url, index) in JSON.parse(clubData.carouselImages)" 
+                  :key="index" 
+                  :src="url" 
+                  style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px;" 
+                />
+              </template>
+              <template v-else>
+                <img 
+                  :src="clubData.carouselImages" 
+                  style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px;" 
+                />
+              </template>
+            </div>
             <span v-else>-</span>
           </a-descriptions-item>
 
@@ -79,21 +94,9 @@
           <a-descriptions-item label="邮箱" :span="1">
             {{ clubData.email || '-' }}
           </a-descriptions-item>
-          <a-descriptions-item label="法人代表" :span="1">
-            {{ clubData.legalPerson || '-' }}
-          </a-descriptions-item>
 
-          <a-descriptions-item label="经纬度" :span="2">
-            <span v-if="clubData.latitude && clubData.longitude">
-              纬度: {{ clubData.latitude }}, 经度: {{ clubData.longitude }}
-            </span>
-            <span v-else>-</span>
-          </a-descriptions-item>
 
-          <a-descriptions-item label="到期时间" :span="1">
-            {{ clubData.expireDate || '-' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="状态" :span="1">
+          <a-descriptions-item label="状态" :span="2">
             <a-tag :color="clubData.isValid ? 'green' : 'red'">
               {{ clubData.isValid ? '有效' : '无效' }}
             </a-tag>
@@ -155,6 +158,16 @@ const router = useRouter();
 const loading = ref(false);
 const clubData = ref(null);
 const clubFormModal = ref();
+
+// 判断字符串是否为JSON数组格式
+function isJsonArray(str) {
+  try {
+    const parsed = JSON.parse(str);
+    return Array.isArray(parsed);
+  } catch (e) {
+    return false;
+  }
+}
 
 const clubId = route.query.clubId;
 

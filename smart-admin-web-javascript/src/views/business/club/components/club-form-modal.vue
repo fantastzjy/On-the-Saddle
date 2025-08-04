@@ -61,17 +61,6 @@
             </a-input-group>
           </a-form-item>
         </a-col>
-        <a-col :span="12">
-          <a-form-item label="到期时间" name="expireDate">
-            <a-date-picker 
-              v-model:value="form.expireDate" 
-              placeholder="选择到期时间" 
-              style="width: 100%"
-              show-time
-              format="YYYY-MM-DD HH:mm:ss"
-            />
-          </a-form-item>
-        </a-col>
       </a-row>
 
       <!-- 图片资料 -->
@@ -101,21 +90,21 @@
           </a-form-item>
         </a-col>
         <a-col :span="8">
-          <a-form-item label="宣传横幅" name="bannerUrl" style="margin-bottom: 0;">
+          <a-form-item label="轮播图片" name="carouselImages" style="margin-bottom: 0;">
             <a-upload
-              :maxCount="1"
+              :maxCount="5"
               accept="image/*"
               list-type="picture-card"
-              :file-list="bannerFileList"
+              :file-list="carouselFileList"
               :before-upload="beforeUpload"
-              :customRequest="(options) => customUploadRequest(options, 'bannerUrl')"
-              @change="(info) => handleUploadChange(info, 'bannerUrl')"
+              :customRequest="(options) => customUploadRequest(options, 'carouselImages')"
+              @change="(info) => handleUploadChange(info, 'carouselImages')"
               @preview="handlePreview"
               style="display: block;"
             >
-              <div v-if="bannerFileList.length === 0">
+              <div v-if="carouselFileList.length < 5">
                 <PlusOutlined />
-                <div style="margin-top: 8px">上传横幅</div>
+                <div style="margin-top: 8px">上传轮播</div>
               </div>
             </a-upload>
           </a-form-item>
@@ -169,18 +158,6 @@
         <a-input v-model:value="form.address" placeholder="请输入详细地址" />
       </a-form-item>
 
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item label="纬度" name="latitude">
-            <a-input-number v-model:value="form.latitude" placeholder="请输入纬度" :precision="6" style="width: 100%" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="经度" name="longitude">
-            <a-input-number v-model:value="form.longitude" placeholder="请输入经度" :precision="6" style="width: 100%" />
-          </a-form-item>
-        </a-col>
-      </a-row>
 
       <!-- 联系方式 -->
       <a-divider orientation="left">
@@ -213,18 +190,6 @@
         </a-col>
       </a-row>
 
-      <!-- 企业信息 -->
-      <a-divider orientation="left">
-        <span style="font-weight: 600; color: #1890ff;">企业信息</span>
-      </a-divider>
-
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item label="法人代表" name="legalPerson">
-            <a-input v-model:value="form.legalPerson" placeholder="请输入法人代表" />
-          </a-form-item>
-        </a-col>
-      </a-row>
 
       <!-- 详细描述 -->
       <a-divider orientation="left">
@@ -270,7 +235,7 @@ const formRef = ref();
 
 // 图片文件列表
 const logoFileList = ref([]);
-const bannerFileList = ref([]);
+const carouselFileList = ref([]);
 const licenseFileList = ref([]);
 
 // 预览相关
@@ -282,7 +247,7 @@ const formDefault = {
   clubName: '',
   clubCode: '',
   logoUrl: '',
-  bannerUrl: '',
+  carouselImages: '',
   pcBannerUrl: '',
   businessStartTime: null,
   businessEndTime: null,
@@ -291,17 +256,13 @@ const formDefault = {
   description: '',
   honorInfo: '',
   bookingNotice: '',
-  latitude: null,
-  longitude: null,
   province: '',
   city: '',
   district: '',
   businessLicenseUrl: '',
-  legalPerson: '',
   contactPerson: '',
   contactPhone: '',
   email: '',
-  expireDate: null,
 };
 
 const form = reactive({ ...formDefault });
@@ -347,16 +308,33 @@ watch(() => form.logoUrl, (newVal) => {
   }
 });
 
-watch(() => form.bannerUrl, (newVal) => {
-  if (newVal && bannerFileList.value.length === 0) {
-    bannerFileList.value = [{
-      uid: 'banner-1',
-      name: 'banner.jpg',
-      status: 'done',
-      url: newVal,
-    }];
+watch(() => form.carouselImages, (newVal) => {
+  if (newVal && carouselFileList.value.length === 0) {
+    try {
+      let imageUrls;
+      // 兼容单个URL字符串和JSON数组格式
+      if (newVal.startsWith('[') && newVal.endsWith(']')) {
+        imageUrls = JSON.parse(newVal);
+      } else {
+        imageUrls = [newVal]; // 将单个URL转换为数组
+      }
+      carouselFileList.value = imageUrls.map((url, index) => ({
+        uid: `carousel-${index}`,
+        name: `carousel-${index}.jpg`,
+        status: 'done',
+        url: url,
+      }));
+    } catch (e) {
+      // 如果解析失败，当作单个URL处理
+      carouselFileList.value = [{
+        uid: 'carousel-0',
+        name: 'carousel-0.jpg',
+        status: 'done',
+        url: newVal,
+      }];
+    }
   } else if (!newVal) {
-    bannerFileList.value = [];
+    carouselFileList.value = [];
   }
 });
 
@@ -401,7 +379,26 @@ async function customUploadRequest(options, fieldName) {
     const fileInfo = res.data;
     
     // 更新表单字段
-    form[fieldName] = fileInfo.fileUrl;
+    if (fieldName === 'carouselImages') {
+      // 轮播图片特殊处理
+      let currentUrls = [];
+      if (form.carouselImages) {
+        try {
+          // 兼容单个URL字符串和JSON数组格式
+          if (form.carouselImages.startsWith('[') && form.carouselImages.endsWith(']')) {
+            currentUrls = JSON.parse(form.carouselImages);
+          } else {
+            currentUrls = [form.carouselImages];
+          }
+        } catch (e) {
+          currentUrls = [form.carouselImages];
+        }
+      }
+      currentUrls.push(fileInfo.fileUrl);
+      form.carouselImages = JSON.stringify(currentUrls);
+    } else {
+      form[fieldName] = fileInfo.fileUrl;
+    }
     
     // 更新文件列表
     const fileItem = {
@@ -411,6 +408,11 @@ async function customUploadRequest(options, fieldName) {
       url: fileInfo.fileUrl,
       response: fileInfo,
     };
+    
+    // 轮播图片需要特殊处理文件列表
+    if (fieldName === 'carouselImages') {
+      carouselFileList.value.push(fileItem);
+    }
     
     options.onSuccess(fileItem, options.file);
     
@@ -427,15 +429,22 @@ function handleUploadChange(info, fieldName) {
   const { file, fileList } = info;
   
   if (file.status === 'removed') {
-    form[fieldName] = '';
-    
-    // 清空对应的文件列表
-    if (fieldName === 'logoUrl') {
-      logoFileList.value = [];
-    } else if (fieldName === 'bannerUrl') {
-      bannerFileList.value = [];
-    } else if (fieldName === 'businessLicenseUrl') {
-      licenseFileList.value = [];
+    if (fieldName === 'carouselImages') {
+      // 轮播图片特殊处理
+      const remainingUrls = carouselFileList.value
+        .filter(item => item.uid !== file.uid)
+        .map(item => item.url);
+      form.carouselImages = remainingUrls.length > 0 ? JSON.stringify(remainingUrls) : '';
+      carouselFileList.value = carouselFileList.value.filter(item => item.uid !== file.uid);
+    } else {
+      form[fieldName] = '';
+      
+      // 清空对应的文件列表
+      if (fieldName === 'logoUrl') {
+        logoFileList.value = [];
+      } else if (fieldName === 'businessLicenseUrl') {
+        licenseFileList.value = [];
+      }
     }
   }
 }
@@ -459,7 +468,7 @@ function show(clubId) {
     Object.assign(form, formDefault);
     // 清空文件列表
     logoFileList.value = [];
-    bannerFileList.value = [];
+    carouselFileList.value = [];
     licenseFileList.value = [];
   }
 }
@@ -476,9 +485,6 @@ async function getDetail(clubId) {
     }
     if (data.businessEndTime) {
       form.businessEndTime = dayjs(data.businessEndTime, 'HH:mm');
-    }
-    if (data.expireDate) {
-      form.expireDate = dayjs(data.expireDate);
     }
     
     // 设置图片文件列表 - 会通过watch自动更新
@@ -501,9 +507,6 @@ async function onSubmit() {
     }
     if (params.businessEndTime) {
       params.businessEndTime = params.businessEndTime.format('HH:mm:ss');
-    }
-    if (params.expireDate) {
-      params.expireDate = params.expireDate.format('YYYY-MM-DD HH:mm:ss');
     }
 
     if (params.clubId) {
@@ -528,7 +531,7 @@ function onCancel() {
   Object.assign(form, formDefault);
   // 清空文件列表
   logoFileList.value = [];
-  bannerFileList.value = [];
+  carouselFileList.value = [];
   licenseFileList.value = [];
 }
 

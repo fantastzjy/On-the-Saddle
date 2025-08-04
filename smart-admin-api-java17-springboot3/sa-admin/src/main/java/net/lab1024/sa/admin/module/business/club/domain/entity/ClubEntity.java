@@ -35,8 +35,8 @@ public class ClubEntity {
     @DataTracerFieldLabel("LOGO地址")
     private String logoUrl;
 
-    @DataTracerFieldLabel("置顶图片地址")
-    private String bannerUrl;
+    @DataTracerFieldLabel("轮播图片地址列表")
+    private String carouselImages;
 
     @DataTracerFieldLabel("PC端首页图片地址")
     private String pcBannerUrl;
@@ -62,12 +62,6 @@ public class ClubEntity {
     @DataTracerFieldLabel("约课需知")
     private String bookingNotice;
 
-    @DataTracerFieldLabel("纬度")
-    private BigDecimal latitude;
-
-    @DataTracerFieldLabel("经度")
-    private BigDecimal longitude;
-
     @DataTracerFieldLabel("省份")
     private String province;
 
@@ -80,9 +74,6 @@ public class ClubEntity {
     @DataTracerFieldLabel("营业执照图片地址")
     private String businessLicenseUrl;
 
-    @DataTracerFieldLabel("法人代表")
-    private String legalPerson;
-
     @DataTracerFieldLabel("联系人")
     private String contactPerson;
 
@@ -91,9 +82,6 @@ public class ClubEntity {
 
     @DataTracerFieldLabel("邮箱")
     private String email;
-
-    @DataTracerFieldLabel("到期日期时间")
-    private LocalDateTime expireDate;
 
     private String createBy;
 

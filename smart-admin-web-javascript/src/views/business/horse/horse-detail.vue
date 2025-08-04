@@ -12,7 +12,7 @@
           <div class="sa-page-header-title">
             <h3>{{ horseDetail.horseName || '马匹详情' }}</h3>
             <div class="sa-page-header-subtitle">
-              编号：{{ horseDetail.horseCode }} | 芯片号：{{ horseDetail.chipNumber }}
+              编号：{{ horseDetail.horseCode }} | 芯片号：{{ horseDetail.chipNo }}
             </div>
           </div>
         </div>
@@ -69,21 +69,17 @@ const horseDetail = reactive({
   horseCode: '',
   horseName: '',
   clubName: '',
-  horseType: '',
-  chipNumber: '',
-  passportNumber: '',
+  horseType: 1,
+  chipNo: '',
+  passportNo: '',
   breed: '',
-  gender: '',
+  gender: 1,
   color: '',
   birthDate: '',
-  height: undefined,
-  weight: undefined,
   ownerName: '',
-  coachName: '',
   responsibleCoachName: '',
-  status: '',
-  healthStatus: '',
-  remark: '',
+  healthStatus: 1,
+  workStatus: 1,
   createTime: '',
 });
 

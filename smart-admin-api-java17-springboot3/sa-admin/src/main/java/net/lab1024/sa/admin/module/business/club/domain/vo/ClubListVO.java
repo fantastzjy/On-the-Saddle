@@ -30,6 +30,9 @@ public class ClubListVO {
     @Schema(description = "LOGO地址")
     private String logoUrl;
 
+    @Schema(description = "轮播图片地址列表JSON格式")
+    private String carouselImages;
+
     @Schema(description = "营业开始时间")
     private LocalTime businessStartTime;
 
@@ -56,9 +59,6 @@ public class ClubListVO {
 
     @Schema(description = "联系电话")
     private String contactPhone;
-
-    @Schema(description = "到期日期时间")
-    private LocalDateTime expireDate;
 
     @Schema(description = "创建人")
     private String createBy;
