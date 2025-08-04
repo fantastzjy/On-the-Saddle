@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import net.lab1024.sa.base.common.enumeration.GenderEnum;
 import net.lab1024.sa.base.common.swagger.SchemaEnum;
-import net.lab1024.sa.base.module.support.data.masking.annotation.DataMasking;
-import net.lab1024.sa.base.module.support.data.masking.enumeration.DataMaskingTypeEnum;
+import net.lab1024.sa.base.module.support.datamasking.DataMasking;
+import net.lab1024.sa.base.module.support.datamasking.DataMaskingTypeEnum;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

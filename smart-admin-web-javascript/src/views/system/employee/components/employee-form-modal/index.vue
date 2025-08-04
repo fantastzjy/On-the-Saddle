@@ -34,15 +34,15 @@
       <a-form-item label="手机号" name="phone">
         <a-input v-model:value.trim="form.phone" placeholder="请输入手机号" />
       </a-form-item>
+      <a-form-item label="邮箱" name="email">
+        <a-input v-model:value.trim="form.email" placeholder="请输入邮箱" />
+      </a-form-item>
       <a-form-item label="部门" name="departmentId">
         <DepartmentTreeSelect ref="departmentTreeSelect" width="100%" :init="false" v-model:value="form.departmentId" />
       </a-form-item>
       <a-form-item label="登录名" name="loginName">
         <a-input v-model:value.trim="form.loginName" placeholder="请输入登录名" />
         <p class="hint">初始密码默认为：随机</p>
-      </a-form-item>
-      <a-form-item label="邮箱" name="email">
-        <a-input v-model:value.trim="form.email" placeholder="请输入邮箱" />
       </a-form-item>
       <a-form-item label="状态" name="disabledFlag">
         <a-select v-model:value="form.disabledFlag" placeholder="请选择状态">
