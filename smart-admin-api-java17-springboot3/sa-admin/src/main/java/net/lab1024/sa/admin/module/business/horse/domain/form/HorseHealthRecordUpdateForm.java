@@ -30,10 +30,6 @@ public class HorseHealthRecordUpdateForm {
     @Schema(description = "关联计划ID")
     private Long planId;
 
-    @Schema(description = "记录类型", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "记录类型不能为空")
-    private String recordType;
-
     @Schema(description = "记录日期", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "记录日期不能为空")
     private LocalDateTime recordDate;

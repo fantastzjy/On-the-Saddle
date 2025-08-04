@@ -31,9 +31,6 @@ public class HorseHealthPlanUpdateForm {
     @NotBlank(message = "计划类型不能为空")
     private String planType;
 
-    @Schema(description = "计划名称")
-    private String planName;
-
     @Schema(description = "周期天数")
     private Integer cycleDays;
 

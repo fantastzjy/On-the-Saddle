@@ -35,11 +35,8 @@ public class HorseHealthRecordListVO {
     @Schema(description = "关联计划ID")
     private Long planId;
 
-    @Schema(description = "关联计划名称")
-    private String planName;
-
-    @Schema(description = "记录类型")
-    private String recordType;
+    @Schema(description = "计划类型")
+    private String planType;
 
     @Schema(description = "记录日期")
     private LocalDateTime recordDate;

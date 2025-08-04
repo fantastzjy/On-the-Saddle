@@ -24,9 +24,6 @@ public class HorseHealthPlanQueryForm extends PageParam {
     @Schema(description = "计划类型")
     private String planType;
 
-    @Schema(description = "计划名称")
-    private String planName;
-
     @Schema(description = "下次执行开始日期")
     private LocalDateTime nextDateStart;
 

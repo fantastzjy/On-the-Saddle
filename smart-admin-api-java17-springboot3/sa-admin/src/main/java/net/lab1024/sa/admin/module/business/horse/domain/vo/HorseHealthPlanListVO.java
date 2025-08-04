@@ -35,9 +35,6 @@ public class HorseHealthPlanListVO {
     @Schema(description = "计划类型")
     private String planType;
 
-    @Schema(description = "计划名称")
-    private String planName;
-
     @Schema(description = "周期天数")
     private Integer cycleDays;
 

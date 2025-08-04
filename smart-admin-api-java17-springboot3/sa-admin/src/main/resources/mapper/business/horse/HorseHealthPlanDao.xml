@@ -10,7 +10,6 @@
             h.horse_code,
             c.club_name,
             hp.plan_type,
-            hp.plan_name,
             hp.cycle_days,
             hp.last_date,
             hp.next_date,
@@ -35,9 +34,6 @@
             <if test="query.planType != null and query.planType != ''">
                 AND hp.plan_type = #{query.planType}
             </if>
-            <if test="query.planName != null and query.planName != ''">
-                AND hp.plan_name LIKE CONCAT('%', #{query.planName}, '%')
-            </if>
             <if test="query.nextDateStart != null">
                 AND hp.next_date >= #{query.nextDateStart}
             </if>
@@ -59,7 +55,6 @@
             h.horse_code,
             c.club_name,
             hp.plan_type,
-            hp.plan_name,
             hp.cycle_days,
             hp.last_date,
             hp.next_date,
@@ -88,7 +83,6 @@
             h.horse_code,
             c.club_name,
             hp.plan_type,
-            hp.plan_name,
             hp.cycle_days,
             hp.last_date,
             hp.next_date,

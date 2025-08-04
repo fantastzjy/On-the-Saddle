@@ -10,8 +10,7 @@
             h.horse_code,
             c.club_name,
             hr.plan_id,
-            hp.plan_name,
-            hr.record_type,
+            hr.plan_type,
             hr.record_date,
             hr.executor_id,
             executor.actual_name as executor_name,
@@ -23,7 +22,6 @@
         FROM m_horse_health_record hr
         LEFT JOIN m_horse h ON hr.horse_id = h.horse_id AND h.is_delete = 0 AND h.is_valid = 1
         LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
-        LEFT JOIN m_horse_health_plan hp ON hr.plan_id = hp.id AND hp.is_delete = 0 AND hp.is_valid = 1
         LEFT JOIN t_employee executor ON hr.executor_id = executor.employee_id AND executor.deleted_flag = 0
         <where>
             hr.is_delete = #{query.isDelete} AND hr.is_valid = #{query.isValid}
@@ -33,8 +31,8 @@
             <if test="query.planId != null">
                 AND hr.plan_id = #{query.planId}
             </if>
-            <if test="query.recordType != null and query.recordType != ''">
-                AND hr.record_type = #{query.recordType}
+            <if test="query.planType != null and query.planType != ''">
+                AND hr.plan_type = #{query.planType}
             </if>
             <if test="query.executorId != null">
                 AND hr.executor_id = #{query.executorId}
@@ -57,8 +55,7 @@
             h.horse_code,
             c.club_name,
             hr.plan_id,
-            hp.plan_name,
-            hr.record_type,
+            hr.plan_type,
             hr.record_date,
             hr.executor_id,
             executor.actual_name as executor_name,
@@ -70,7 +67,6 @@
         FROM m_horse_health_record hr
         LEFT JOIN m_horse h ON hr.horse_id = h.horse_id AND h.is_delete = 0 AND h.is_valid = 1
         LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
-        LEFT JOIN m_horse_health_plan hp ON hr.plan_id = hp.id AND hp.is_delete = 0 AND hp.is_valid = 1
         LEFT JOIN t_employee executor ON hr.executor_id = executor.employee_id AND executor.deleted_flag = 0
         WHERE hr.horse_id = #{horseId} AND hr.is_delete = 0 AND hr.is_valid = 1
         ORDER BY hr.record_date DESC
@@ -84,8 +80,7 @@
             h.horse_code,
             c.club_name,
             hr.plan_id,
-            hp.plan_name,
-            hr.record_type,
+            hr.plan_type,
             hr.record_date,
             hr.executor_id,
             executor.actual_name as executor_name,
@@ -97,7 +92,6 @@
         FROM m_horse_health_record hr
         LEFT JOIN m_horse h ON hr.horse_id = h.horse_id AND h.is_delete = 0 AND h.is_valid = 1
         LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
-        LEFT JOIN m_horse_health_plan hp ON hr.plan_id = hp.id AND hp.is_delete = 0 AND hp.is_valid = 1
         LEFT JOIN t_employee executor ON hr.executor_id = executor.employee_id AND executor.deleted_flag = 0
         WHERE hr.plan_id = #{planId} AND hr.is_delete = 0 AND hr.is_valid = 1
         ORDER BY hr.record_date DESC

@@ -31,9 +31,6 @@ public class HorseHealthPlanEntity {
     @DataTracerFieldLabel("计划类型")
     private String planType;
 
-    @DataTracerFieldLabel("计划名称")
-    private String planName;
-
     @DataTracerFieldLabel("周期天数")
     private Integer cycleDays;
 

@@ -31,8 +31,8 @@ public class HorseHealthRecordEntity {
     @DataTracerFieldLabel("关联计划ID")
     private Long planId;
 
-    @DataTracerFieldLabel("记录类型")
-    private String recordType;
+    @DataTracerFieldLabel("计划类型")
+    private String planType;
 
     @DataTracerFieldLabel("记录日期")
     private LocalDateTime recordDate;

@@ -24,8 +24,8 @@ public class HorseHealthRecordQueryForm extends PageParam {
     @Schema(description = "关联计划ID")
     private Long planId;
 
-    @Schema(description = "记录类型")
-    private String recordType;
+    @Schema(description = "计划类型")
+    private String planType;
 
     @Schema(description = "执行人ID")
     private Long executorId;
