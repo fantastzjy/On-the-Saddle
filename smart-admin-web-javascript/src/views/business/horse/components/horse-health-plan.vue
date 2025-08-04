@@ -86,11 +86,6 @@ const quickRecordModalRef = ref();
 
 const planColumns = [
   {
-    title: '计划名称',
-    dataIndex: 'planName',
-    width: 150,
-  },
-  {
     title: '计划类型',
     dataIndex: 'planType',
     width: 120,
@@ -153,7 +148,7 @@ function quickCreateRecord(plan) {
 function deletePlan(record) {
   Modal.confirm({
     title: '提示',
-    content: `确定要删除计划"${record.planName}"吗？`,
+    content: `确定要删除计划"${record.planType}"吗？`,
     okText: '删除',
     okType: 'danger',
     onOk: async () => {

@@ -9,10 +9,6 @@
     :destroyOnClose="true"
   >
     <a-form :model="formState.form" :rules="formRules" ref="formRef" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
-      <a-form-item label="计划名称" name="planName">
-        <a-input v-model:value="formState.form.planName" placeholder="请输入计划名称" />
-      </a-form-item>
-
       <a-form-item label="计划类型" name="planType">
         <a-select v-model:value="formState.form.planType" placeholder="请选择计划类型">
           <a-select-option value="疫苗">疫苗</a-select-option>
@@ -86,7 +82,6 @@ const formState = reactive({
   form: {
     id: undefined,
     horseId: undefined,
-    planName: '',
     planType: '',
     cycleDays: 0,
     reminderDays: 0,
@@ -97,7 +92,6 @@ const formState = reactive({
 });
 
 const formRules = {
-  planName: [{ required: true, message: '请输入计划名称' }],
   planType: [{ required: true, message: '请选择计划类型' }],
   cycleDays: [{ required: true, message: '请设置执行周期' }],
   reminderDays: [{ required: true, message: '请设置提醒天数' }],
@@ -123,7 +117,6 @@ function resetForm() {
   Object.assign(formState.form, {
     id: undefined,
     horseId: props.horseId,
-    planName: '',
     planType: '',
     cycleDays: 0,
     reminderDays: 0,

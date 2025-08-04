@@ -128,7 +128,7 @@
               <div class="timeline-content">
                 <div class="timeline-header">
                   <a-tag :color="getTypeColor(record.recordType)">{{ record.recordType }}</a-tag>
-                  <span class="timeline-title">{{ record.planName || '临时记录' }}</span>
+                  <span class="timeline-title">{{ record.planType || '临时记录' }}</span>
                   <div class="timeline-actions">
                     <a-button v-privilege="'club:horse:health:record:update'" type="link" size="small" @click="showRecordModal(false, record)">
                       编辑

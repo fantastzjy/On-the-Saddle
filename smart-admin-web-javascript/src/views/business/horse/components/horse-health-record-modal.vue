@@ -12,7 +12,7 @@
       <a-form-item label="关联计划" name="planId">
         <a-select v-model:value="formState.form.planId" placeholder="请选择关联计划" allowClear>
           <a-select-option v-for="plan in planList" :key="plan.id" :value="plan.id">
-            {{ plan.planName }}
+            {{ plan.planType }}
           </a-select-option>
         </a-select>
       </a-form-item>

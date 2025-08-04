@@ -10,7 +10,7 @@
   >
     <div class="quick-record-info">
       <a-descriptions :column="1" bordered size="small">
-        <a-descriptions-item label="计划名称">{{ planInfo.planName }}</a-descriptions-item>
+        <a-descriptions-item label="计划类型">{{ planInfo.planType }}</a-descriptions-item>
         <a-descriptions-item label="计划类型">{{ planInfo.planType }}</a-descriptions-item>
         <a-descriptions-item label="计划内容">{{ planInfo.planContent }}</a-descriptions-item>
       </a-descriptions>
@@ -73,7 +73,7 @@ const formState = reactive({
 
 const planInfo = reactive({
   id: undefined,
-  planName: '',
+  planType: '',
   planType: '',
   planContent: '',
   cycleDays: 0,
