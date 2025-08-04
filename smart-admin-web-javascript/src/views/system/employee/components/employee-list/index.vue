@@ -151,27 +151,6 @@
       width: 100,
     },
     {
-      title: '手机号',
-      dataIndex: 'phone',
-      width: 85,
-    },
-    {
-      title: '邮箱',
-      dataIndex: 'email',
-      width: 100,
-      ellipsis: true,
-    },
-    {
-      title: '超管',
-      dataIndex: 'administratorFlag',
-      width: 60,
-    },
-    {
-      title: '状态',
-      dataIndex: 'disabledFlag',
-      width: 60,
-    },
-    {
       title: '职务',
       dataIndex: 'positionName',
       width: 100,
@@ -188,6 +167,41 @@
       ellipsis: true,
       width: 200,
     },
+
+    {
+      title: '手机号',
+      dataIndex: 'phone',
+      width: 85,
+    },
+    {
+      title: '邮箱',
+      dataIndex: 'email',
+      width: 100,
+      ellipsis: true,
+    },
+
+    {
+      title: '生日',
+      dataIndex: 'birthDate',
+      width: 100,
+    },
+    {
+      title: '身份证号码',
+      dataIndex: 'idCard',
+      width: 120,
+      ellipsis: true,
+    },
+    {
+      title: '超管',
+      dataIndex: 'administratorFlag',
+      width: 60,
+    },
+    {
+      title: '状态',
+      dataIndex: 'disabledFlag',
+      width: 60,
+    },
+
     {
       title: '操作',
       dataIndex: 'operate',

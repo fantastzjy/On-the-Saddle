@@ -66,9 +66,9 @@ public class SmartVerificationUtil {
     public static final String TIME = "^(0[0-9]|1[0-9]|2[0-3]):(0[0-9]|[1-5][0-9])$";
 
     /**
-     * 身份证号
+     * 身份证号 - 严格验证（包含出生日期校验）
      */
-    public static final String ID_CARD = "(^\\d{15}$)|(^\\d{18}$)|(^\\d{17}(\\d|X|x)$)";
+    public static final String ID_CARD = "^[1-9]\\d{5}[1-9]\\d{3}((0\\d)|(1[0-2]))(([0|1|2]\\d)|3[0-1])\\d{3}([0-9]|X|x)$";
 
     /**
      * URL

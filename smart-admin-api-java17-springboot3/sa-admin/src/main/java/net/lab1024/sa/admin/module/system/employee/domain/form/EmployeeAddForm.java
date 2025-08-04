@@ -10,6 +10,7 @@ import net.lab1024.sa.base.common.util.SmartVerificationUtil;
 import net.lab1024.sa.base.common.validator.enumeration.CheckEnum;
 import org.hibernate.validator.constraints.Length;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -55,6 +56,13 @@ public class EmployeeAddForm {
     @NotNull(message = "邮箱账号不能为空")
     @Pattern(regexp = SmartVerificationUtil.EMAIL, message = "邮箱账号格式不正确")
     private String email;
+
+    @Schema(description = "生日")
+    private LocalDate birthDate;
+
+    @Schema(description = "身份证号码")
+    @Pattern(regexp = SmartVerificationUtil.ID_CARD, message = "身份证号码格式不正确")
+    private String idCard;
 
     @Schema(description = "职务级别ID")
     private Long positionId;

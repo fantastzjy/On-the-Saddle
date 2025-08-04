@@ -4,7 +4,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import net.lab1024.sa.base.common.enumeration.GenderEnum;
 import net.lab1024.sa.base.common.swagger.SchemaEnum;
+import net.lab1024.sa.base.module.support.data.masking.annotation.DataMasking;
+import net.lab1024.sa.base.module.support.data.masking.enumeration.DataMaskingTypeEnum;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -64,5 +67,12 @@ public class EmployeeVO {
 
     @Schema(description = "邮箱")
     private String email;
+
+    @Schema(description = "生日")
+    private LocalDate birthDate;
+
+    @Schema(description = "身份证号码")
+    @DataMasking(DataMaskingTypeEnum.ID_CARD)
+    private String idCard;
 
 }

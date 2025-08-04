@@ -22,6 +22,15 @@
       <a-form-item label="姓名" name="actualName">
         <a-input v-model:value.trim="form.actualName" placeholder="请输入姓名" />
       </a-form-item>
+      <a-form-item label="性别" name="gender">
+        <smart-enum-select style="width: 100%" v-model:value="form.gender" placeholder="请选择性别" enum-name="GENDER_ENUM" />
+      </a-form-item>
+      <a-form-item label="生日" name="birthDate">
+        <a-date-picker v-model:value="form.birthDate" placeholder="请选择生日" style="width: 100%" />
+      </a-form-item>
+      <a-form-item label="身份证号码" name="idCard">
+        <a-input v-model:value.trim="form.idCard" placeholder="请输入身份证号码" />
+      </a-form-item>
       <a-form-item label="手机号" name="phone">
         <a-input v-model:value.trim="form.phone" placeholder="请输入手机号" />
       </a-form-item>
@@ -34,9 +43,6 @@
       </a-form-item>
       <a-form-item label="邮箱" name="email">
         <a-input v-model:value.trim="form.email" placeholder="请输入邮箱" />
-      </a-form-item>
-      <a-form-item label="性别" name="gender">
-        <smart-enum-select style="width: 100%" v-model:value="form.gender" placeholder="请选择性别" enum-name="GENDER_ENUM" />
       </a-form-item>
       <a-form-item label="状态" name="disabledFlag">
         <a-select v-model:value="form.disabledFlag" placeholder="请选择状态">
@@ -120,6 +126,8 @@
     roleIdList: undefined,
     positionId: undefined,
     email: undefined,
+    birthDate: undefined,
+    idCard: undefined,
   };
 
   let form = reactive(_.cloneDeep(formDefault));
@@ -148,6 +156,9 @@
     disabledFlag: [{ required: true, message: '状态不能为空' }],
     leaveFlag: [{ required: true, message: '在职状态不能为空' }],
     email: [{ required: true, message: '请输入邮箱' }],
+    idCard: [
+      { pattern: regular.isIdentityCard, message: '请输入正确的身份证号码', trigger: 'blur' },
+    ],
   };
 
   // 校验表单
