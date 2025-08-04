@@ -41,7 +41,7 @@ export const appDefaultConfig = {
   // 水印
   watermarkFlag: true,
   // 网站名称
-  websiteName: '鞍境 on the saddle 1.0',
+  websiteName: 'On The Saddle',
   // 主题颜色
   primaryColor: '#1677ff',
   // 紧凑
