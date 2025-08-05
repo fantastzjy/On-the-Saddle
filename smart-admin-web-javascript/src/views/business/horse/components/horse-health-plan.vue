@@ -177,16 +177,14 @@
             <a-empty v-if="filteredRecordList.length === 0 && !recordLoading" 
               :description="selectedPlanId ? '该计划暂无相关记录' : '暂无健康记录'" />
             
-            <a-timeline v-else mode="left" class="health-record-timeline">
+            <a-timeline v-else class="health-record-timeline">
               <a-timeline-item v-for="record in filteredRecordList" :key="record.id" :color="getTimelineColor(record.recordType)">
-                <template #label>
-                  <div class="timeline-date">
-                    {{ dayjs(record.recordDate).format('MM-DD') }}
-                    <div class="timeline-time">{{ dayjs(record.recordDate).format('HH:mm') }}</div>
-                  </div>
-                </template>
                 <div class="timeline-content">
                   <div class="timeline-header">
+                    <div class="timeline-date-time">
+                      <div class="timeline-date">{{ dayjs(record.recordDate).format('MM-DD') }}</div>
+                      <div class="timeline-time">{{ dayjs(record.recordDate).format('HH:mm') }}</div>
+                    </div>
                     <a-tag :color="getTypeColor(record.recordType)">{{ record.recordType }}</a-tag>
                     <span class="timeline-title">{{ record.planType || '临时记录' }}</span>
                     <div class="timeline-actions">
@@ -200,8 +198,18 @@
                   </div>
                   <div class="timeline-body">
                     <p v-if="record.content">{{ record.content }}</p>
-                    <div v-if="record.imgUrl" class="timeline-image">
-                      <a-image :src="record.imgUrl" :width="100" />
+                    <div v-if="record.imgUrl" class="timeline-images">
+                      <a-image-preview-group>
+                        <a-image 
+                          v-for="(imageUrl, index) in getImageUrls(record.imgUrl)" 
+                          :key="index"
+                          :src="imageUrl" 
+                          :width="100" 
+                          :height="100"
+                          :style="{ margin: '4px', borderRadius: '6px', objectFit: 'cover' }"
+                          :preview="{ mask: '点击放大' }"
+                        />
+                      </a-image-preview-group>
                     </div>
                     <div v-if="record.recordData" class="timeline-data">
                       <pre>{{ formatRecordData(record.recordData) }}</pre>
@@ -521,6 +529,12 @@ function getTypeColor(recordType) {
   return colorMap[recordType] || 'default';
 }
 
+// 解析图片URL数组
+function getImageUrls(imgUrlString) {
+  if (!imgUrlString) return [];
+  return imgUrlString.split(',').filter(url => url.trim()).map(url => url.trim());
+}
+
 // 获取指定类型的记录数量
 function getRecordCountByType(type) {
   return recordList.value.filter(record => record.recordType === type).length;
@@ -629,9 +643,7 @@ defineExpose({
 .timeline-date {
   font-size: 14px;
   font-weight: 500;
-  text-align: right;
   color: #262626;
-  min-width: 60px;
 }
 
 .timeline-time {
@@ -640,12 +652,17 @@ defineExpose({
   margin-top: 2px;
 }
 
+.timeline-date-time {
+  margin-right: 12px;
+  text-align: center;
+  min-width: 48px;
+}
+
 .timeline-content {
   background: #fff;
   border: 1px solid #f0f0f0;
   border-radius: 6px;
   padding: 16px;
-  margin-left: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s;
 }
@@ -656,7 +673,7 @@ defineExpose({
 
 .timeline-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -665,6 +682,7 @@ defineExpose({
   font-weight: 500;
   flex: 1;
   color: #262626;
+  margin-left: 4px;
 }
 
 .timeline-actions {
@@ -680,6 +698,13 @@ defineExpose({
 .timeline-body p {
   margin-bottom: 8px;
   color: #595959;
+}
+
+.timeline-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
 }
 
 .timeline-image {

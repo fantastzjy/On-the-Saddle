@@ -51,7 +51,28 @@
       </a-form-item>
 
       <a-form-item label="图片" name="imgUrl">
-        <a-input v-model:value="formState.form.imgUrl" placeholder="请输入图片URL" />
+        <div class="upload-container">
+          <a-upload
+            :file-list="fileList"
+            list-type="picture-card"
+            :custom-request="customUploadRequest"
+            :before-upload="beforeUpload"
+            @change="handleUploadChange"
+            @preview="handlePreview"
+            :max-count="5"
+            accept="image/*"
+          >
+            <div v-if="fileList.length < 5">
+              <plus-outlined />
+              <div style="margin-top: 8px">上传图片</div>
+            </div>
+          </a-upload>
+          
+          <!-- 图片预览模态框 -->
+          <a-modal v-model:open="previewVisible" :footer="null" :width="800">
+            <img :src="previewImage" style="width: 100%" />
+          </a-modal>
+        </div>
       </a-form-item>
 
       <a-form-item label="记录数据" name="recordData">
@@ -66,10 +87,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import { message } from 'ant-design-vue';
+import { PlusOutlined } from '@ant-design/icons-vue';
 import { horseHealthRecordApi, horseHealthPlanApi } from '/@/api/business/horse/horse-api';
 import { employeeApi } from '/@/api/system/employee-api';
+import { fileApi } from '/@/api/support/file-api';
+import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
 import { smartSentry } from '/@/lib/smart-sentry';
 import dayjs from 'dayjs';
 
@@ -85,6 +109,11 @@ const emit = defineEmits(['reload']);
 const formRef = ref();
 const planList = ref([]);
 const executorList = ref([]);
+
+// 图片上传相关
+const fileList = ref([]);
+const previewVisible = ref(false);
+const previewImage = ref('');
 
 const formState = reactive({
   visible: false,
@@ -118,12 +147,30 @@ function showModal(isCreate, rowData = {}) {
     resetForm();
     formState.form.horseId = props.horseId;
     formState.form.recordDate = dayjs();
+    fileList.value = [];
   } else {
     Object.assign(formState.form, {
       ...rowData,
       recordDate: rowData.recordDate ? dayjs(rowData.recordDate) : undefined,
       nextDate: rowData.nextDate ? dayjs(rowData.nextDate) : undefined,
     });
+    
+    // 加载现有图片到文件列表
+    loadExistingImages(rowData.imgUrl);
+  }
+}
+
+function loadExistingImages(imgUrls) {
+  fileList.value = [];
+  if (imgUrls) {
+    const urls = imgUrls.split(',').filter(url => url.trim());
+    fileList.value = urls.map((url, index) => ({
+      uid: `existing_${index}`,
+      name: `image_${index + 1}`,
+      status: 'done',
+      url: url.trim(),
+      thumbUrl: url.trim(),
+    }));
   }
 }
 
@@ -155,6 +202,12 @@ async function onSubmit() {
       params.nextDate = params.nextDate.format('YYYY-MM-DD HH:mm:ss');
     }
 
+    // 确保使用最新的图片URL
+    updateFormImageUrls();
+    params.imgUrl = formState.form.imgUrl;
+    
+    console.log('>>> Submitting with imgUrl:', params.imgUrl);
+
     if (formState.isCreate) {
       await horseHealthRecordApi.create(params);
       message.success('创建成功');
@@ -175,7 +228,132 @@ async function onSubmit() {
 function onClose() {
   formState.visible = false;
   resetForm();
+  fileList.value = [];
   formRef.value?.resetFields();
+}
+
+// 图片上传相关方法
+function beforeUpload(file) {
+  const isImage = file.type.startsWith('image/');
+  if (!isImage) {
+    message.error('只能上传图片文件！');
+    return false;
+  }
+  
+  const isLt5M = file.size / 1024 / 1024 < 5;
+  if (!isLt5M) {
+    message.error('图片大小不能超过 5MB！');
+    return false;
+  }
+  
+  return true;
+}
+
+async function customUploadRequest(options) {
+  try {
+    console.log('>>> Starting upload for file:', options.file.name);
+    
+    // 创建临时文件对象并添加到列表
+    const tempFile = {
+      uid: options.file.uid,
+      name: options.file.name,
+      status: 'uploading',
+      percent: 0,
+      originFileObj: options.file
+    };
+    
+    fileList.value.push(tempFile);
+    console.log('>>> Temp file added, fileList length:', fileList.value.length);
+    
+    const formData = new FormData();
+    formData.append('file', options.file);
+    
+    const res = await fileApi.uploadFile(formData, FILE_FOLDER_TYPE_ENUM.COMMON.value);
+    const fileData = res.data;
+    
+    console.log('>>> Upload API Response:', fileData);
+    
+    // 找到临时文件并替换为完成状态
+    const fileIndex = fileList.value.findIndex(item => item.uid === options.file.uid);
+    if (fileIndex > -1) {
+      fileList.value[fileIndex] = {
+        uid: options.file.uid,
+        name: fileData.fileName || options.file.name,
+        status: 'done',
+        url: fileData.fileUrl,
+        thumbUrl: fileData.fileUrl,
+        response: fileData,
+        originFileObj: options.file
+      };
+      
+      console.log('>>> File updated at index', fileIndex, 'with URL:', fileData.fileUrl);
+    }
+    
+    // 更新表单imgUrl字段
+    updateFormImageUrls();
+    
+    options.onSuccess(fileData, options.file);
+    message.success('图片上传成功');
+    
+  } catch (error) {
+    console.error('Upload error:', error);
+    
+    // 移除失败的文件
+    const fileIndex = fileList.value.findIndex(item => item.uid === options.file.uid);
+    if (fileIndex > -1) {
+      fileList.value.splice(fileIndex, 1);
+    }
+    
+    options.onError(error);
+    message.error('图片上传失败');
+    smartSentry.captureError(error);
+  }
+}
+
+function updateFormImageUrls() {
+  console.log('>>> updateFormImageUrls - fileList length:', fileList.value.length);
+  
+  const urls = [];
+  fileList.value.forEach((file, index) => {
+    console.log(`>>> updateFormImageUrls File ${index}:`, {
+      status: file.status,
+      url: file.url,
+      hasUrl: !!file.url
+    });
+    
+    if (file.status === 'done' && file.url) {
+      urls.push(file.url);
+    }
+  });
+  
+  formState.form.imgUrl = urls.join(',');
+  console.log('>>> updateFormImageUrls result:', formState.form.imgUrl);
+}
+
+function handleUploadChange(info) {
+  const { file, fileList: currentFileList } = info;
+  
+  if (file.status === 'removed') {
+    console.log('>>> File removed:', file.name);
+    // 从我们的fileList中移除
+    const index = fileList.value.findIndex(item => item.uid === file.uid);
+    if (index > -1) {
+      fileList.value.splice(index, 1);
+      updateFormImageUrls();
+    }
+  }
+}
+
+function handlePreview(file) {
+  previewImage.value = file.url || file.thumbUrl;
+  previewVisible.value = true;
+}
+
+function handleRemove(file) {
+  console.log('>>> Removing file with URL:', file.url);
+  setTimeout(() => {
+    updateFormImageUrls();
+  }, 50);
 }
 
 async function loadPlanList() {
@@ -207,3 +385,19 @@ defineExpose({
   showModal,
 });
 </script>
+
+<style scoped>
+.upload-container {
+  width: 100%;
+}
+
+.upload-container :deep(.ant-upload-select) {
+  width: 100px !important;
+  height: 100px !important;
+}
+
+.upload-container :deep(.ant-upload-list-picture-card-container) {
+  width: 100px;
+  height: 100px;
+}
+</style>
