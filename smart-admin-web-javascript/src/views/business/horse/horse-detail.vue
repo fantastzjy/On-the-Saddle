@@ -60,7 +60,7 @@ const route = useRoute();
 const router = useRouter();
 
 const horseId = ref(route.query.horseId);
-const activeTab = ref('basic');
+const activeTab = ref(route.query.tab || 'basic');
 const loading = ref(false);
 const formModalRef = ref();
 

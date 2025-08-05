@@ -90,7 +90,8 @@
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <div class="smart-table-operate">
-              <a-button v-privilege="'club:horse:query'" type="link" @click="goDetail(record.horseId)">查看</a-button>
+              <a-button v-privilege="'club:horse:query'" type="link" @click="goDetail(record.horseId)">详情</a-button>
+              <a-button v-privilege="'club:horse:health:plan:query'" type="link" @click="goHealthPlan(record.horseId)">健康计划</a-button>
               <a-button v-privilege="'club:horse:update'" type="link" @click="showModal(false, record)">编辑</a-button>
               <a-button v-privilege="'club:horse:delete'" type="link" danger @click="onDelete(record)">删除</a-button>
             </div>
@@ -186,7 +187,7 @@ const columns = [
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
-    width: 150,
+    width: 220,
   },
 ];
 
@@ -259,10 +260,11 @@ function onDelete(record) {
 }
 
 function goDetail(horseId) {
-  router.push({
-    path: '/club/horse/horse-detail',
-    query: { horseId },
-  });
+  window.open(`#/club/horse/horse-detail?horseId=${horseId}`, '_blank');
+}
+
+function goHealthPlan(horseId) {
+  window.open(`#/club/horse/horse-detail?horseId=${horseId}&tab=health-plan`, '_blank');
 }
 
 async function queryClubList() {
