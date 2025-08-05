@@ -9,8 +9,8 @@
 -->
 <template>
   <a-drawer
-    :title="form.employeeId ? '编辑' : '添加'"
-    :width="600"
+    :title="form.employeeId ? '编辑员工' : '添加员工'"
+    :width="900"
     :open="visible"
     :body-style="{ paddingBottom: '80px' }"
     @close="onClose"
@@ -18,7 +18,12 @@
   >
     <a-alert message="超管需要直接在数据库表 t_employee修改哦" type="error" closable />
     <br />
-    <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
+    
+    <!-- 选项卡 -->
+    <a-tabs v-model:activeKey="activeTab" type="card">
+      <!-- 基本信息 -->
+      <a-tab-pane key="basic" tab="基本信息">
+        <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
       <a-form-item label="姓名" name="actualName">
         <a-input v-model:value.trim="form.actualName" placeholder="请输入姓名" />
       </a-form-item>
@@ -59,7 +64,41 @@
           <a-select-option v-for="item in roleList" :key="item.roleId" :title="item.roleName">{{ item.roleName }}</a-select-option>
         </a-select>
       </a-form-item>
-    </a-form>
+        </a-form>
+      </a-tab-pane>
+      
+      <!-- 学历信息 -->
+      <a-tab-pane key="education" tab="学历信息" :disabled="!form.employeeId">
+        <EmployeeEducation 
+          v-if="form.employeeId && activeTab === 'education'"
+          :employee-id="form.employeeId"
+          @change="handleEducationChange"
+        />
+        <a-empty v-else description="请先保存基本信息，然后添加学历信息" />
+      </a-tab-pane>
+      
+      <!-- 工作经历 -->
+      <a-tab-pane key="work-experience" tab="工作经历" :disabled="!form.employeeId">
+        <EmployeeWorkExperience 
+          v-if="form.employeeId && activeTab === 'work-experience'"
+          :employee-id="form.employeeId"
+          @change="handleWorkExperienceChange"
+        />
+        <a-empty v-else description="请先保存基本信息，然后添加工作经历" />
+      </a-tab-pane>
+      
+      <!-- 简历上传 -->
+      <a-tab-pane key="resume" tab="简历上传" :disabled="!form.employeeId">
+        <EmployeeResume 
+          v-if="form.employeeId && activeTab === 'resume'"
+          :employee-id="form.employeeId"
+          :latest-resume-file-key="form.resumeFileKey"
+          @change="handleResumeChange"
+          @update-latest="handleUpdateLatestResume"
+        />
+        <a-empty v-else description="请先保存基本信息，然后上传简历文件" />
+      </a-tab-pane>
+    </a-tabs>
     <div class="footer">
       <a-button style="margin-right: 8px" @click="onClose">取消</a-button>
       <a-button type="primary" style="margin-right: 8px" @click="onSubmit(false)">保存</a-button>
@@ -76,12 +115,17 @@
   import DepartmentTreeSelect from '/@/components/system/department-tree-select/index.vue';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
   import PositionSelect from '/@/components/system/position-select/index.vue';
+  import EmployeeEducation from '../employee-education/index.vue';
+  import EmployeeWorkExperience from '../employee-work-experience/index.vue';
+  import EmployeeResume from '../employee-resume/index.vue';
   import { GENDER_ENUM } from '/@/constants/common-const';
   import { regular } from '/@/constants/regular-const';
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { smartSentry } from '/@/lib/smart-sentry';
   // ----------------------- 以下是字段定义 emits props ---------------------
   const departmentTreeSelect = ref();
+  const activeTab = ref('basic'); // 当前选项卡
+  
   // emit
   const emit = defineEmits(['refresh', 'show-account']);
 
@@ -92,6 +136,7 @@
   function onClose() {
     reset();
     visible.value = false;
+    activeTab.value = 'basic'; // 重置选项卡
   }
   // 显示
   async function showDrawer(rowData) {
@@ -128,6 +173,8 @@
     email: undefined,
     birthDate: undefined,
     idCard: undefined,
+    resumeFileKey: undefined, // 最新简历文件key
+    resumeUpdateTime: undefined, // 简历更新时间
   };
 
   let form = reactive(_.cloneDeep(formDefault));
@@ -222,6 +269,33 @@
     } finally {
       SmartLoading.hide();
     }
+  }
+
+  // ----------------------- 扩展信息处理 ---------------------
+  
+  // 处理学历信息变化
+  function handleEducationChange(educationList) {
+    // 可以在这里处理学历信息变化的逻辑
+    console.log('学历信息更新:', educationList);
+  }
+  
+  // 处理工作经历变化
+  function handleWorkExperienceChange(workExperienceList) {
+    // 可以在这里处理工作经历变化的逻辑
+    console.log('工作经历更新:', workExperienceList);
+  }
+  
+  // 处理简历变化
+  function handleResumeChange(resumeList) {
+    // 可以在这里处理简历文件变化的逻辑
+    console.log('简历文件更新:', resumeList);
+  }
+  
+  // 处理最新简历更新
+  function handleUpdateLatestResume(fileKey) {
+    form.resumeFileKey = fileKey;
+    form.resumeUpdateTime = new Date().toISOString();
+    console.log('最新简历更新:', fileKey);
   }
 
   // ----------------------- 以下是暴露的方法内容 ----------------------------

@@ -99,6 +99,16 @@ public class EmployeeEntity {
      */
     private String remark;
 
+    /**
+     * 最新简历文件key
+     */
+    private String resumeFileKey;
+
+    /**
+     * 简历更新时间
+     */
+    private LocalDateTime resumeUpdateTime;
+
     private LocalDateTime updateTime;
 
     private LocalDateTime createTime;
