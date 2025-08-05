@@ -275,7 +275,7 @@ async function onSubmit() {
 
     const params = { ...formState.form };
     if (params.birthDate) {
-      params.birthDate = params.birthDate.format('YYYY-MM-DD');
+      params.birthDate = params.birthDate.format('YYYY-MM-DD 00:00:00');
     }
 
     if (formState.isCreate) {

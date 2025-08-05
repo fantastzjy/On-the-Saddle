@@ -41,6 +41,12 @@ public class HorseVO {
     @Schema(description = "毛色")
     private String color;
 
+    @Schema(description = "身高(cm)")
+    private Integer height;
+
+    @Schema(description = "体重(kg)")
+    private Integer weight;
+
     @Schema(description = "出生日期")
     private LocalDateTime birthDate;
 

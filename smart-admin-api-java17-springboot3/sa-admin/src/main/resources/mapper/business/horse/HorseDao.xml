@@ -4,30 +4,32 @@
 
     <select id="queryByPage" resultType="net.lab1024.sa.admin.module.business.horse.domain.vo.HorseListVO">
         SELECT
-            h.horse_id,
-            h.club_id,
-            c.club_name,
-            h.horse_name,
-            h.horse_code,
-            h.breed,
-            h.gender,
-            h.color,
-            h.birth_date,
-            h.chip_no,
-            h.passport_no,
-            h.horse_type,
-            h.owner_id,
-            owner.actual_name as owner_name,
-            h.responsible_coach_id,
-            u_coach.actual_name as responsible_coach_name,
-            h.health_status,
-            h.work_status,
-            h.create_time,
-            h.create_by
+        h.horse_id,
+        h.club_id,
+        c.club_name,
+        h.horse_name,
+        h.horse_code,
+        h.breed,
+        h.gender,
+        h.color,
+        h.height,
+        h.weight,
+        h.birth_date,
+        h.chip_no,
+        h.passport_no,
+        h.horse_type,
+        h.owner_id,
+        owner.actual_name as owner_name,
+        h.responsible_coach_id,
+        u_coach.actual_name as responsible_coach_name,
+        h.health_status,
+        h.work_status,
+        h.create_time,
+        h.create_by
         FROM m_horse h
         LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
         LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
-        LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid = 1
+        LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid =1
         LEFT JOIN t_employee u_coach ON coach.user_id = u_coach.employee_id AND u_coach.deleted_flag = 0
         <where>
             h.is_delete = #{query.isDelete} AND h.is_valid = #{query.isValid}
@@ -80,6 +82,8 @@
             h.breed,
             h.gender,
             h.color,
+            h.height,
+            h.weight,
             h.birth_date,
             h.chip_no,
             h.passport_no,
@@ -119,6 +123,8 @@
             h.breed,
             h.gender,
             h.color,
+            h.height,
+            h.weight,
             h.birth_date,
             h.chip_no,
             h.passport_no,

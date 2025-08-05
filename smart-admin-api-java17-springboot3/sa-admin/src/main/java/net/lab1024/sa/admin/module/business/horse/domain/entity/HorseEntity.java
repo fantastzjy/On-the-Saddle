@@ -43,6 +43,12 @@ public class HorseEntity {
     @DataTracerFieldLabel("毛色")
     private String color;
 
+    @DataTracerFieldLabel("身高")
+    private Integer height;
+
+    @DataTracerFieldLabel("体重")
+    private Integer weight;
+
     @DataTracerFieldLabel("出生日期")
     private LocalDateTime birthDate;
 
