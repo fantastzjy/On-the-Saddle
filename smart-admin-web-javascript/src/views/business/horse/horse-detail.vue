@@ -34,9 +34,6 @@
           <a-tab-pane key="health-plan" tab="健康计划">
             <HorseHealthPlan :horse-id="horseId" />
           </a-tab-pane>
-          <a-tab-pane key="health-record" tab="健康记录">
-            <HorseHealthRecord :horse-id="horseId" />
-          </a-tab-pane>
         </a-tabs>
       </a-card>
     </div>
@@ -54,7 +51,6 @@ import { smartSentry } from '/@/lib/smart-sentry';
 import HorseFormModal from './components/horse-form-modal.vue';
 import HorseBasicInfo from './components/horse-basic-info.vue';
 import HorseHealthPlan from './components/horse-health-plan.vue';
-import HorseHealthRecord from './components/horse-health-record.vue';
 
 const route = useRoute();
 const router = useRouter();
