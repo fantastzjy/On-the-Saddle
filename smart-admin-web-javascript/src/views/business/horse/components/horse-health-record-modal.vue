@@ -202,11 +202,8 @@ async function onSubmit() {
       params.nextDate = params.nextDate.format('YYYY-MM-DD HH:mm:ss');
     }
 
-    // 确保使用最新的图片URL
     updateFormImageUrls();
     params.imgUrl = formState.form.imgUrl;
-    
-    console.log('>>> Submitting with imgUrl:', params.imgUrl);
 
     if (formState.isCreate) {
       await horseHealthRecordApi.create(params);
@@ -251,9 +248,6 @@ function beforeUpload(file) {
 
 async function customUploadRequest(options) {
   try {
-    console.log('>>> Starting upload for file:', options.file.name);
-    
-    // 创建临时文件对象并添加到列表
     const tempFile = {
       uid: options.file.uid,
       name: options.file.name,
@@ -263,7 +257,6 @@ async function customUploadRequest(options) {
     };
     
     fileList.value.push(tempFile);
-    console.log('>>> Temp file added, fileList length:', fileList.value.length);
     
     const formData = new FormData();
     formData.append('file', options.file);
@@ -271,9 +264,6 @@ async function customUploadRequest(options) {
     const res = await fileApi.uploadFile(formData, FILE_FOLDER_TYPE_ENUM.COMMON.value);
     const fileData = res.data;
     
-    console.log('>>> Upload API Response:', fileData);
-    
-    // 找到临时文件并替换为完成状态
     const fileIndex = fileList.value.findIndex(item => item.uid === options.file.uid);
     if (fileIndex > -1) {
       fileList.value[fileIndex] = {
@@ -285,20 +275,14 @@ async function customUploadRequest(options) {
         response: fileData,
         originFileObj: options.file
       };
-      
-      console.log('>>> File updated at index', fileIndex, 'with URL:', fileData.fileUrl);
     }
     
-    // 更新表单imgUrl字段
     updateFormImageUrls();
     
     options.onSuccess(fileData, options.file);
     message.success('图片上传成功');
     
   } catch (error) {
-    console.error('Upload error:', error);
-    
-    // 移除失败的文件
     const fileIndex = fileList.value.findIndex(item => item.uid === options.file.uid);
     if (fileIndex > -1) {
       fileList.value.splice(fileIndex, 1);
@@ -311,31 +295,20 @@ async function customUploadRequest(options) {
 }
 
 function updateFormImageUrls() {
-  console.log('>>> updateFormImageUrls - fileList length:', fileList.value.length);
-  
   const urls = [];
-  fileList.value.forEach((file, index) => {
-    console.log(`>>> updateFormImageUrls File ${index}:`, {
-      status: file.status,
-      url: file.url,
-      hasUrl: !!file.url
-    });
-    
+  fileList.value.forEach((file) => {
     if (file.status === 'done' && file.url) {
       urls.push(file.url);
     }
   });
   
   formState.form.imgUrl = urls.join(',');
-  console.log('>>> updateFormImageUrls result:', formState.form.imgUrl);
 }
 
 function handleUploadChange(info) {
-  const { file, fileList: currentFileList } = info;
+  const { file } = info;
   
   if (file.status === 'removed') {
-    console.log('>>> File removed:', file.name);
-    // 从我们的fileList中移除
     const index = fileList.value.findIndex(item => item.uid === file.uid);
     if (index > -1) {
       fileList.value.splice(index, 1);
@@ -350,7 +323,6 @@ function handlePreview(file) {
 }
 
 function handleRemove(file) {
-  console.log('>>> Removing file with URL:', file.url);
   setTimeout(() => {
     updateFormImageUrls();
   }, 50);
