@@ -206,6 +206,7 @@
       title: '操作',
       dataIndex: 'operate',
       width: 140,
+      fixed: 'right',
     },
   ]);
   const tableData = ref();

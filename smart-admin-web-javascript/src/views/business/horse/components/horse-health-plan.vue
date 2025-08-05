@@ -42,7 +42,7 @@
           <a-tag v-else-if="text === 'normal'" color="green">正常</a-tag>
         </template>
         <template v-else-if="column.dataIndex === 'action'">
-          <div class="sa-table-action">
+          <div class="smart-table-operate">
             <a-button v-privilege="'club:horse:health:record:add'" type="link" @click="quickCreateRecord(record)">
               快速执行
             </a-button>

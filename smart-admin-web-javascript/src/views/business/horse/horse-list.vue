@@ -89,7 +89,7 @@
             {{ text ? dayjs(text).format('YYYY-MM-DD') : '-' }}
           </template>
           <template v-else-if="column.dataIndex === 'action'">
-            <div class="sa-table-action">
+            <div class="smart-table-operate">
               <a-button v-privilege="'club:horse:query'" type="link" @click="goDetail(record.horseId)">查看</a-button>
               <a-button v-privilege="'club:horse:update'" type="link" @click="showModal(false, record)">编辑</a-button>
               <a-button v-privilege="'club:horse:delete'" type="link" danger @click="onDelete(record)">删除</a-button>
