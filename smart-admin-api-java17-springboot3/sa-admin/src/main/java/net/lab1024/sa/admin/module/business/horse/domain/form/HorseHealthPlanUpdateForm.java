@@ -5,6 +5,7 @@ import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDateTime;
 
 /**
@@ -27,8 +28,9 @@ public class HorseHealthPlanUpdateForm {
     @NotNull(message = "马匹ID不能为空")
     private Long horseId;
 
-    @Schema(description = "计划类型", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "计划类型: shoeing-钉蹄, deworming-驱虫, dental-搓牙, vaccine-疫苗, medication-用药", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "计划类型不能为空")
+    @Pattern(regexp = "^(shoeing|deworming|dental|vaccine|medication)$", message = "计划类型格式不正确")
     private String planType;
 
     @Schema(description = "周期天数")

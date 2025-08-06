@@ -87,6 +87,11 @@ export const horseHealthPlanApi = {
   queryReminder: (days) => {
     return getRequest(`/club/horse/health/plan/reminder/${days}`);
   },
+
+  // 获取健康计划类型选项
+  getPlanTypes: () => {
+    return getRequest('/club/horse/health/plan/types');
+  },
 };
 
 export const horseHealthRecordApi = {

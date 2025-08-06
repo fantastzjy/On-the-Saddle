@@ -5,11 +5,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.constant.AdminSwaggerTagConst;
+import net.lab1024.sa.admin.module.business.horse.constant.HealthPlanTypeEnum;
 import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseHealthPlanEntity;
 import net.lab1024.sa.admin.module.business.horse.domain.form.HorseHealthPlanCreateForm;
 import net.lab1024.sa.admin.module.business.horse.domain.form.HorseHealthPlanQueryForm;
 import net.lab1024.sa.admin.module.business.horse.domain.form.HorseHealthPlanUpdateForm;
 import net.lab1024.sa.admin.module.business.horse.domain.vo.HorseHealthPlanListVO;
+import net.lab1024.sa.admin.module.business.horse.domain.vo.HealthPlanTypeOptionVO;
 import net.lab1024.sa.admin.module.business.horse.service.HorseHealthPlanService;
 import net.lab1024.sa.base.module.support.operatelog.annotation.OperateLog;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -18,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 马匹健康计划控制器
@@ -92,5 +96,15 @@ public class HorseHealthPlanController {
     @SaCheckPermission("club:horse:health:plan:update")
     public ResponseDTO<String> execute(@PathVariable Long planId) {
         return horseHealthPlanService.execute(planId);
+    }
+
+    @Operation(summary = "获取健康计划类型选项")
+    @GetMapping("/club/horse/health/plan/types")
+    @SaCheckPermission("club:horse:health:plan:query")
+    public ResponseDTO<List<HealthPlanTypeOptionVO>> getPlanTypes() {
+        List<HealthPlanTypeOptionVO> options = Arrays.stream(HealthPlanTypeEnum.values())
+                .map(type -> new HealthPlanTypeOptionVO(type.getValue(), type.getDesc()))
+                .collect(Collectors.toList());
+        return ResponseDTO.ok(options);
     }
 }

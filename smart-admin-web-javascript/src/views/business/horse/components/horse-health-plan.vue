@@ -37,7 +37,7 @@
           >
             <template #bodyCell="{ text, record, column }">
               <template v-if="column.dataIndex === 'planType'">
-                <a-tag color="blue">{{ text }}</a-tag>
+                <a-tag :color="getPlanTypeColor(text)">{{ getPlanTypeDesc(text) }}</a-tag>
                 <span v-if="selectedPlanId === record.id" style="margin-left: 8px;">
                   <CheckOutlined style="color: #1890ff;" />
                 </span>
@@ -126,15 +126,15 @@
               <span>快速筛选：</span>
               <a-tag 
                 v-for="type in recordTypes" 
-                :key="type.name"
-                :color="filterForm.recordType === type.name ? type.color : 'default'"
+                :key="type.value"
+                :color="filterForm.planType === type.value ? type.color : 'default'"
                 style="cursor: pointer;"
-                @click="filterByType(type.name)"
+                @click="filterByType(type.value)"
               >
-                {{ type.name }} ({{ getRecordCountByType(type.name) }})
+                {{ type.desc }} ({{ getRecordCountByType(type.value) }})
               </a-tag>
               <a-tag 
-                :color="!filterForm.recordType ? 'blue' : 'default'"
+                :color="!filterForm.planType ? 'blue' : 'default'"
                 style="cursor: pointer;"
                 @click="filterByType(null)"
               >
@@ -178,14 +178,14 @@
               :description="selectedPlanId ? '该计划暂无相关记录' : '暂无健康记录'" />
             
             <a-timeline v-else class="health-record-timeline">
-              <a-timeline-item v-for="record in filteredRecordList" :key="record.id" :color="getTimelineColor(record.recordType)">
+              <a-timeline-item v-for="record in filteredRecordList" :key="record.id" :color="getPlanTypeColor(record.planType)">
                 <div class="timeline-content">
                   <div class="timeline-header">
                     <div class="timeline-date-time">
                       <div class="timeline-date">{{ dayjs(record.recordDate).format('MM-DD') }}</div>
                       <div class="timeline-time">{{ dayjs(record.recordDate).format('HH:mm') }}</div>
                     </div>
-                    <a-tag :color="getTypeColor(record.recordType)">{{ record.recordType }}</a-tag>
+                    <a-tag :color="getPlanTypeColor(record.planType)">{{ getPlanTypeDesc(record.planType) }}</a-tag>
                     <span class="timeline-title">{{ record.planType || '临时记录' }}</span>
                     <div class="timeline-actions">
                       <a-button v-privilege="'club:horse:health:record:update'" type="link" size="small" @click="showRecordModal(false, record)">
@@ -247,6 +247,7 @@ import {
 import { horseHealthPlanApi, horseHealthRecordApi } from '/@/api/business/horse/horse-api';
 import { employeeApi } from '/@/api/system/employee-api';
 import { smartSentry } from '/@/lib/smart-sentry';
+import { HEALTH_PLAN_TYPE_ENUM, getPlanTypeDesc, getPlanTypeColor } from '/@/constants/business/horse/health-const';
 import HorseHealthPlanModal from './horse-health-plan-modal.vue';
 import HorseHealthRecordModal from './horse-health-record-modal.vue';
 import QuickRecordModal from './quick-record-modal.vue';
@@ -274,20 +275,13 @@ const quickRecordModalRef = ref();
 
 // 筛选表单
 const filterForm = reactive({
-  recordType: undefined,
+  planType: undefined,
   dateRange: undefined,
   executorId: undefined,
 });
 
-// 记录类型配置
-const recordTypes = [
-  { name: '疫苗', color: 'blue' },
-  { name: '驱虫', color: 'green' },
-  { name: '修蹄', color: 'orange' },
-  { name: '体检', color: 'purple' },
-  { name: '治疗', color: 'red' },
-  { name: '其他', color: 'default' },
-];
+// 记录类型配置（基于常量）
+const recordTypes = Object.values(HEALTH_PLAN_TYPE_ENUM);
 
 // 计划表格列配置
 const planColumns = [
@@ -338,8 +332,8 @@ const filteredRecordList = computed(() => {
   }
   
   // 按记录类型过滤
-  if (filterForm.recordType) {
-    filtered = filtered.filter(record => record.recordType === filterForm.recordType);
+  if (filterForm.planType) {
+    filtered = filtered.filter(record => record.planType === filterForm.planType);
   }
   
   // 按日期范围过滤
@@ -424,8 +418,14 @@ const clearSelection = () => {
 const getSelectedPlanName = () => {
   if (!selectedPlanId.value) return '';
   const plan = planList.value.find(p => p.id === selectedPlanId.value);
-  return plan ? plan.planType : '';
+  return plan ? getPlanTypeDesc(plan.planType) : '';
 };
+
+// 解析图片URL数组
+function getImageUrls(imgUrlString) {
+  if (!imgUrlString) return [];
+  return imgUrlString.split(',').filter(url => url.trim()).map(url => url.trim());
+}
 
 // 获取计划的记录数量
 const getPlanRecordCount = (planId) => {
@@ -456,7 +456,7 @@ function quickCreateRecord(plan) {
     quickRecordModalRef.value.showModal(plan.planType, plan.id);
   } else {
     showRecordModal(true, { 
-      recordType: plan.planType, 
+      planType: plan.planType, 
       planId: plan.id 
     });
   }
@@ -503,46 +503,14 @@ function deleteRecord(record) {
   });
 }
 
-// 获取时间轴颜色
-function getTimelineColor(recordType) {
-  const colorMap = {
-    '疫苗': 'blue',
-    '驱虫': 'green',
-    '修蹄': 'orange',
-    '体检': 'purple',
-    '治疗': 'red',
-    '其他': 'gray',
-  };
-  return colorMap[recordType] || 'gray';
-}
-
-// 获取类型颜色
-function getTypeColor(recordType) {
-  const colorMap = {
-    '疫苗': 'blue',
-    '驱虫': 'green',
-    '修蹄': 'orange',
-    '体检': 'purple',
-    '治疗': 'red',
-    '其他': 'default',
-  };
-  return colorMap[recordType] || 'default';
-}
-
-// 解析图片URL数组
-function getImageUrls(imgUrlString) {
-  if (!imgUrlString) return [];
-  return imgUrlString.split(',').filter(url => url.trim()).map(url => url.trim());
-}
-
 // 获取指定类型的记录数量
 function getRecordCountByType(type) {
-  return recordList.value.filter(record => record.recordType === type).length;
+  return recordList.value.filter(record => record.planType === type).length;
 }
 
 // 按类型筛选
 function filterByType(type) {
-  filterForm.recordType = type;
+  filterForm.planType = type;
 }
 
 // 应用筛选
@@ -552,7 +520,7 @@ function applyFilters() {
 
 // 重置筛选
 function resetFilters() {
-  filterForm.recordType = undefined;
+  filterForm.planType = undefined;
   filterForm.dateRange = undefined;
   filterForm.executorId = undefined;
 }

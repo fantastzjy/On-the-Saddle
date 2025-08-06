@@ -17,14 +17,11 @@
         </a-select>
       </a-form-item>
 
-      <a-form-item label="记录类型" name="recordType">
-        <a-select v-model:value="formState.form.recordType" placeholder="请选择记录类型">
-          <a-select-option value="疫苗">疫苗</a-select-option>
-          <a-select-option value="驱虫">驱虫</a-select-option>
-          <a-select-option value="修蹄">修蹄</a-select-option>
-          <a-select-option value="体检">体检</a-select-option>
-          <a-select-option value="治疗">治疗</a-select-option>
-          <a-select-option value="其他">其他</a-select-option>
+      <a-form-item label="记录类型" name="planType">
+        <a-select v-model:value="formState.form.planType" placeholder="请选择记录类型">
+          <a-select-option v-for="type in planTypeOptions" :key="type.value" :value="type.value">
+            {{ type.label }}
+          </a-select-option>
         </a-select>
       </a-form-item>
 
@@ -109,6 +106,7 @@ const emit = defineEmits(['reload']);
 const formRef = ref();
 const planList = ref([]);
 const executorList = ref([]);
+const planTypeOptions = ref([]);
 
 // 图片上传相关
 const fileList = ref([]);
@@ -123,7 +121,7 @@ const formState = reactive({
     id: undefined,
     horseId: undefined,
     planId: undefined,
-    recordType: '',
+    planType: '',
     recordDate: undefined,
     executorId: undefined,
     content: '',
@@ -134,7 +132,7 @@ const formState = reactive({
 });
 
 const formRules = {
-  recordType: [{ required: true, message: '请选择记录类型' }],
+  planType: [{ required: true, message: '请选择记录类型' }],
   recordDate: [{ required: true, message: '请选择记录日期' }],
   content: [{ required: true, message: '请输入记录内容' }],
 };
@@ -179,7 +177,7 @@ function resetForm() {
     id: undefined,
     horseId: props.horseId,
     planId: undefined,
-    recordType: '',
+    planType: '',
     recordDate: dayjs(),
     executorId: undefined,
     content: '',
@@ -328,6 +326,15 @@ function handleRemove(file) {
   }, 50);
 }
 
+async function loadPlanTypes() {
+  try {
+    const res = await horseHealthPlanApi.getPlanTypes();
+    planTypeOptions.value = res.data || [];
+  } catch (error) {
+    smartSentry.captureError(error);
+  }
+}
+
 async function loadPlanList() {
   if (!props.horseId) return;
   
@@ -349,6 +356,7 @@ async function loadExecutorList() {
 }
 
 onMounted(() => {
+  loadPlanTypes();
   loadPlanList();
   loadExecutorList();
 });
