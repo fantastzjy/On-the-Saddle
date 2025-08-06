@@ -52,9 +52,7 @@
                 {{ text ? dayjs(text).format('YYYY-MM-DD') : '-' }}
               </template>
               <template v-else-if="column.dataIndex === 'reminderStatus'">
-                <a-tag v-if="text === 'overdue'" color="red">已逾期</a-tag>
-                <a-tag v-else-if="text === 'reminder'" color="orange">需要提醒</a-tag>
-                <a-tag v-else-if="text === 'normal'" color="green">正常</a-tag>
+                <a-tag :color="getPlanStatusInfo(text).color">{{ getPlanStatusInfo(text).desc }}</a-tag>
               </template>
               <template v-else-if="column.dataIndex === 'recordCount'">
                 <div class="record-countdown">
@@ -243,7 +241,7 @@ import {
 import { horseHealthPlanApi, horseHealthRecordApi } from '/@/api/business/horse/horse-api';
 import { employeeApi } from '/@/api/system/employee-api';
 import { smartSentry } from '/@/lib/smart-sentry';
-import { HEALTH_PLAN_TYPE_ENUM, getPlanTypeDesc, getPlanTypeColor } from '/@/constants/business/horse/health-const';
+import { HEALTH_PLAN_TYPE_ENUM, getPlanTypeDesc, getPlanTypeColor, getPlanStatusInfo } from '/@/constants/business/horse/health-const';
 import HorseHealthPlanModal from './horse-health-plan-modal.vue';
 import HorseHealthRecordModal from './horse-health-record-modal.vue';
 import QuickRecordModal from './quick-record-modal.vue';

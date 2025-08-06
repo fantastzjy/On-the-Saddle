@@ -9,11 +9,18 @@
     :destroyOnClose="true"
   >
     <div class="quick-record-info">
-      <a-descriptions :column="1" bordered size="small">
-        <a-descriptions-item label="计划类型">{{ getPlanTypeDesc(planInfo.planType) }}</a-descriptions-item>
-        <a-descriptions-item label="周期设置">{{ planInfo.cycleDays > 0 ? `${planInfo.cycleDays}天` : '不重复' }}</a-descriptions-item>
-        <a-descriptions-item v-if="planInfo.nextDate" label="下次执行">{{ planInfo.nextDate }}</a-descriptions-item>
-      </a-descriptions>
+      <div class="plan-info-item">
+        <span class="info-label">计划类型：</span>
+        <span class="info-value">{{ getPlanTypeDesc(planInfo.planType) }}</span>
+      </div>
+      <div class="plan-info-item">
+        <span class="info-label">周期设置：</span>
+        <span class="info-value">{{ planInfo.cycleDays > 0 ? `${planInfo.cycleDays}天` : '不重复' }}</span>
+      </div>
+      <div class="plan-info-item" v-if="planInfo.nextDate">
+        <span class="info-label">下次执行：</span>
+        <span class="info-value">{{ planInfo.nextDate }}</span>
+      </div>
     </div>
 
     <a-form :model="formState.form" :rules="formRules" ref="formRef" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }" style="margin-top: 20px;">
@@ -162,10 +169,39 @@ defineExpose({
 <style scoped>
 .quick-record-info {
   margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #fafafa;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
 }
 
-:deep(.ant-descriptions-item-label) {
+.plan-info-item {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.plan-info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
   width: 80px;
-  background-color: #fafafa;
+  text-align: right;
+  margin-right: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.info-value {
+  flex: 1;
+  color: #262626;
+}
+
+:deep(.ant-form-item-label) {
+  text-align: left !important;
+}
+
+:deep(.ant-form-item-label > label) {
+  text-align: left;
 }
 </style>

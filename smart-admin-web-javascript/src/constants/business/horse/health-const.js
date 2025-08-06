@@ -36,6 +36,28 @@ export function getPlanTypeColor(value) {
   return type ? type.color : 'default';
 }
 
+// 获取状态描述和颜色
+export function getPlanStatusInfo(value) {
+  // 支持数字和字符串两种格式
+  let status;
+  
+  if (typeof value === 'number') {
+    // 数字格式
+    status = Object.values(HEALTH_PLAN_STATUS_ENUM).find(s => s.value === value);
+  } else if (typeof value === 'string') {
+    // 字符串格式
+    const statusMap = {
+      'normal': HEALTH_PLAN_STATUS_ENUM.NORMAL,
+      'reminder': HEALTH_PLAN_STATUS_ENUM.REMINDER, 
+      'urgent': HEALTH_PLAN_STATUS_ENUM.URGENT,
+      'overdue': HEALTH_PLAN_STATUS_ENUM.OVERDUE
+    };
+    status = statusMap[value] || Object.values(HEALTH_PLAN_STATUS_ENUM).find(s => s.desc === value);
+  }
+  
+  return status || { desc: value, color: 'default' };
+}
+
 // 健康计划状态枚举
 export const HEALTH_PLAN_STATUS_ENUM = {
   NORMAL: { value: 1, desc: '正常', color: 'green' },
@@ -63,5 +85,6 @@ export default {
   getHealthPlanTypeList,
   getPlanTypeDesc,
   getPlanTypeColor,
+  getPlanStatusInfo,
   calculatePlanStatus,
 };

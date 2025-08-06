@@ -11,12 +11,9 @@
     <a-form :model="formState.form" :rules="formRules" ref="formRef" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
       <a-form-item label="计划类型" name="planType">
         <a-select v-model:value="formState.form.planType" placeholder="请选择计划类型">
-          <a-select-option value="疫苗">疫苗</a-select-option>
-          <a-select-option value="驱虫">驱虫</a-select-option>
-          <a-select-option value="修蹄">修蹄</a-select-option>
-          <a-select-option value="体检">体检</a-select-option>
-          <a-select-option value="治疗">治疗</a-select-option>
-          <a-select-option value="其他">其他</a-select-option>
+          <a-select-option v-for="type in planTypeOptions" :key="type.value" :value="type.value">
+            {{ type.desc }}
+          </a-select-option>
         </a-select>
       </a-form-item>
 
@@ -61,6 +58,7 @@
 import { ref, reactive } from 'vue';
 import { message } from 'ant-design-vue';
 import { horseHealthPlanApi } from '/@/api/business/horse/horse-api';
+import { HEALTH_PLAN_TYPE_ENUM } from '/@/constants/business/horse/health-const';
 import { smartSentry } from '/@/lib/smart-sentry';
 import dayjs from 'dayjs';
 
@@ -74,6 +72,9 @@ const props = defineProps({
 const emit = defineEmits(['reload']);
 
 const formRef = ref();
+
+// 计划类型选项
+const planTypeOptions = Object.values(HEALTH_PLAN_TYPE_ENUM);
 
 const formState = reactive({
   visible: false,

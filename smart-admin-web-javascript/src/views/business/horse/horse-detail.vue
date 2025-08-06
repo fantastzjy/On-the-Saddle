@@ -3,12 +3,12 @@
     <div class="common-container">
       <div class="sa-page-header">
         <div class="sa-page-header-left">
-          <a-button @click="goBack">
-            <template #icon>
-              <ArrowLeftOutlined />
-            </template>
-            返回
-          </a-button>
+          <!--<a-button @click="goBack">-->
+          <!--  <template #icon>-->
+          <!--    <ArrowLeftOutlined />-->
+          <!--  </template>-->
+          <!--  返回-->
+          <!--</a-button>-->
           <div class="sa-page-header-title">
             <h3>{{ horseDetail.horseName || '马匹详情' }}</h3>
             <div class="sa-page-header-subtitle">
@@ -81,7 +81,7 @@ const horseDetail = reactive({
 
 async function loadHorseDetail() {
   if (!horseId.value) return;
-  
+
   try {
     loading.value = true;
     const res = await horseApi.detail(horseId.value);

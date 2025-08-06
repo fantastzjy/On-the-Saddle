@@ -22,12 +22,6 @@
         <a-tag :color="getPlanTypeColor(selectedPlanType)">
           {{ getPlanTypeDesc(selectedPlanType) }}
         </a-tag>
-        <span v-if="formState.form.planId" style="margin-left: 8px; color: #666; font-size: 12px;">
-          (根据关联计划自动设置)
-        </span>
-        <span v-else style="margin-left: 8px; color: #666; font-size: 12px;">
-          (记录类型)
-        </span>
       </a-form-item>
 
       <a-form-item label="记录日期" name="recordDate">
@@ -150,7 +144,7 @@ const selectedPlanType = computed(() => {
       return selectedPlan.planType;
     }
   }
-  
+
   // 如果没有关联计划，使用记录本身的类型（编辑模式）
   return formState.form.planType || '';
 });
