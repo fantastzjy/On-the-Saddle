@@ -10,26 +10,28 @@
   >
     <a-form :model="formState.form" :rules="formRules" ref="formRef" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
       <a-form-item label="关联计划" name="planId">
-        <a-select v-model:value="formState.form.planId" placeholder="请选择关联计划" allowClear>
+        <a-select v-model:value="formState.form.planId" placeholder="请选择关联计划" allowClear @change="onPlanChange">
           <a-select-option v-for="plan in planList" :key="plan.id" :value="plan.id">
-            {{ plan.planType }}
+            {{ getPlanTypeDesc(plan.planType) }} - {{ plan.nextDate ? dayjs(plan.nextDate).format('YYYY-MM-DD') : '无下次日期' }}
           </a-select-option>
         </a-select>
       </a-form-item>
 
-      <a-form-item label="记录类型" name="planType">
-        <a-select v-model:value="formState.form.planType" placeholder="请选择记录类型">
-          <a-select-option v-for="type in planTypeOptions" :key="type.value" :value="type.value">
-            {{ type.label }}
-          </a-select-option>
-        </a-select>
+      <!-- 显示选中计划的类型信息 -->
+      <a-form-item v-if="formState.form.planId" label="计划类型">
+        <a-tag :color="getPlanTypeColor(selectedPlanType)">
+          {{ getPlanTypeDesc(selectedPlanType) }}
+        </a-tag>
+        <!--<span style="margin-left: 8px; color: #666; font-size: 12px;">-->
+        <!--  (根据关联计划自动设置)-->
+        <!--</span>-->
       </a-form-item>
 
       <a-form-item label="记录日期" name="recordDate">
-        <a-date-picker 
-          v-model:value="formState.form.recordDate" 
-          placeholder="请选择记录日期" 
-          style="width: 100%" 
+        <a-date-picker
+          v-model:value="formState.form.recordDate"
+          placeholder="请选择记录日期"
+          style="width: 100%"
           showTime
           format="YYYY-MM-DD HH:mm"
         />
@@ -64,7 +66,7 @@
               <div style="margin-top: 8px">上传图片</div>
             </div>
           </a-upload>
-          
+
           <!-- 图片预览模态框 -->
           <a-modal v-model:open="previewVisible" :footer="null" :width="800">
             <img :src="previewImage" style="width: 100%" />
@@ -84,13 +86,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { message } from 'ant-design-vue';
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { horseHealthRecordApi, horseHealthPlanApi } from '/@/api/business/horse/horse-api';
 import { employeeApi } from '/@/api/system/employee-api';
 import { fileApi } from '/@/api/support/file-api';
 import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
+import { getPlanTypeDesc, getPlanTypeColor } from '/@/constants/business/horse/health-const';
 import { smartSentry } from '/@/lib/smart-sentry';
 import dayjs from 'dayjs';
 
@@ -106,7 +109,6 @@ const emit = defineEmits(['reload']);
 const formRef = ref();
 const planList = ref([]);
 const executorList = ref([]);
-const planTypeOptions = ref([]);
 
 // 图片上传相关
 const fileList = ref([]);
@@ -132,15 +134,33 @@ const formState = reactive({
 });
 
 const formRules = {
-  planType: [{ required: true, message: '请选择记录类型' }],
   recordDate: [{ required: true, message: '请选择记录日期' }],
   content: [{ required: true, message: '请输入记录内容' }],
 };
 
+// 计算选中计划的类型
+const selectedPlanType = computed(() => {
+  if (!formState.form.planId) return '';
+  const selectedPlan = planList.value.find(plan => plan.id === formState.form.planId);
+  return selectedPlan?.planType || '';
+});
+
+// 处理计划选择变化
+function onPlanChange(planId) {
+  if (planId) {
+    const selectedPlan = planList.value.find(plan => plan.id === planId);
+    if (selectedPlan) {
+      formState.form.planType = selectedPlan.planType;
+    }
+  } else {
+    formState.form.planType = '';
+  }
+}
+
 function showModal(isCreate, rowData = {}) {
   formState.visible = true;
   formState.isCreate = isCreate;
-  
+
   if (isCreate) {
     resetForm();
     formState.form.horseId = props.horseId;
@@ -152,7 +172,7 @@ function showModal(isCreate, rowData = {}) {
       recordDate: rowData.recordDate ? dayjs(rowData.recordDate) : undefined,
       nextDate: rowData.nextDate ? dayjs(rowData.nextDate) : undefined,
     });
-    
+
     // 加载现有图片到文件列表
     loadExistingImages(rowData.imgUrl);
   }
@@ -234,13 +254,13 @@ function beforeUpload(file) {
     message.error('只能上传图片文件！');
     return false;
   }
-  
+
   const isLt5M = file.size / 1024 / 1024 < 5;
   if (!isLt5M) {
     message.error('图片大小不能超过 5MB！');
     return false;
   }
-  
+
   return true;
 }
 
@@ -253,15 +273,15 @@ async function customUploadRequest(options) {
       percent: 0,
       originFileObj: options.file
     };
-    
+
     fileList.value.push(tempFile);
-    
+
     const formData = new FormData();
     formData.append('file', options.file);
-    
+
     const res = await fileApi.uploadFile(formData, FILE_FOLDER_TYPE_ENUM.COMMON.value);
     const fileData = res.data;
-    
+
     const fileIndex = fileList.value.findIndex(item => item.uid === options.file.uid);
     if (fileIndex > -1) {
       fileList.value[fileIndex] = {
@@ -274,18 +294,18 @@ async function customUploadRequest(options) {
         originFileObj: options.file
       };
     }
-    
+
     updateFormImageUrls();
-    
+
     options.onSuccess(fileData, options.file);
     message.success('图片上传成功');
-    
+
   } catch (error) {
     const fileIndex = fileList.value.findIndex(item => item.uid === options.file.uid);
     if (fileIndex > -1) {
       fileList.value.splice(fileIndex, 1);
     }
-    
+
     options.onError(error);
     message.error('图片上传失败');
     smartSentry.captureError(error);
@@ -299,13 +319,13 @@ function updateFormImageUrls() {
       urls.push(file.url);
     }
   });
-  
+
   formState.form.imgUrl = urls.join(',');
 }
 
 function handleUploadChange(info) {
   const { file } = info;
-  
+
   if (file.status === 'removed') {
     const index = fileList.value.findIndex(item => item.uid === file.uid);
     if (index > -1) {
@@ -326,18 +346,9 @@ function handleRemove(file) {
   }, 50);
 }
 
-async function loadPlanTypes() {
-  try {
-    const res = await horseHealthPlanApi.getPlanTypes();
-    planTypeOptions.value = res.data || [];
-  } catch (error) {
-    smartSentry.captureError(error);
-  }
-}
-
 async function loadPlanList() {
   if (!props.horseId) return;
-  
+
   try {
     const res = await horseHealthPlanApi.queryByHorseId(props.horseId);
     planList.value = res.data || [];
@@ -356,7 +367,6 @@ async function loadExecutorList() {
 }
 
 onMounted(() => {
-  loadPlanTypes();
   loadPlanList();
   loadExecutorList();
 });

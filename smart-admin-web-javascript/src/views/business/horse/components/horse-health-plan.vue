@@ -2,7 +2,7 @@
   <div class="horse-health-plan-container">
     <a-row :gutter="24">
       <!-- 左侧：健康计划 -->
-      <a-col :span="10">
+      <a-col :span="12">
         <div class="health-plan-panel">
           <div class="sa-table-header">
             <div class="sa-table-header-left">
@@ -57,9 +57,22 @@
                 <a-tag v-else-if="text === 'normal'" color="green">正常</a-tag>
               </template>
               <template v-else-if="column.dataIndex === 'recordCount'">
-                <a-badge :count="getPlanRecordCount(record.id)" :numberStyle="{ backgroundColor: '#52c41a' }">
-                  <span>记录</span>
-                </a-badge>
+                <div class="record-countdown">
+                  <div class="countdown-text">
+                    <span v-if="getCountdownDays(record) > 0" class="countdown-days">
+                      还有{{ getCountdownDays(record) }}天
+                    </span>
+                    <span v-else-if="getCountdownDays(record) === 0" class="countdown-today">
+                      今天执行
+                    </span>
+                    <span v-else class="countdown-overdue">
+                      逾期{{ Math.abs(getCountdownDays(record)) }}天
+                    </span>
+                  </div>
+                  <div class="execution-count">
+                    (已执行{{ getPlanRecordCount(record.id) }}次)
+                  </div>
+                </div>
               </template>
               <template v-else-if="column.dataIndex === 'action'">
                 <div class="smart-table-operate">
@@ -80,7 +93,7 @@
       </a-col>
 
       <!-- 右侧：健康记录 -->
-      <a-col :span="14">
+      <a-col :span="12">
         <div class="health-record-panel">
           <!-- 记录头部 -->
           <div class="record-header">
@@ -107,38 +120,25 @@
             </div>
           </div>
 
-          <!-- 筛选状态栏 -->
-          <div class="filter-status-bar">
+          <!-- 快速筛选 -->
+          <div class="quick-filter-bar">
             <a-space>
-              <a-tag v-if="!selectedPlanId" color="default">
-                <EyeOutlined /> 显示全部记录
-              </a-tag>
-              <a-tag v-else color="blue">
-                <FilterOutlined /> 显示计划：{{ getSelectedPlanName() }}
-                <a-button type="text" size="small" @click="clearSelection" style="margin-left: 4px;">
-                  <CloseOutlined />
-                </a-button>
-              </a-tag>
-              
-              <a-divider type="vertical" />
-              
-              <!-- 快速筛选 -->
               <span>快速筛选：</span>
-              <a-tag 
-                v-for="type in recordTypes" 
+              <a-tag
+                  :color="!filterForm.planType ? 'blue' : 'default'"
+                  style="cursor: pointer;"
+                  @click="filterByType(null)"
+              >
+                全部 ({{ recordList.length }})
+              </a-tag>
+              <a-tag
+                v-for="type in recordTypes"
                 :key="type.value"
                 :color="filterForm.planType === type.value ? type.color : 'default'"
                 style="cursor: pointer;"
                 @click="filterByType(type.value)"
               >
                 {{ type.desc }} ({{ getRecordCountByType(type.value) }})
-              </a-tag>
-              <a-tag 
-                :color="!filterForm.planType ? 'blue' : 'default'"
-                style="cursor: pointer;"
-                @click="filterByType(null)"
-              >
-                全部 ({{ recordList.length }})
               </a-tag>
             </a-space>
           </div>
@@ -147,18 +147,18 @@
           <div class="sa-filter-bar">
             <a-row :gutter="16">
               <a-col :span="8">
-                <a-range-picker 
-                  v-model:value="filterForm.dateRange" 
+                <a-range-picker
+                  v-model:value="filterForm.dateRange"
                   placeholder="选择日期范围"
-                  @change="applyFilters" 
+                  @change="applyFilters"
                 />
               </a-col>
               <a-col :span="8">
-                <a-select 
-                  v-model:value="filterForm.executorId" 
-                  placeholder="执行人" 
-                  allowClear 
-                  @change="applyFilters" 
+                <a-select
+                  v-model:value="filterForm.executorId"
+                  placeholder="执行人"
+                  allowClear
+                  @change="applyFilters"
                   showSearch
                 >
                   <a-select-option v-for="executor in executorList" :key="executor.employeeId" :value="executor.employeeId">
@@ -174,9 +174,9 @@
 
           <!-- 记录时间轴 -->
           <div class="record-timeline-container">
-            <a-empty v-if="filteredRecordList.length === 0 && !recordLoading" 
+            <a-empty v-if="filteredRecordList.length === 0 && !recordLoading"
               :description="selectedPlanId ? '该计划暂无相关记录' : '暂无健康记录'" />
-            
+
             <a-timeline v-else class="health-record-timeline">
               <a-timeline-item v-for="record in filteredRecordList" :key="record.id" :color="getPlanTypeColor(record.planType)">
                 <div class="timeline-content">
@@ -186,7 +186,6 @@
                       <div class="timeline-time">{{ dayjs(record.recordDate).format('HH:mm') }}</div>
                     </div>
                     <a-tag :color="getPlanTypeColor(record.planType)">{{ getPlanTypeDesc(record.planType) }}</a-tag>
-                    <span class="timeline-title">{{ record.planType || '临时记录' }}</span>
                     <div class="timeline-actions">
                       <a-button v-privilege="'club:horse:health:record:update'" type="link" size="small" @click="showRecordModal(false, record)">
                         编辑
@@ -200,11 +199,11 @@
                     <p v-if="record.content">{{ record.content }}</p>
                     <div v-if="record.imgUrl" class="timeline-images">
                       <a-image-preview-group>
-                        <a-image 
-                          v-for="(imageUrl, index) in getImageUrls(record.imgUrl)" 
+                        <a-image
+                          v-for="(imageUrl, index) in getImageUrls(record.imgUrl)"
                           :key="index"
-                          :src="imageUrl" 
-                          :width="100" 
+                          :src="imageUrl"
+                          :width="100"
                           :height="100"
                           :style="{ margin: '4px', borderRadius: '6px', objectFit: 'cover' }"
                           :preview="{ mask: '点击放大' }"
@@ -237,12 +236,9 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
 import { message, Modal } from 'ant-design-vue';
-import { 
-  PlusOutlined, 
-  CheckOutlined,
-  EyeOutlined,
-  FilterOutlined,
-  CloseOutlined
+import {
+  PlusOutlined,
+  CheckOutlined
 } from '@ant-design/icons-vue';
 import { horseHealthPlanApi, horseHealthRecordApi } from '/@/api/business/horse/horse-api';
 import { employeeApi } from '/@/api/system/employee-api';
@@ -311,9 +307,9 @@ const planColumns = [
     width: 80,
   },
   {
-    title: '记录',
+    title: '执行情况',
     dataIndex: 'recordCount',
-    width: 60,
+    width: 100,
   },
   {
     title: '操作',
@@ -325,17 +321,17 @@ const planColumns = [
 // 过滤后的记录列表
 const filteredRecordList = computed(() => {
   let filtered = [...recordList.value];
-  
+
   // 根据选中的计划过滤
   if (selectedPlanId.value) {
     filtered = filtered.filter(record => record.planId === selectedPlanId.value);
   }
-  
+
   // 按记录类型过滤
   if (filterForm.planType) {
     filtered = filtered.filter(record => record.planType === filterForm.planType);
   }
-  
+
   // 按日期范围过滤
   if (filterForm.dateRange && filterForm.dateRange.length === 2) {
     const [startDate, endDate] = filterForm.dateRange;
@@ -344,12 +340,12 @@ const filteredRecordList = computed(() => {
       return recordDate.isAfter(startDate) && recordDate.isBefore(endDate.add(1, 'day'));
     });
   }
-  
+
   // 按执行人过滤
   if (filterForm.executorId) {
     filtered = filtered.filter(record => record.executorId === filterForm.executorId);
   }
-  
+
   // 按时间降序排列
   return filtered.sort((a, b) => dayjs(b.recordDate).valueOf() - dayjs(a.recordDate).valueOf());
 });
@@ -357,7 +353,7 @@ const filteredRecordList = computed(() => {
 // 加载健康计划列表
 async function loadPlanList() {
   if (!props.horseId) return;
-  
+
   try {
     planLoading.value = true;
     const res = await horseHealthPlanApi.queryByHorseId(props.horseId);
@@ -372,7 +368,7 @@ async function loadPlanList() {
 // 加载健康记录列表
 async function loadRecordList() {
   if (!props.horseId) return;
-  
+
   try {
     recordLoading.value = true;
     const res = await horseHealthRecordApi.queryByHorseId(props.horseId);
@@ -404,8 +400,10 @@ const refreshAll = () => {
 const onPlanRowClick = (plan) => {
   if (selectedPlanId.value === plan.id) {
     selectedPlanId.value = null; // 取消选择，显示全部
+    filterForm.planType = undefined; // 清除类型筛选
   } else {
     selectedPlanId.value = plan.id; // 选择该计划
+    filterForm.planType = plan.planType; // 同步设置类型筛选
   }
 };
 
@@ -432,10 +430,18 @@ const getPlanRecordCount = (planId) => {
   return recordList.value.filter(r => r.planId === planId).length;
 };
 
+// 计算距离下次执行的天数
+const getCountdownDays = (plan) => {
+  if (!plan.nextDate) return null;
+  const today = dayjs().startOf('day');
+  const nextDate = dayjs(plan.nextDate).startOf('day');
+  return nextDate.diff(today, 'day');
+};
+
 // 获取本月记录数量
 const getMonthRecordCount = () => {
   const currentMonth = dayjs().format('YYYY-MM');
-  return recordList.value.filter(record => 
+  return recordList.value.filter(record =>
     dayjs(record.recordDate).format('YYYY-MM') === currentMonth
   ).length;
 };
@@ -455,9 +461,9 @@ function quickCreateRecord(plan) {
   if (quickRecordModalRef.value) {
     quickRecordModalRef.value.showModal(plan.planType, plan.id);
   } else {
-    showRecordModal(true, { 
-      planType: plan.planType, 
-      planId: plan.id 
+    showRecordModal(true, {
+      planType: plan.planType,
+      planId: plan.id
     });
   }
 }
@@ -511,6 +517,7 @@ function getRecordCountByType(type) {
 // 按类型筛选
 function filterByType(type) {
   filterForm.planType = type;
+  selectedPlanId.value = null; // 清除计划选择，因为现在按类型筛选
 }
 
 // 应用筛选
@@ -523,6 +530,7 @@ function resetFilters() {
   filterForm.planType = undefined;
   filterForm.dateRange = undefined;
   filterForm.executorId = undefined;
+  selectedPlanId.value = null; // 同时清除计划选择
 }
 
 // 格式化记录数据
@@ -584,7 +592,7 @@ defineExpose({
   border-radius: 6px;
 }
 
-.filter-status-bar {
+.quick-filter-bar {
   margin-bottom: 16px;
   padding: 12px 16px;
   background: #f0f2f5;
@@ -712,6 +720,36 @@ defineExpose({
 .timeline-next {
   color: #1890ff;
   font-weight: 500;
+}
+
+/* 执行情况样式 */
+.record-countdown {
+  text-align: center;
+  font-size: 12px;
+}
+
+.countdown-text {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.countdown-days {
+  color: #1890ff;
+}
+
+.countdown-today {
+  color: #faad14;
+  font-weight: 600;
+}
+
+.countdown-overdue {
+  color: #ff4d4f;
+  font-weight: 600;
+}
+
+.execution-count {
+  color: #8c8c8c;
+  font-size: 11px;
 }
 
 /* 响应式设计 */
