@@ -12,8 +12,8 @@
   <div class="login-container">
     <div class="box-item desc">
       <div class="welcome">
-        <p>欢迎登录 SmartAdmin V3</p>
-        <p class="sub-welcome">「高质量代码、简洁、高效、安全」的开发平台</p>
+        <p>鞍境 on the saddle 1.0</p>
+        <p class="sub-welcome">马术人自己的圈子</p>
       </div>
       <img class="welcome-img" :src="loginGif" />
     </div>
