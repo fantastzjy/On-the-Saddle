@@ -459,7 +459,7 @@ function showRecordModal(isCreate, record = {}) {
 // 快速创建记录
 function quickCreateRecord(plan) {
   if (quickRecordModalRef.value) {
-    quickRecordModalRef.value.showModal(plan.planType, plan.id);
+    quickRecordModalRef.value.showModal(plan);
   } else {
     showRecordModal(true, {
       planType: plan.planType,

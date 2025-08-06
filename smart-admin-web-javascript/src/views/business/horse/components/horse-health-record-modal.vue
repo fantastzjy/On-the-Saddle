@@ -18,13 +18,16 @@
       </a-form-item>
 
       <!-- 显示选中计划的类型信息 -->
-      <a-form-item v-if="formState.form.planId" label="计划类型">
+      <a-form-item v-if="selectedPlanType" label="计划类型">
         <a-tag :color="getPlanTypeColor(selectedPlanType)">
           {{ getPlanTypeDesc(selectedPlanType) }}
         </a-tag>
-        <!--<span style="margin-left: 8px; color: #666; font-size: 12px;">-->
-        <!--  (根据关联计划自动设置)-->
-        <!--</span>-->
+        <span v-if="formState.form.planId" style="margin-left: 8px; color: #666; font-size: 12px;">
+          (根据关联计划自动设置)
+        </span>
+        <span v-else style="margin-left: 8px; color: #666; font-size: 12px;">
+          (记录类型)
+        </span>
       </a-form-item>
 
       <a-form-item label="记录日期" name="recordDate">
@@ -140,9 +143,16 @@ const formRules = {
 
 // 计算选中计划的类型
 const selectedPlanType = computed(() => {
-  if (!formState.form.planId) return '';
-  const selectedPlan = planList.value.find(plan => plan.id === formState.form.planId);
-  return selectedPlan?.planType || '';
+  // 优先使用关联计划的类型
+  if (formState.form.planId) {
+    const selectedPlan = planList.value.find(plan => plan.id === formState.form.planId);
+    if (selectedPlan?.planType) {
+      return selectedPlan.planType;
+    }
+  }
+  
+  // 如果没有关联计划，使用记录本身的类型（编辑模式）
+  return formState.form.planType || '';
 });
 
 // 处理计划选择变化
