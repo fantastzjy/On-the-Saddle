@@ -52,22 +52,22 @@
           <div class="btn" @click="onLogin">登录</div>
         </a-form-item>
       </a-form>
-      <div class="more">
-        <div class="title-box">
-          <p class="line"></p>
-          <p class="title">其他方式登录</p>
-          <p class="line"></p>
-        </div>
-        <div class="login-type">
-          <img :src="wechatIcon" />
-          <img :src="aliIcon" />
-          <img :src="douyinIcon" />
-          <img :src="qqIcon" />
-          <img :src="weiboIcon" />
-          <img :src="feishuIcon" />
-          <img :src="googleIcon" />
-        </div>
-      </div>
+      <!--<div class="more">-->
+      <!--  <div class="title-box">-->
+      <!--    <p class="line"></p>-->
+      <!--    <p class="title">其他方式登录</p>-->
+      <!--    <p class="line"></p>-->
+      <!--  </div>-->
+      <!--  <div class="login-type">-->
+      <!--    <img :src="wechatIcon" />-->
+      <!--    <img :src="aliIcon" />-->
+      <!--    <img :src="douyinIcon" />-->
+      <!--    <img :src="qqIcon" />-->
+      <!--    <img :src="weiboIcon" />-->
+      <!--    <img :src="feishuIcon" />-->
+      <!--    <img :src="googleIcon" />-->
+      <!--  </div>-->
+      <!--</div>-->
     </div>
   </div>
 </template>
