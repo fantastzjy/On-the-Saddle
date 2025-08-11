@@ -40,6 +40,7 @@ export const TABLE_ID_CONST = {
       HORSE: businessClubInitTableId + 3, //马匹管理
       HORSE_HEALTH_PLAN: businessClubInitTableId + 4, //马匹健康计划
       HORSE_HEALTH_RECORD: businessClubInitTableId + 5, //马匹健康记录
+      MEMBER: businessClubInitTableId + 6, //会员管理
     },
   },
 
