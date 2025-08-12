@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.member.dao.FamilyGroupDao">
+
+    <!-- 根据会员ID获取家庭信息 -->
+    <select id="getFamilyInfoByMemberId" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO">
+        SELECT
+            fg.family_group_id,
+            fg.family_name,
+            fg.club_id,
+            fg.main_contact_id,
+            mc.actual_name as main_contact_name,
+            fg.description,
+            fg.create_time
+        FROM m_family_group fg
+        INNER JOIN m_family_member_relation fmr ON fg.family_group_id = fmr.family_group_id AND fmr.is_delete = 0
+        LEFT JOIN m_member mc ON fg.main_contact_id = mc.member_id AND mc.is_delete = 0
+        WHERE fmr.member_id = #{memberId} AND fg.is_delete = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据俱乐部ID和家庭名称查询 -->
+    <select id="selectByClubAndName" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.FamilyGroupEntity">
+        SELECT * FROM m_family_group 
+        WHERE club_id = #{clubId} AND family_name = #{familyName} AND is_delete = 0
+    </select>
+
+    <!-- 更新主要联系人 -->
+    <update id="updateMainContact">
+        UPDATE m_family_group 
+        SET main_contact_id = #{mainContactId}, update_time = NOW()
+        WHERE family_group_id = #{familyGroupId}
+    </update>
+
+</mapper>

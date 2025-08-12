@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.member.dao.MemberDao">
+
+    <!-- 分页查询会员列表 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO">
+        SELECT
+            m.member_id,
+            m.member_no,
+            m.actual_name,
+            m.phone,
+            m.email,
+            m.avatar_url,
+            m.gender,
+            m.birth_date,
+            TIMESTAMPDIFF(YEAR, m.birth_date, CURDATE()) as age,
+            m.club_id,
+            club.club_name,
+            m.is_membership,
+            m.membership_status,
+            m.expire_date,
+            CASE 
+                WHEN m.expire_date IS NULL THEN NULL
+                ELSE DATEDIFF(m.expire_date, CURDATE())
+            END as remaining_days,
+            m.id_card_no,
+            m.rider_cert_no,
+            m.registration_status,
+            m.created_by_guardian,
+            m.disabled_flag,
+            m.membership_status,
+            m.expire_date,
+            fg.family_group_id,
+            fg.family_name,
+            fmr.is_guardian,
+            m.last_login_time,
+            m.create_by,
+            m.create_time,
+            m.update_by,
+            m.update_time
+        FROM m_member m
+        LEFT JOIN m_club club ON m.club_id = club.club_id AND club.is_delete = 0
+        LEFT JOIN m_family_member_relation fmr ON m.member_id = fmr.member_id AND fmr.is_delete = 0
+        LEFT JOIN m_family_group fg ON fmr.family_group_id = fg.family_group_id AND fg.is_delete = 0
+        <where>
+            m.is_delete = #{queryForm.isDelete}
+            <if test="queryForm.keywords != null and queryForm.keywords != ''">
+                AND (
+                    INSTR(m.member_no, #{queryForm.keywords}) > 0
+                    OR INSTR(m.actual_name, #{queryForm.keywords}) > 0
+                    OR INSTR(m.phone, #{queryForm.keywords}) > 0
+                    OR INSTR(m.rider_cert_no, #{queryForm.keywords}) > 0
+                )
+            </if>
+            <if test="queryForm.clubId != null">
+                AND m.club_id = #{queryForm.clubId}
+            </if>
+            <if test="queryForm.registrationStatus != null">
+                AND m.registration_status = #{queryForm.registrationStatus}
+            </if>
+            <if test="queryForm.isMembership != null">
+                AND m.is_membership = #{queryForm.isMembership}
+            </if>
+            <if test="queryForm.createdByGuardian != null">
+                AND m.created_by_guardian = #{queryForm.createdByGuardian}
+            </if>
+            <if test="queryForm.disabledFlag != null">
+                AND m.disabled_flag = #{queryForm.disabledFlag}
+            </if>
+            <if test="queryForm.gender != null">
+                AND m.gender = #{queryForm.gender}
+            </if>
+            <if test="queryForm.createTimeBegin != null and queryForm.createTimeBegin != ''">
+                AND m.create_time >= #{queryForm.createTimeBegin}
+            </if>
+            <if test="queryForm.createTimeEnd != null and queryForm.createTimeEnd != ''">
+                AND m.create_time &lt;= #{queryForm.createTimeEnd}
+            </if>
+            <if test="queryForm.isValid != null">
+                AND m.is_valid = #{queryForm.isValid}
+            </if>
+        </where>
+        ORDER BY m.create_time DESC
+    </select>
+
+    <!-- 根据会员编号查询 -->
+    <select id="selectByMemberNo" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity">
+        SELECT * FROM m_member 
+        WHERE member_no = #{memberNo} AND is_delete = 0
+    </select>
+
+    <!-- 根据登录名查询 -->
+    <select id="selectByLoginName" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity">
+        SELECT * FROM m_member 
+        WHERE login_name = #{loginName} AND is_delete = 0
+    </select>
+
+    <!-- 根据手机号查询 -->
+    <select id="selectByPhone" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity">
+        SELECT * FROM m_member 
+        WHERE phone = #{phone} AND is_delete = 0
+    </select>
+
+    <!-- 查询会员详情 -->
+    <select id="getMemberDetail" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.MemberDetailVO">
+        SELECT
+            m.member_id,
+            m.member_no,
+            m.union_id,
+            m.open_id,
+            m.login_name,
+            m.actual_name,
+            m.phone,
+            m.email,
+            m.avatar_url,
+            m.gender,
+            m.birth_date,
+            TIMESTAMPDIFF(YEAR, m.birth_date, CURDATE()) as age,
+            m.club_id,
+            club.club_name,
+            m.is_membership,
+            m.membership_status,
+            m.expire_date,
+            CASE 
+                WHEN m.expire_date IS NULL THEN NULL
+                ELSE DATEDIFF(m.expire_date, CURDATE())
+            END as membership_remaining_days,
+            m.id_card_no,
+            m.rider_cert_no,
+            m.registration_status,
+            m.created_by_guardian,
+            m.disabled_flag,
+            m.profile_data,
+            m.last_login_time,
+            m.create_by,
+            m.create_time,
+            m.update_by,
+            m.update_time
+        FROM m_member m
+        LEFT JOIN m_club club ON m.club_id = club.club_id AND club.is_delete = 0
+        WHERE m.member_id = #{memberId} AND m.is_delete = 0
+    </select>
+
+    <!-- 检查手机号是否存在 -->
+    <select id="checkPhoneExists" resultType="int">
+        SELECT COUNT(1) FROM m_member 
+        WHERE phone = #{phone} AND is_delete = 0
+        <if test="excludeId != null">
+            AND member_id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 检查登录名是否存在 -->
+    <select id="checkLoginNameExists" resultType="int">
+        SELECT COUNT(1) FROM m_member 
+        WHERE login_name = #{loginName} AND is_delete = 0
+        <if test="excludeId != null">
+            AND member_id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 检查会员编号是否存在 -->
+    <select id="checkMemberNoExists" resultType="int">
+        SELECT COUNT(1) FROM m_member 
+        WHERE member_no = #{memberNo} AND is_delete = 0
+    </select>
+
+    <!-- 根据俱乐部ID查询会员列表 -->
+    <select id="queryListByClub" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO">
+        SELECT
+            m.member_id,
+            m.member_no,
+            m.actual_name,
+            m.phone,
+            m.avatar_url,
+            m.gender,
+            m.registration_status,
+            m.disabled_flag
+        FROM m_member m
+        WHERE m.club_id = #{clubId} AND m.is_delete = 0
+        <if test="isValid != null">
+            AND m.is_valid = #{isValid}
+        </if>
+        ORDER BY m.actual_name ASC
+    </select>
+
+    <!-- 更新会员状态 -->
+    <update id="updateMemberStatus">
+        UPDATE m_member 
+        SET disabled_flag = #{disabledFlag}, update_time = NOW()
+        WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 重置密码 -->
+    <update id="resetPassword">
+        UPDATE m_member 
+        SET login_pwd = #{newPassword}, update_time = NOW()
+        WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 更新最后登录时间 -->
+    <update id="updateLastLoginTime">
+        UPDATE m_member 
+        SET last_login_time = NOW(), update_time = NOW()
+        WHERE member_id = #{memberId}
+    </update>
+
+    <!-- 查询所有有效会员 -->
+    <select id="queryAllValidMembers" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity">
+        SELECT * FROM m_member 
+        WHERE is_valid = 1 AND is_delete = 0
+    </select>
+
+</mapper>

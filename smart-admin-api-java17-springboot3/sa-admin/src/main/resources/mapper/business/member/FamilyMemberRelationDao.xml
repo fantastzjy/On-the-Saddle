@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.member.dao.FamilyMemberRelationDao">
+
+    <!-- 根据家庭组ID查询成员列表 -->
+    <select id="getMembersByFamilyGroupId" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO$FamilyMemberVO">
+        SELECT
+            m.member_id,
+            m.member_no,
+            m.actual_name,
+            m.avatar_url,
+            m.phone,
+            m.gender,
+            TIMESTAMPDIFF(YEAR, m.birth_date, CURDATE()) as age,
+            m.registration_status,
+            fmr.is_guardian,
+            fmr.join_date,
+            fmr.remark
+        FROM m_family_member_relation fmr
+        INNER JOIN m_member m ON fmr.member_id = m.member_id AND m.is_delete = 0
+        WHERE fmr.family_group_id = #{familyGroupId} AND fmr.is_delete = 0
+        ORDER BY fmr.is_guardian DESC, m.birth_date DESC
+    </select>
+
+    <!-- 根据家庭组和会员ID查询关系 -->
+    <select id="selectByFamilyAndMember" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.FamilyMemberRelationEntity">
+        SELECT * FROM m_family_member_relation 
+        WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId} AND is_delete = 0
+    </select>
+
+    <!-- 设置监护人 -->
+    <update id="setGuardian">
+        UPDATE m_family_member_relation 
+        SET is_guardian = #{isGuardian}, update_time = NOW()
+        WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId}
+    </update>
+
+    <!-- 移除家庭成员（软删除） -->
+    <update id="removeFamilyMember">
+        UPDATE m_family_member_relation 
+        SET is_delete = 1, update_time = NOW()
+        WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId}
+    </update>
+
+    <!-- 查询家庭组中的监护人数量 -->
+    <select id="countGuardiansByFamilyGroupId" resultType="int">
+        SELECT COUNT(1) FROM m_family_member_relation 
+        WHERE family_group_id = #{familyGroupId} AND is_guardian = 1 AND is_delete = 0
+    </select>
+
+    <!-- 查询会员所属的家庭组ID -->
+    <select id="getFamilyGroupIdByMemberId" resultType="Long">
+        SELECT family_group_id FROM m_family_member_relation 
+        WHERE member_id = #{memberId} AND is_delete = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据家庭组ID删除所有成员关系 -->
+    <update id="deleteByFamilyGroupId">
+        UPDATE m_family_member_relation 
+        SET is_delete = 1, update_time = NOW()
+        WHERE family_group_id = #{familyGroupId}
+    </update>
+
+</mapper>

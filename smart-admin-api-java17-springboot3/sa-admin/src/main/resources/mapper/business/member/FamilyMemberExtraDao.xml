@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.member.dao.FamilyMemberExtraDao">
+
+    <!-- 根据会员ID查询扩展信息 -->
+    <select id="selectByMemberId" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.FamilyMemberExtraEntity">
+        SELECT * FROM m_family_member_extra 
+        WHERE member_id = #{memberId} AND is_delete = 0
+    </select>
+
+    <!-- 根据会员ID删除扩展信息 -->
+    <update id="deleteByMemberId">
+        UPDATE m_family_member_extra 
+        SET is_delete = 1, update_time = NOW()
+        WHERE member_id = #{memberId}
+    </update>
+
+</mapper>
