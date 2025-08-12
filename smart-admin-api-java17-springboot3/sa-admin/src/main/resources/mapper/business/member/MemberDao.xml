@@ -33,6 +33,9 @@
             fg.family_group_id,
             fg.family_name,
             fmr.is_guardian,
+            m.default_coach_id,
+            coach.actual_name as default_coach_name,
+            m.default_course_level,
             m.last_login_time,
             m.create_by,
             m.create_time,
@@ -42,6 +45,7 @@
         LEFT JOIN m_club club ON m.club_id = club.club_id AND club.is_delete = 0
         LEFT JOIN m_family_member_relation fmr ON m.member_id = fmr.member_id AND fmr.is_delete = 0
         LEFT JOIN m_family_group fg ON fmr.family_group_id = fg.family_group_id AND fg.is_delete = 0
+        LEFT JOIN m_coach coach ON m.default_coach_id = coach.coach_id AND coach.is_delete = 0
         <where>
             m.is_delete = #{queryForm.isDelete}
             <if test="queryForm.keywords != null and queryForm.keywords != ''">
@@ -125,6 +129,9 @@
             m.created_by_guardian,
             m.disabled_flag,
             m.profile_data,
+            m.default_coach_id,
+            coach.actual_name as default_coach_name,
+            m.default_course_level,
             m.last_login_time,
             m.create_by,
             m.create_time,
@@ -132,6 +139,7 @@
             m.update_time
         FROM m_member m
         LEFT JOIN m_club club ON m.club_id = club.club_id AND club.is_delete = 0
+        LEFT JOIN m_coach coach ON m.default_coach_id = coach.coach_id AND coach.is_delete = 0
         WHERE m.member_id = #{memberId} AND m.is_delete = 0
     </select>
 

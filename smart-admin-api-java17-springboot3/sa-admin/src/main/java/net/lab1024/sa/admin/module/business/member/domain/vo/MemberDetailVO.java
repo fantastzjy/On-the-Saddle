@@ -86,6 +86,18 @@ public class MemberDetailVO {
     @Schema(description = "扩展数据JSON格式")
     private String profileData;
 
+    @Schema(description = "默认教练ID")
+    private Long defaultCoachId;
+
+    @Schema(description = "默认教练姓名")
+    private String defaultCoachName;
+
+    @Schema(description = "默认课程级别")
+    private String defaultCourseLevel;
+
+    @Schema(description = "默认课程级别描述")
+    private String defaultCourseLevelDesc;
+
     @Schema(description = "最后登录时间")
     private LocalDateTime lastLoginTime;
 

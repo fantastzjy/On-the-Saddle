@@ -93,12 +93,15 @@ export const SEARCH_TYPE_OPTIONS = [
   { value: 'riderCertNo', label: '骑手证号' }
 ]
 
+// 课程级别字典编码
+export const COURSE_LEVEL_DICT_CODE = 'COURSE_LEVEL'
+
 // 表格列配置
 export const TABLE_COLUMNS = [
   {
-    title: '会员信息',
-    dataIndex: 'memberInfo',
-    width: 200,
+    title: '会员姓名',
+    dataIndex: 'actualName',
+    width: 120,
     fixed: 'left'
   },
   {
@@ -115,27 +118,32 @@ export const TABLE_COLUMNS = [
   {
     title: '性别',
     dataIndex: 'gender',
-    width: 80
+    width: 80,
+    slots: { customRender: 'gender' }
   },
   {
     title: '年龄',
     dataIndex: 'age',
-    width: 80
+    width: 80,
+    slots: { customRender: 'age' }
   },
   {
     title: '注册状态',
     dataIndex: 'registrationStatus',
-    width: 100
+    width: 100,
+    slots: { customRender: 'registrationStatus' }
   },
   {
     title: '会籍状态',
     dataIndex: 'isMembership',
-    width: 100
+    width: 100,
+    slots: { customRender: 'isMembership' }
   },
   {
     title: '会籍到期时间',
     dataIndex: 'membershipExpireDate',
-    width: 120
+    width: 120,
+    slots: { customRender: 'membershipExpireDate' }
   },
   {
     title: '家庭组',
@@ -154,19 +162,34 @@ export const TABLE_COLUMNS = [
     width: 120
   },
   {
+    title: '默认教练',
+    dataIndex: 'defaultCoachName',
+    width: 120,
+    slots: { customRender: 'defaultCoach' }
+  },
+  {
+    title: '课程级别',
+    dataIndex: 'defaultCourseLevel',
+    width: 100,
+    slots: { customRender: 'defaultCourseLevel' }
+  },
+  {
     title: '创建方式',
     dataIndex: 'createdByGuardian',
-    width: 100
+    width: 100,
+    slots: { customRender: 'createdByGuardian' }
   },
   {
     title: '状态',
     dataIndex: 'disabledFlag',
-    width: 80
+    width: 80,
+    slots: { customRender: 'disabledFlag' }
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    width: 150
+    width: 150,
+    slots: { customRender: 'createTime' }
   },
   {
     title: '操作',

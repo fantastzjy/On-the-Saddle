@@ -42,14 +42,6 @@
                 <a-avatar :src="memberInfo.avatarUrl" :size="80">
                   {{ memberInfo.actualName?.charAt(0) }}
                 </a-avatar>
-                <div class="member-status">
-                  <a-tag :color="getRegistrationStatusColor(memberInfo.registrationStatus)">
-                    {{ getRegistrationStatusText(memberInfo.registrationStatus) }}
-                  </a-tag>
-                  <a-tag :color="getMembershipStatusColor(memberInfo.isMembership)">
-                    {{ getMembershipStatusText(memberInfo.isMembership) }}
-                  </a-tag>
-                </div>
               </div>
             </a-col>
             <a-col :span="20">

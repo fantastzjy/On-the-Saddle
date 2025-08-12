@@ -81,6 +81,12 @@ public class MemberEntity {
     @DataTracerFieldLabel("扩展数据JSON格式")
     private String profileData;
 
+    @DataTracerFieldLabel("默认教练ID")
+    private Long defaultCoachId;
+
+    @DataTracerFieldLabel("默认课程级别")
+    private String defaultCourseLevel;
+
     @DataTracerFieldLabel("最后登录时间")
     private LocalDateTime lastLoginTime;
 

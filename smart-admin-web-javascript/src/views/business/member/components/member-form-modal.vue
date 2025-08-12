@@ -15,8 +15,6 @@
       :label-col="{ span: 6 }"
       :wrapper-col="{ span: 16 }"
     >
-      <!-- 基本信息 -->
-      <a-divider orientation="left">基本信息</a-divider>
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="真实姓名" name="actualName">
@@ -67,37 +65,20 @@
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="头像">
-            <Upload
-              v-model="form.avatarUrl"
-              :max-count="1"
-              :max-size="2"
-              accept="image/*"
-              list-type="picture-card"
-              upload-text="上传头像"
-            />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <!-- 身份信息 -->
-      <a-divider orientation="left">身份信息</a-divider>
-      <a-row :gutter="24">
-        <a-col :span="12">
           <a-form-item label="所属俱乐部" name="clubId">
             <a-select v-model:value="form.clubId" placeholder="请选择所属俱乐部">
               <a-select-option :value="1">默认俱乐部</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
+      </a-row>
+      
+      <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="身份证号" name="idCardNo">
             <a-input v-model:value="form.idCardNo" placeholder="请输入身份证号" />
           </a-form-item>
         </a-col>
-      </a-row>
-      
-      <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="骑手证号" name="riderCertNo">
             <a-input v-model:value="form.riderCertNo" placeholder="请输入骑手证号" />
@@ -105,9 +86,39 @@
         </a-col>
       </a-row>
 
+      <a-row :gutter="24">
+        <a-col :span="12">
+          <a-form-item label="默认教练" name="defaultCoachId">
+            <a-select 
+              v-model:value="form.defaultCoachId" 
+              placeholder="请选择默认教练"
+              allow-clear
+              show-search
+              option-filter-prop="children"
+            >
+              <a-select-option value="">无</a-select-option>
+              <a-select-option 
+                v-for="coach in coachList" 
+                :key="coach.coachId" 
+                :value="coach.coachId"
+              >
+                {{ coach.userName }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="课程级别" name="defaultCourseLevel">
+            <dict-select
+              v-model:value="form.defaultCourseLevel"
+              :dict-code="COURSE_LEVEL_DICT_CODE"
+              placeholder="请选择课程级别"
+              allow-clear
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
 
-      <!-- 会籍信息 -->
-      <a-divider orientation="left">会籍信息</a-divider>
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="会籍类型" name="isMembership">
@@ -129,8 +140,6 @@
         </a-col>
       </a-row>
 
-      <!-- 其他设置 -->
-      <a-divider orientation="left">其他设置</a-divider>
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="注册类型" name="registrationStatus">
@@ -187,13 +196,15 @@ import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { memberApi } from '/@/api/business/member-api'
+import { coachApi } from '/@/api/business/coach/coach-api'
 import { smartSentry } from '/@/lib/smart-sentry'
-import Upload from '/@/components/support/file-upload/index.vue'
+import DictSelect from '/@/components/support/dict-select/index.vue'
 import {
   REGISTRATION_STATUS,
   MEMBERSHIP_STATUS,
   GENDER_OPTIONS,
-  CREATED_BY
+  CREATED_BY,
+  COURSE_LEVEL_DICT_CODE
 } from '../constants/member-constants'
 
 // ----------------------- 事件 -----------------------
@@ -204,6 +215,7 @@ const visible = ref(false)
 const confirmLoading = ref(false)
 const formRef = ref()
 const isEdit = ref(false)
+const coachList = ref([])
 
 const form = reactive({
   memberId: undefined,
@@ -213,9 +225,10 @@ const form = reactive({
   birthDate: undefined,
   phone: '',
   email: '',
-  avatarUrl: '',
   idCardNo: '',
   riderCertNo: '',
+  defaultCoachId: undefined,
+  defaultCourseLevel: '',
   isMembership: MEMBERSHIP_STATUS.NORMAL,
   membershipExpireDate: undefined,
   registrationStatus: REGISTRATION_STATUS.ACTIVATED,
@@ -288,6 +301,19 @@ watch(
   }
 )
 
+watch(
+  () => form.clubId,
+  (newVal) => {
+    if (newVal) {
+      loadCoachList()
+    } else {
+      coachList.value = []
+    }
+    // 清空已选择的教练
+    form.defaultCoachId = undefined
+  }
+)
+
 // ----------------------- 表单验证 -----------------------
 async function validatePhone(rule, value) {
   if (value && isEdit.value && form.registrationStatus === REGISTRATION_STATUS.ACTIVATED) {
@@ -307,6 +333,18 @@ async function validatePhone(rule, value) {
   return Promise.resolve()
 }
 
+
+// ----------------------- 教练相关 -----------------------
+async function loadCoachList() {
+  try {
+    const res = await coachApi.queryList(1, form.clubId)
+    if (res.code === 0 && res.ok) {
+      coachList.value = res.data || []
+    }
+  } catch (e) {
+    console.warn('获取教练列表失败：', e)
+  }
+}
 
 // ----------------------- 工具函数 -----------------------
 function calculateAge(birthDate) {
@@ -360,9 +398,10 @@ async function showModal(record) {
       birthDate: record.birthDate ? dayjs(record.birthDate) : undefined,
       phone: record.phone,
       email: record.email,
-      avatarUrl: record.avatarUrl,
       idCardNo: record.idCardNo,
       riderCertNo: record.riderCertNo,
+      defaultCoachId: record.defaultCoachId,
+      defaultCourseLevel: record.defaultCourseLevel || '',
       isMembership: record.isMembership,
       membershipExpireDate: record.membershipExpireDate ? dayjs(record.membershipExpireDate) : undefined,
       registrationStatus: record.registrationStatus,
@@ -380,9 +419,10 @@ async function showModal(record) {
       birthDate: undefined,
       phone: '',
       email: '',
-      avatarUrl: '',
       idCardNo: '',
       riderCertNo: '',
+      defaultCoachId: undefined,
+      defaultCourseLevel: '',
       isMembership: MEMBERSHIP_STATUS.NORMAL,
       membershipExpireDate: undefined,
       registrationStatus: REGISTRATION_STATUS.ACTIVATED,
@@ -390,6 +430,11 @@ async function showModal(record) {
       disabledFlag: 0,
       memberNo
     })
+  }
+  
+  // 加载教练列表
+  if (form.clubId) {
+    await loadCoachList()
   }
   
   // 重置表单验证
@@ -467,16 +512,6 @@ defineExpose({
 </script>
 
 <style scoped lang="less">
-:deep(.ant-upload-select-picture-card) {
-  width: 80px;
-  height: 80px;
-}
-
-:deep(.ant-upload-list-picture-card .ant-upload-list-item) {
-  width: 80px;
-  height: 80px;
-}
-
 .ant-alert {
   margin-bottom: 16px;
 }

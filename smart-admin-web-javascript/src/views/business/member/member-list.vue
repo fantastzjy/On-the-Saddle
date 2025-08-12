@@ -1,37 +1,30 @@
 <template>
   <div class="member-list-wrapper">
     <!-- 查询表单 -->
-    <a-card size="small" title="查询条件" class="smart-query-form-card">
-      <a-form
-        ref="queryFormRef"
-        :model="queryForm"
-        layout="horizontal"
-        :label-col="{ span: 4 }"
-        :wrapper-col="{ span: 20 }"
-      >
-        <a-row :gutter="24">
-          <a-col :span="12">
-            <a-form-item label="关键字">
-              <a-input
-                v-model:value="queryForm.keywords"
-                placeholder="会员编号/姓名/手机号/骑手证号"
-                allow-clear
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12" style="text-align: right">
+    <a-form class="smart-query-form" ref="queryFormRef" :model="queryForm">
+      <a-row class="smart-query-form-row">
+        <a-form-item label="关键字" class="smart-query-form-item">
+          <a-input
+            style="width: 300px"
+            v-model:value="queryForm.keywords"
+            placeholder="会员编号/姓名/手机号/骑手证号"
+            allow-clear
+          />
+        </a-form-item>
+        <a-form-item class="smart-query-form-item smart-margin-left10">
+          <a-button-group>
             <a-button type="primary" @click="onSearch">
               <SearchOutlined />
               查询
             </a-button>
-            <a-button style="margin-left: 10px" @click="onResetQuery">
+            <a-button @click="onResetQuery">
               <ReloadOutlined />
               重置
             </a-button>
-          </a-col>
-        </a-row>
-      </a-form>
-    </a-card>
+          </a-button-group>
+        </a-form-item>
+      </a-row>
+    </a-form>
 
     <!-- 表格操作工具栏 -->
     <a-card size="small">
@@ -73,19 +66,6 @@
         size="small"
         bordered
       >
-        <!-- 会员信息 -->
-        <template #memberInfo="{ record }">
-          <div class="member-info">
-            <a-avatar :src="record.avatarUrl" :size="40">
-              {{ record.actualName?.charAt(0) }}
-            </a-avatar>
-            <div class="member-info-text">
-              <div class="member-name">{{ record.actualName }}</div>
-              <div class="member-no">{{ record.memberNo }}</div>
-            </div>
-          </div>
-        </template>
-
         <!-- 性别 -->
         <template #gender="{ record }">
           {{ GENDER_TEXT[record.gender] }}
@@ -157,6 +137,24 @@
           <a-tag :color="CREATED_BY_COLOR[record.createdByGuardian]">
             {{ CREATED_BY_TEXT[record.createdByGuardian] }}
           </a-tag>
+        </template>
+
+        <!-- 默认教练 -->
+        <template #defaultCoach="{ record }">
+          <span v-if="record.defaultCoachName">
+            {{ record.defaultCoachName }}
+          </span>
+          <span v-else style="color: #ccc;">未设置</span>
+        </template>
+
+        <!-- 课程级别 -->
+        <template #defaultCourseLevel="{ record }">
+          <dict-label 
+            v-if="record.defaultCourseLevel" 
+            :dict-code="COURSE_LEVEL_DICT_CODE" 
+            :value="record.defaultCourseLevel" 
+          />
+          <span v-else style="color: #ccc;">未设置</span>
         </template>
 
         <!-- 状态 -->
@@ -267,6 +265,7 @@ import { memberApi } from '/@/api/business/member-api'
 import { smartSentry } from '/@/lib/smart-sentry'
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const'
 import TableOperator from '/@/components/support/table-operator/index.vue'
+import DictLabel from '/@/components/support/dict-label/index.vue'
 import MemberFormModal from './components/member-form-modal.vue'
 import FamilyManageModal from './components/family-manage-modal.vue'
 import {
@@ -274,7 +273,14 @@ import {
   MEMBERSHIP_STATUS_COLOR,
   GENDER_TEXT,
   DISABLED_FLAG,
-  TABLE_COLUMNS
+  TABLE_COLUMNS,
+  REGISTRATION_STATUS_TEXT,
+  REGISTRATION_STATUS_COLOR,
+  CREATED_BY_TEXT,
+  CREATED_BY_COLOR,
+  DISABLED_FLAG_TEXT,
+  DISABLED_FLAG_COLOR,
+  COURSE_LEVEL_DICT_CODE
 } from './constants/member-constants'
 
 // ----------------------- 组件引用 -----------------------
@@ -493,14 +499,6 @@ function getMembershipExpireStyle(expireDate) {
   padding: 10px;
 }
 
-.smart-query-form-card {
-  margin-bottom: 10px;
-
-  .smart-query-form-button {
-    margin-top: 10px;
-  }
-}
-
 .smart-table-btn-block {
   padding-bottom: 15px;
   display: flex;
@@ -523,26 +521,6 @@ function getMembershipExpireStyle(expireDate) {
 .smart-query-table-page {
   margin-top: 15px;
   text-align: right;
-}
-
-.member-info {
-  display: flex;
-  align-items: center;
-
-  .member-info-text {
-    margin-left: 10px;
-
-    .member-name {
-      font-weight: 500;
-      font-size: 14px;
-      color: #262626;
-    }
-
-    .member-no {
-      font-size: 12px;
-      color: #8c8c8c;
-    }
-  }
 }
 
 .smart-table-operate {

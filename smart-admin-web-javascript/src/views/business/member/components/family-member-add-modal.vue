@@ -254,7 +254,7 @@ async function loadCoachList() {
   if (!familyGroupInfo.value.clubId) return
   
   try {
-    const res = await coachApi.queryList(true, familyGroupInfo.value.clubId)
+    const res = await coachApi.queryList(1, familyGroupInfo.value.clubId)
     if (res.code === 0 && res.ok) {
       coachList.value = res.data || []
     }

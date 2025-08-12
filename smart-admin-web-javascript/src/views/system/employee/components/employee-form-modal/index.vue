@@ -87,17 +87,7 @@
         <a-empty v-else description="请先保存基本信息，然后添加工作经历" />
       </a-tab-pane>
       
-      <!-- 简历上传 -->
-      <a-tab-pane key="resume" tab="简历上传" :disabled="!form.employeeId">
-        <EmployeeResume 
-          v-if="form.employeeId && activeTab === 'resume'"
-          :employee-id="form.employeeId"
-          :latest-resume-file-key="form.resumeFileKey"
-          @change="handleResumeChange"
-          @update-latest="handleUpdateLatestResume"
-        />
-        <a-empty v-else description="请先保存基本信息，然后上传简历文件" />
-      </a-tab-pane>
+      <!-- 简历上传 tab 已被删除 -->
     </a-tabs>
     <div class="footer">
       <a-button style="margin-right: 8px" @click="onClose">取消</a-button>
@@ -117,7 +107,7 @@
   import PositionSelect from '/@/components/system/position-select/index.vue';
   import EmployeeEducation from '../employee-education/index.vue';
   import EmployeeWorkExperience from '../employee-work-experience/index.vue';
-  import EmployeeResume from '../employee-resume/index.vue';
+  // import EmployeeResume from '../employee-resume/index.vue'; // 简历上传组件已删除
   import { GENDER_ENUM } from '/@/constants/common-const';
   import { regular } from '/@/constants/regular-const';
   import { SmartLoading } from '/@/components/framework/smart-loading';
@@ -285,18 +275,17 @@
     console.log('工作经历更新:', workExperienceList);
   }
   
-  // 处理简历变化
-  function handleResumeChange(resumeList) {
-    // 可以在这里处理简历文件变化的逻辑
-    console.log('简历文件更新:', resumeList);
-  }
+  // 处理简历变化 - 已删除
+  // function handleResumeChange(resumeList) {
+  //   console.log('简历文件更新:', resumeList);
+  // }
   
-  // 处理最新简历更新
-  function handleUpdateLatestResume(fileKey) {
-    form.resumeFileKey = fileKey;
-    form.resumeUpdateTime = new Date().toISOString();
-    console.log('最新简历更新:', fileKey);
-  }
+  // 处理最新简历更新 - 已删除  
+  // function handleUpdateLatestResume(fileKey) {
+  //   form.resumeFileKey = fileKey;
+  //   form.resumeUpdateTime = new Date().toISOString();
+  //   console.log('最新简历更新:', fileKey);
+  // }
 
   // ----------------------- 以下是暴露的方法内容 ----------------------------
   defineExpose({

@@ -85,6 +85,18 @@ public class MemberVO {
     @Schema(description = "是否监护人: 1-是 0-否")
     private Integer isGuardian;
 
+    @Schema(description = "默认教练ID")
+    private Long defaultCoachId;
+
+    @Schema(description = "默认教练姓名")
+    private String defaultCoachName;
+
+    @Schema(description = "默认课程级别")
+    private String defaultCourseLevel;
+
+    @Schema(description = "默认课程级别描述")
+    private String defaultCourseLevelDesc;
+
     @Schema(description = "最后登录时间")
     private LocalDateTime lastLoginTime;
 
