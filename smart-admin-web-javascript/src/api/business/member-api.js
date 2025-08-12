@@ -7,7 +7,6 @@ export const memberApi = {
   create: (param) => postRequest('/club/member/create', param),
   update: (param) => postRequest('/club/member/update', param),
   updateStatus: (memberId, status) => postRequest('/club/member/update-status', {memberId, status}),
-  resetPassword: (memberId) => postRequest('/club/member/reset-password', {memberId}),
   delete: (memberId) => getRequest(`/club/member/delete/${memberId}`),
   
   // 家庭管理
@@ -24,7 +23,6 @@ export const memberApi = {
   
   // 辅助接口
   checkPhoneExist: (phone, excludeId) => getRequest(`/club/member/check-phone/${phone}${excludeId ? '?excludeId=' + excludeId : ''}`),
-  checkLoginNameExist: (loginName, excludeId) => getRequest(`/club/member/check-login-name/${loginName}${excludeId ? '?excludeId=' + excludeId : ''}`),
   generateMemberNo: () => getRequest('/club/member/generate-no'),
   queryList: (clubId) => getRequest(`/club/member/query/list?clubId=${clubId}`),
   

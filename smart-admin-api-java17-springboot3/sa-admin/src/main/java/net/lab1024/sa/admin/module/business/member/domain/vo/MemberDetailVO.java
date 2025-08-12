@@ -28,8 +28,6 @@ public class MemberDetailVO {
     @Schema(description = "微信openId")
     private String openId;
 
-    @Schema(description = "登录账号")
-    private String loginName;
 
     @Schema(description = "真实姓名")
     private String actualName;

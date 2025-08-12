@@ -105,33 +105,6 @@
         </a-col>
       </a-row>
 
-      <!-- 账号信息（仅已注册用户显示） -->
-      <template v-if="showAccountInfo">
-        <a-divider orientation="left">账号信息</a-divider>
-        <a-row :gutter="24">
-          <a-col :span="12">
-            <a-form-item label="登录账号" name="loginName">
-              <a-input
-                v-model:value="form.loginName"
-                placeholder="请输入登录账号"
-                :disabled="isEdit"
-              />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item 
-              :label="isEdit ? '新密码' : '登录密码'"
-              :name="isEdit ? 'newPassword' : 'loginPwd'"
-            >
-              <a-input-password
-                v-model:value="passwordFieldValue"
-                :placeholder="isEdit ? '留空则不修改' : '请输入登录密码'"
-                autocomplete="new-password"
-              />
-            </a-form-item>
-          </a-col>
-        </a-row>
-      </template>
 
       <!-- 会籍信息 -->
       <a-divider orientation="left">会籍信息</a-divider>
@@ -243,9 +216,6 @@ const form = reactive({
   avatarUrl: '',
   idCardNo: '',
   riderCertNo: '',
-  loginName: '',
-  loginPwd: '',
-  newPassword: '',
   isMembership: MEMBERSHIP_STATUS.NORMAL,
   membershipExpireDate: undefined,
   registrationStatus: REGISTRATION_STATUS.ACTIVATED,
@@ -279,16 +249,6 @@ const rules = {
       trigger: 'blur' 
     }
   ],
-  loginName: [
-    { required: true, message: '请输入登录账号', trigger: 'blur' },
-    { min: 4, max: 20, message: '登录账号长度为4-20个字符', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_]+$/, message: '登录账号只能包含字母、数字和下划线', trigger: 'blur' },
-    { validator: validateLoginName, trigger: 'blur' }
-  ],
-  loginPwd: [
-    { required: true, message: '请输入登录密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
-  ],
   membershipExpireDate: [
     { required: true, message: '请选择会籍到期时间', trigger: 'change' }
   ]
@@ -299,36 +259,19 @@ const modalTitle = computed(() => {
   return isEdit.value ? '编辑会员' : '新建会员'
 })
 
-const showAccountInfo = computed(() => {
-  return form.registrationStatus === REGISTRATION_STATUS.ACTIVATED
-})
 
 const showMinorAlert = computed(() => {
   return form.birthDate && calculateAge(form.birthDate) < 18
 })
 
-const passwordFieldValue = computed({
-  get() {
-    return isEdit.value ? form.newPassword : form.loginPwd
-  },
-  set(value) {
-    if (isEdit.value) {
-      form.newPassword = value
-    } else {
-      form.loginPwd = value
-    }
-  }
-})
 
 // ----------------------- 监听器 -----------------------
 watch(
   () => form.registrationStatus,
   (newVal) => {
     if (newVal === REGISTRATION_STATUS.UNACTIVATED) {
-      // 未激活用户清空账号信息
-      form.loginName = ''
-      form.loginPwd = ''
-      form.newPassword = ''
+      // 未激活用户设置默认值
+      form.createdByGuardian = CREATED_BY.GUARDIAN
     } else {
       // 已注册用户设置默认值
       form.createdByGuardian = CREATED_BY.SELF
@@ -364,19 +307,6 @@ async function validatePhone(rule, value) {
   return Promise.resolve()
 }
 
-async function validateLoginName(rule, value) {
-  if (value && form.registrationStatus === REGISTRATION_STATUS.ACTIVATED) {
-    try {
-      const res = await memberApi.checkLoginNameExist(value, form.memberId)
-      if (res.data) {
-        return Promise.reject('该登录账号已存在')
-      }
-    } catch (e) {
-      console.warn('登录账号验证失败：', e)
-    }
-  }
-  return Promise.resolve()
-}
 
 // ----------------------- 工具函数 -----------------------
 function calculateAge(birthDate) {
@@ -394,9 +324,6 @@ function disabledExpireDate(current) {
   return current && current < dayjs().startOf('day')
 }
 
-function generateTempLoginName() {
-  return `temp_${Date.now().toString().slice(-8)}`
-}
 
 async function generateMemberNo() {
   try {
@@ -436,9 +363,6 @@ async function showModal(record) {
       avatarUrl: record.avatarUrl,
       idCardNo: record.idCardNo,
       riderCertNo: record.riderCertNo,
-      loginName: record.loginName,
-      loginPwd: '',
-      newPassword: '',
       isMembership: record.isMembership,
       membershipExpireDate: record.membershipExpireDate ? dayjs(record.membershipExpireDate) : undefined,
       registrationStatus: record.registrationStatus,
@@ -459,9 +383,6 @@ async function showModal(record) {
       avatarUrl: '',
       idCardNo: '',
       riderCertNo: '',
-      loginName: '',
-      loginPwd: '',
-      newPassword: '',
       isMembership: MEMBERSHIP_STATUS.NORMAL,
       membershipExpireDate: undefined,
       registrationStatus: REGISTRATION_STATUS.ACTIVATED,
@@ -500,23 +421,12 @@ async function onSubmit() {
     
     // 处理未激活用户的特殊逻辑
     if (submitData.registrationStatus === REGISTRATION_STATUS.UNACTIVATED) {
-      submitData.loginName = generateTempLoginName()
-      submitData.loginPwd = ''
       submitData.disabledFlag = 1 // 未激活用户默认禁用
     }
-    
-    // 清理不需要的字段
-    delete submitData.newPassword
     
     let res
     if (isEdit.value) {
       // 编辑模式
-      if (form.newPassword) {
-        submitData.loginPwd = form.newPassword
-      } else {
-        delete submitData.loginPwd
-      }
-      
       // 开发环境调试
       if (process.env.NODE_ENV === 'development') {
         console.log('调用更新接口:', submitData)

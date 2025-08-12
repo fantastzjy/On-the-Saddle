@@ -74,24 +74,11 @@ public class MemberController {
         return memberService.updateStatus(memberId, status);
     }
 
-    @Operation(summary = "重置会员密码")
-    @PostMapping("/reset-password")
-    public ResponseDTO<String> resetPassword(@RequestParam Long memberId) {
-        return memberService.resetPassword(memberId);
-    }
-
     @Operation(summary = "检查手机号是否存在")
     @GetMapping("/check-phone/{phone}")
     public ResponseDTO<Boolean> checkPhoneExists(@PathVariable String phone, 
                                                @RequestParam(required = false) Long excludeId) {
         return memberService.checkPhoneExists(phone, excludeId);
-    }
-
-    @Operation(summary = "检查登录名是否存在")
-    @GetMapping("/check-login-name/{loginName}")
-    public ResponseDTO<Boolean> checkLoginNameExists(@PathVariable String loginName, 
-                                                   @RequestParam(required = false) Long excludeId) {
-        return memberService.checkLoginNameExists(loginName, excludeId);
     }
 
     @Operation(summary = "生成会员编号")

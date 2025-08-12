@@ -32,12 +32,6 @@ public class MemberUpdateForm {
     @Schema(description = "微信openId")
     private String openId;
 
-    @Schema(description = "登录账号")
-    @Size(min = 4, max = 50, message = "登录账号长度为4-50个字符")
-    private String loginName;
-
-    @Schema(description = "新密码")
-    private String newPassword;
 
     @Schema(description = "真实姓名")
     @NotBlank(message = "真实姓名不能为空")

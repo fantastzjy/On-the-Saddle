@@ -170,6 +170,7 @@ export const TABLE_COLUMNS = [
     title: '操作',
     dataIndex: 'action',
     width: 200,
-    fixed: 'right'
+    fixed: 'right',
+    slots: { customRender: 'action' }
   }
 ]

@@ -257,15 +257,6 @@
               家庭
             </a-button>
             <a-button
-              v-privilege="'club:member:reset-password'"
-              v-if="record.registrationStatus === REGISTRATION_STATUS.ACTIVATED"
-              @click="onResetPassword(record)"
-              size="small"
-              type="link"
-            >
-              重置密码
-            </a-button>
-            <a-button
               v-privilege="'club:member:update-status'"
               @click="onUpdateStatus(record)"
               size="small"
@@ -530,25 +521,6 @@ async function onUpdateStatus(record) {
   })
 }
 
-async function onResetPassword(record) {
-  Modal.confirm({
-    title: '重置密码',
-    content: `确定要重置会员"${record.actualName}"的密码吗？重置后密码为：123456`,
-    onOk: async () => {
-      try {
-        const res = await memberApi.resetPassword(record.memberId)
-        if (res.code === 0 && res.ok) {
-          message.success(res.msg || '密码重置成功，新密码为：123456')
-        } else {
-          message.error('密码重置失败：' + res.msg)
-        }
-      } catch (e) {
-        smartSentry.captureError(e)
-        message.error('密码重置失败')
-      }
-    }
-  })
-}
 
 async function onExport() {
   exportLoading.value = true

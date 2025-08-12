@@ -32,11 +32,6 @@ public class MemberEntity {
     @DataTracerFieldLabel("微信openId")
     private String openId;
 
-    @DataTracerFieldLabel("登录账号")
-    private String loginName;
-
-    @DataTracerFieldLabel("登录密码")
-    private String loginPwd;
 
     @DataTracerFieldLabel("真实姓名")
     private String actualName;

@@ -141,26 +141,6 @@
       </a-descriptions>
     </a-card>
 
-    <!-- 账号信息 -->
-    <a-card v-if="memberInfo.registrationStatus === REGISTRATION_STATUS.ACTIVATED" title="账号信息" class="account-card">
-      <a-descriptions :column="3" size="middle">
-        <a-descriptions-item label="登录账号">{{ memberInfo.loginName }}</a-descriptions-item>
-        <a-descriptions-item label="注册时间">
-          {{ memberInfo.createTime ? dayjs(memberInfo.createTime).format('YYYY-MM-DD HH:mm') : '-' }}
-        </a-descriptions-item>
-        <a-descriptions-item label="密码操作">
-          <a-button
-            v-privilege="'club:member:reset-password'"
-            type="link"
-            danger
-            @click="resetPassword"
-            size="small"
-          >
-            重置密码
-          </a-button>
-        </a-descriptions-item>
-      </a-descriptions>
-    </a-card>
 
     <!-- 详细信息标签页 -->
     <a-card class="detail-tabs-card">
@@ -460,7 +440,7 @@ async function loadMemberDetail() {
   
   try {
     const res = await memberApi.detail(memberId)
-    if (res.code === 1) {
+    if (res.code === 0 && res.ok) {
       memberInfo.value = res.data || {}
       await Promise.all([
         loadFamilyInfo(),
@@ -481,7 +461,7 @@ async function loadFamilyInfo() {
   
   try {
     const res = await memberApi.getFamilyInfo(memberInfo.value.memberId)
-    if (res.code === 1 && res.data) {
+    if (res.code === 0 && res.ok && res.data) {
       familyInfo.value = res.data.familyGroup
       familyMembers.value = res.data.members || []
     } else {
@@ -543,25 +523,6 @@ function showMembershipModal() {
   membershipRenewModalRef.value.showModal(memberInfo.value)
 }
 
-function resetPassword() {
-  Modal.confirm({
-    title: '重置密码',
-    content: `确定要重置会员"${memberInfo.value.actualName}"的密码吗？重置后密码为：123456`,
-    onOk: async () => {
-      try {
-        const res = await memberApi.resetPassword(memberInfo.value.memberId)
-        if (res.code === 1) {
-          message.success('密码重置成功，新密码为：123456')
-        } else {
-          message.error('密码重置失败：' + res.msg)
-        }
-      } catch (e) {
-        smartSentry.captureError(e)
-        message.error('密码重置失败')
-      }
-    }
-  })
-}
 
 function onOrderTableChange(pagination) {
   orderPagination.current = pagination.current
@@ -722,9 +683,6 @@ function getOrderStatusColor(status) {
   margin-bottom: 24px;
 }
 
-.account-card {
-  margin-bottom: 24px;
-}
 
 .detail-tabs-card {
   .family-members-section {
