@@ -107,12 +107,15 @@
                   <a-statistic title="本月新增" :value="getMonthRecordCount()" suffix="条" />
                 </a-col>
                 <a-col :span="6">
+                  <!-- 临时注释掉新建记录按钮 -->
+                  <!--
                   <a-button v-privilege="'club:horse:health:record:add'" type="primary" @click="showRecordModal(true)">
                     <template #icon>
                       <PlusOutlined />
                     </template>
                     新建记录
                   </a-button>
+                  -->
                 </a-col>
               </a-row>
             </div>

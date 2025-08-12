@@ -40,9 +40,9 @@ public enum HealthPlanTypeEnum implements BaseEnum {
     VACCINE("vaccine", "疫苗"),
 
     /**
-     * 用药
+     * 养护
      */
-    MEDICATION("medication", "用药");
+    MEDICATION("medication", "养护");
 
     private final String value;
     private final String desc;

@@ -14,7 +14,7 @@ export const HEALTH_PLAN_TYPE_ENUM = {
   DEWORMING: { value: 'deworming', desc: '驱虫', color: 'green' },
   DENTAL: { value: 'dental', desc: '搓牙', color: 'purple' },
   VACCINE: { value: 'vaccine', desc: '疫苗', color: 'blue' },
-  MEDICATION: { value: 'medication', desc: '用药', color: 'red' }
+  MEDICATION: { value: 'medication', desc: '养护', color: 'red' }
 };
 
 // 获取所有类型列表

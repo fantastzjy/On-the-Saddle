@@ -86,6 +86,7 @@ import { fileApi } from '/@/api/support/file-api';
 import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
 import { getPlanTypeDesc } from '/@/constants/business/horse/health-const';
 import { smartSentry } from '/@/lib/smart-sentry';
+import { useUserStore } from '/@/store/modules/system/user';
 import dayjs from 'dayjs';
 
 const props = defineProps({
@@ -99,6 +100,7 @@ const emit = defineEmits(['reload']);
 
 const formRef = ref();
 const executorList = ref([]);
+const userStore = useUserStore();
 
 // 图片上传相关
 const fileList = ref([]);
@@ -136,7 +138,7 @@ function showModal(plan) {
 
 function resetForm() {
   Object.assign(formState.form, {
-    executorId: undefined,
+    executorId: userStore.employeeId, // 默认设置为当前登录用户
     content: '',
     recordData: '',
   });
