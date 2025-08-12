@@ -52,8 +52,14 @@ public class MemberVO {
     @Schema(description = "是否为会籍会员: 1-是 0-否")
     private Integer isMembership;
 
+    @Schema(description = "会籍状态: 1-正常 2-即将到期 3-已过期")
+    private Integer membershipStatus;
+
     @Schema(description = "会籍有效期")
     private LocalDate membershipExpireDate;
+
+    @Schema(description = "剩余天数")
+    private Long remainingDays;
 
     @Schema(description = "身份证号")
     private String idCardNo;

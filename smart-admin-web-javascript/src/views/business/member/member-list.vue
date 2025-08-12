@@ -111,7 +111,7 @@
             v-privilege="'club:member:add'"
             type="primary"
             size="small"
-            @click="showModal"
+            @click="showCreateModal"
           >
             <PlusOutlined />
             新建
@@ -137,7 +137,7 @@
           </a-button>
         </div>
         <div class="smart-table-setting-block">
-          <TableOperator v-model="columns" :table-id="TABLE_ID_CONST.BUSINESS.CLUB.MEMBER" />
+          <TableOperator v-model="columns" :table-id="TABLE_ID_CONST.BUSINESS.CLUB.MEMBER" :refresh="onSearch" />
         </div>
       </a-row>
 
@@ -242,7 +242,7 @@
             </a-button>
             <a-button
               v-privilege="'club:member:update'"
-              @click="showModal(record)"
+              @click="showEditModal(record)"
               size="small"
               type="link"
             >
@@ -295,7 +295,7 @@
           :total="total"
           show-size-changer
           show-quick-jumper
-          show-total="(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`"
+          :show-total="(total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`"
           :page-size-options="['10', '20', '50', '100']"
           @change="onSearch"
           @showSizeChange="onSearch"
@@ -399,7 +399,7 @@ async function onSearch() {
     delete params.createTimeRange
     
     const res = await memberApi.pageQuery(params)
-    if (res.code === 1) {
+    if (res.code === 0 && res.ok) {
       tableData.value = res.data.list || []
       total.value = res.data.total || 0
     } else {
@@ -427,7 +427,16 @@ function onResetQuery() {
   onSearch()
 }
 
+function showCreateModal() {
+  memberFormModalRef.value.showModal()  // 不传参数，明确为新建模式
+}
+
+function showEditModal(record) {
+  memberFormModalRef.value.showModal(record)  // 传递记录，明确为编辑模式
+}
+
 function showModal(record) {
+  // 保留原函数以备其他地方调用，但推荐使用上面两个明确的函数
   memberFormModalRef.value.showModal(record)
 }
 
@@ -454,8 +463,8 @@ async function onDelete(record) {
     onOk: async () => {
       try {
         const res = await memberApi.delete(record.memberId)
-        if (res.code === 1) {
-          message.success('删除成功')
+        if (res.code === 0 && res.ok) {
+          message.success(res.msg || '删除成功')
           onSearch()
         } else {
           message.error('删除失败：' + res.msg)
@@ -482,8 +491,8 @@ async function onBatchDelete() {
     onOk: async () => {
       try {
         const res = await memberApi.batchDelete(selectedRowKeyList.value)
-        if (res.code === 1) {
-          message.success('批量删除成功')
+        if (res.code === 0 && res.ok) {
+          message.success(res.msg || '批量删除成功')
           selectedRowKeyList.value = []
           onSearch()
         } else {
@@ -507,8 +516,8 @@ async function onUpdateStatus(record) {
     onOk: async () => {
       try {
         const res = await memberApi.updateStatus(record.memberId, newStatus)
-        if (res.code === 1) {
-          message.success(`${statusText}成功`)
+        if (res.code === 0 && res.ok) {
+          message.success(res.msg || `${statusText}成功`)
           onSearch()
         } else {
           message.error(`${statusText}失败：` + res.msg)
@@ -528,8 +537,8 @@ async function onResetPassword(record) {
     onOk: async () => {
       try {
         const res = await memberApi.resetPassword(record.memberId)
-        if (res.code === 1) {
-          message.success('密码重置成功，新密码为：123456')
+        if (res.code === 0 && res.ok) {
+          message.success(res.msg || '密码重置成功，新密码为：123456')
         } else {
           message.error('密码重置失败：' + res.msg)
         }

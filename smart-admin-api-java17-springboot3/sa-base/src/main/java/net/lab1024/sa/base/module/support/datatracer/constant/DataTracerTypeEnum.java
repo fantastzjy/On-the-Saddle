@@ -58,6 +58,21 @@ public enum DataTracerTypeEnum implements BaseEnum {
      */
     CLUB_HORSE_HEALTH_RECORD(304, "马匹健康记录"),
 
+    /**
+     * 会员管理
+     */
+    CLUB_MEMBER(305, "会员管理"),
+
+    /**
+     * 家庭组管理
+     */
+    CLUB_FAMILY_GROUP(306, "家庭组管理"),
+
+    /**
+     * 会籍续费
+     */
+    CLUB_MEMBERSHIP_RENEW(307, "会籍续费"),
+
     ;
 
     private final Integer value;

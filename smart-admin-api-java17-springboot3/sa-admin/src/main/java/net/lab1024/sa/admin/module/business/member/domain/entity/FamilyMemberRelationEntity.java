@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import net.lab1024.sa.base.module.support.datatracer.annoation.DataTracerFieldLabel;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -32,7 +33,7 @@ public class FamilyMemberRelationEntity {
     private Integer isGuardian;
 
     @DataTracerFieldLabel("加入家庭日期")
-    private LocalDateTime joinDate;
+    private LocalDate joinDate;
 
     @DataTracerFieldLabel("备注")
     private String remark;

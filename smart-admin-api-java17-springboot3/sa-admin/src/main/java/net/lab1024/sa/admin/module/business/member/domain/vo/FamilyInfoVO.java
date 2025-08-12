@@ -3,6 +3,7 @@ package net.lab1024.sa.admin.module.business.member.domain.vo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,38 +17,20 @@ import java.util.List;
 @Data
 public class FamilyInfoVO {
 
-    @Schema(description = "家庭组信息")
-    private FamilyGroupVO familyGroup;
+    @Schema(description = "家庭组ID")
+    private Long familyGroupId;
+
+    @Schema(description = "家庭名称")
+    private String familyName;
+
+    @Schema(description = "家庭描述")
+    private String description;
+
+    @Schema(description = "创建时间")
+    private LocalDateTime createTime;
 
     @Schema(description = "家庭成员列表")
-    private List<FamilyMemberVO> members;
-
-    /**
-     * 家庭组VO
-     */
-    @Data
-    public static class FamilyGroupVO {
-        @Schema(description = "家庭组ID")
-        private Long familyGroupId;
-
-        @Schema(description = "家庭名称")
-        private String familyName;
-
-        @Schema(description = "俱乐部ID")
-        private Long clubId;
-
-        @Schema(description = "主要联系人会员ID")
-        private Long mainContactId;
-
-        @Schema(description = "主要联系人姓名")
-        private String mainContactName;
-
-        @Schema(description = "家庭描述")
-        private String description;
-
-        @Schema(description = "创建时间")
-        private LocalDateTime createTime;
-    }
+    private List<FamilyMemberVO> memberList;
 
     /**
      * 家庭成员VO
@@ -82,7 +65,7 @@ public class FamilyInfoVO {
         private Integer isGuardian;
 
         @Schema(description = "加入家庭日期")
-        private LocalDateTime joinDate;
+        private LocalDate joinDate;
 
         @Schema(description = "备注")
         private String remark;

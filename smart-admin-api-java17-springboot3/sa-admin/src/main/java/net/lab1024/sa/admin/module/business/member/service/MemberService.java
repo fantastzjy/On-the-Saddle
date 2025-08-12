@@ -133,7 +133,7 @@ public class MemberService {
         memberDao.insert(memberEntity);
 
         // 记录数据变更日志
-        dataTracerService.insert(memberEntity.getMemberId(), DataTracerTypeEnum.BUSINESS);
+        dataTracerService.insert(memberEntity.getMemberId(), DataTracerTypeEnum.CLUB_MEMBER);
 
         return ResponseDTO.ok();
     }
@@ -172,6 +172,9 @@ public class MemberService {
             }
         }
 
+        // 获取更新前的数据用于审计日志
+        MemberEntity oldMember = memberDao.selectById(updateForm.getMemberId());
+        
         // 转换实体并更新
         MemberEntity memberEntity = SmartBeanUtil.copy(updateForm, MemberEntity.class);
         memberEntity.setUpdateTime(LocalDateTime.now());
@@ -186,7 +189,7 @@ public class MemberService {
         memberDao.updateById(memberEntity);
 
         // 记录数据变更日志
-        dataTracerService.update(updateForm.getMemberId(), DataTracerTypeEnum.BUSINESS);
+        dataTracerService.update(updateForm.getMemberId(), DataTracerTypeEnum.CLUB_MEMBER, oldMember, memberEntity);
 
         return ResponseDTO.ok();
     }
@@ -215,7 +218,7 @@ public class MemberService {
         familyMemberExtraDao.deleteByMemberId(memberId);
 
         // 记录数据变更日志
-        dataTracerService.delete(memberId, DataTracerTypeEnum.BUSINESS);
+        dataTracerService.delete(memberId, DataTracerTypeEnum.CLUB_MEMBER);
 
         return ResponseDTO.ok();
     }
@@ -255,14 +258,21 @@ public class MemberService {
             return ResponseDTO.userErrorParam("会员不存在");
         }
 
+        MemberEntity oldMemberEntity = SmartBeanUtil.copy(memberEntity, MemberEntity.class);
+        oldMemberEntity.setDisabledFlag(memberEntity.getDisabledFlag());
+        
         int result = memberDao.updateMemberStatus(memberId, disabledFlag);
         if (result > 0) {
+            // 获取更新后的数据用于审计日志
+            MemberEntity updatedMemberEntity = SmartBeanUtil.copy(memberEntity, MemberEntity.class);
+            updatedMemberEntity.setDisabledFlag(disabledFlag);
+            
             // 记录数据变更日志
-            dataTracerService.update(memberId, DataTracerTypeEnum.BUSINESS);
+            dataTracerService.update(memberId, DataTracerTypeEnum.CLUB_MEMBER, oldMemberEntity, updatedMemberEntity);
             return ResponseDTO.ok();
         }
 
-        return ResponseDTO.error("更新状态失败");
+        return ResponseDTO.userErrorParam("更新状态失败");
     }
 
     /**
@@ -285,18 +295,25 @@ public class MemberService {
             return ResponseDTO.userErrorParam("只有已注册用户才能重置密码");
         }
 
+        // 获取更新前的数据用于审计日志
+        MemberEntity oldMemberEntity = SmartBeanUtil.copy(memberEntity, MemberEntity.class);
+        
         // 重置为默认密码 123456
         String defaultPassword = "123456";
         String encodedPassword = passwordEncoder.encode(defaultPassword);
         int result = memberDao.resetPassword(memberId, encodedPassword);
         
         if (result > 0) {
+            // 获取更新后的数据用于审计日志
+            MemberEntity updatedMemberEntity = SmartBeanUtil.copy(memberEntity, MemberEntity.class);
+            updatedMemberEntity.setLoginPwd(encodedPassword);
+            
             // 记录数据变更日志
-            dataTracerService.update(memberId, DataTracerTypeEnum.BUSINESS);
+            dataTracerService.update(memberId, DataTracerTypeEnum.CLUB_MEMBER, oldMemberEntity, updatedMemberEntity);
             return ResponseDTO.ok();
         }
 
-        return ResponseDTO.error("重置密码失败");
+        return ResponseDTO.userErrorParam("重置密码失败");
     }
 
     /**

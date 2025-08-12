@@ -150,41 +150,41 @@
         </a-table>
       </a-card>
     </div>
+  </a-modal>
 
-    <!-- 创建/编辑家庭组弹窗 -->
-    <a-modal
-      v-model:open="familyFormVisible"
-      :title="familyFormTitle"
-      :confirm-loading="familyFormLoading"
-      @ok="submitFamilyForm"
-      @cancel="cancelFamilyForm"
+  <!-- 创建/编辑家庭组弹窗 -->
+  <a-modal
+    v-model:open="familyFormVisible"
+    :title="familyFormTitle"
+    :confirm-loading="familyFormLoading"
+    @ok="submitFamilyForm"
+    @cancel="cancelFamilyForm"
+  >
+    <a-form
+      ref="familyFormRef"
+      :model="familyForm"
+      :rules="familyFormRules"
+      :label-col="{ span: 6 }"
+      :wrapper-col="{ span: 16 }"
     >
-      <a-form
-        ref="familyFormRef"
-        :model="familyForm"
-        :rules="familyFormRules"
-        :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 16 }"
-      >
-        <a-form-item label="家庭名称" name="familyName">
-          <a-input v-model:value="familyForm.familyName" placeholder="请输入家庭名称" />
-        </a-form-item>
-        <a-form-item label="家庭描述" name="description">
-          <a-textarea
-            v-model:value="familyForm.description"
-            placeholder="请输入家庭描述（可选）"
-            :rows="3"
-          />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+      <a-form-item label="家庭名称" name="familyName">
+        <a-input v-model:value="familyForm.familyName" placeholder="请输入家庭名称" />
+      </a-form-item>
+      <a-form-item label="家庭描述" name="description">
+        <a-textarea
+          v-model:value="familyForm.description"
+          placeholder="请输入家庭描述（可选）"
+          :rows="3"
+        />
+      </a-form-item>
+    </a-form>
+  </a-modal>
 
-    <!-- 添加家庭成员弹窗 -->
-    <FamilyMemberAddModal
-      ref="familyMemberAddModalRef"
-      @success="onMemberAdded"
-    />
-  </div>
+  <!-- 添加家庭成员弹窗 -->
+  <FamilyMemberAddModal
+    ref="familyMemberAddModalRef"
+    @success="onMemberAdded"
+  />
 </template>
 
 <script setup>
@@ -305,7 +305,7 @@ async function loadFamilyInfo() {
   
   try {
     const res = await memberApi.getFamilyInfo(memberInfo.value.memberId)
-    if (res.code === 1 && res.data) {
+    if (res.code === 0 && res.ok && res.data) {
       familyInfo.value = res.data.familyGroup
       familyMembers.value = res.data.members || []
     } else {
@@ -363,8 +363,8 @@ async function submitFamilyForm() {
       res = await memberApi.createFamily(submitData)
     }
     
-    if (res.code === 1) {
-      message.success(isEditFamily.value ? '编辑成功' : '创建成功')
+    if (res.code === 0 && res.ok) {
+      message.success(res.msg || (isEditFamily.value ? '编辑成功' : '创建成功'))
       await loadFamilyInfo()
       cancelFamilyForm()
     } else {
@@ -399,8 +399,8 @@ async function setGuardian(member, isGuardian) {
       isGuardian
     )
     
-    if (res.code === 1) {
-      message.success(isGuardian ? '设置监护人成功' : '取消监护人成功')
+    if (res.code === 0 && res.ok) {
+      message.success(res.msg || (isGuardian ? '设置监护人成功' : '取消监护人成功'))
       await loadFamilyInfo()
     } else {
       message.error('操作失败：' + res.msg)
@@ -424,8 +424,8 @@ function removeMember(member) {
           member.memberId
         )
         
-        if (res.code === 1) {
-          message.success('移除成功')
+        if (res.code === 0 && res.ok) {
+          message.success(res.msg || '移除成功')
           await loadFamilyInfo()
           emits('reload')
         } else {

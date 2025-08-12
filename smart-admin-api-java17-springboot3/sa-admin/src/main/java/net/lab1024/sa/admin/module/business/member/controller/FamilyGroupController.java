@@ -21,7 +21,7 @@ import jakarta.validation.Valid;
  */
 @Tag(name = "家庭组管理")
 @RestController
-@RequestMapping("/familyGroup")
+@RequestMapping("/club/family")
 public class FamilyGroupController {
 
     @Resource

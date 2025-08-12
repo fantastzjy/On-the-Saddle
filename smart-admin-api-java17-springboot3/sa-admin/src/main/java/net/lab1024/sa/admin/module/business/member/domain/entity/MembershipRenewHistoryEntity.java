@@ -46,7 +46,7 @@ public class MembershipRenewHistoryEntity {
     private String remark;
 
     @DataTracerFieldLabel("续费时间")
-    private LocalDateTime renewDate;
+    private LocalDate renewDate;
 
     private String createBy;
 

@@ -139,7 +139,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import { memberApi } from '/@/api/business/member-api'
-import { coachApi } from '/@/api/business/coach-api'
+import { coachApi } from '/@/api/business/coach/coach-api'
 import { smartSentry } from '/@/lib/smart-sentry'
 
 // ----------------------- 事件 -----------------------
@@ -255,7 +255,7 @@ async function loadCoachList() {
   
   try {
     const res = await coachApi.queryList(true, familyGroupInfo.value.clubId)
-    if (res.code === 1) {
+    if (res.code === 0 && res.ok) {
       coachList.value = res.data || []
     }
   } catch (e) {
@@ -345,8 +345,8 @@ async function onSubmit() {
     
     const res = await memberApi.addFamilyMember(submitData)
     
-    if (res.code === 1) {
-      message.success('添加家庭成员成功')
+    if (res.code === 0 && res.ok) {
+      message.success(res.msg || '添加家庭成员成功')
       emits('success')
       onCancel()
     } else {

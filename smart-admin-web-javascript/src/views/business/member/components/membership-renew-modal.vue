@@ -262,7 +262,7 @@ async function loadRenewHistory() {
   historyLoading.value = true
   try {
     const res = await memberApi.getMembershipHistory(memberInfo.value.memberId)
-    if (res.code === 1) {
+    if (res.code === 0 && res.ok) {
       renewHistory.value = res.data || []
     }
   } catch (e) {
@@ -321,8 +321,8 @@ async function onSubmit() {
     
     const res = await memberApi.renewMembership(submitData)
     
-    if (res.code === 1) {
-      message.success('会籍续费成功')
+    if (res.code === 0 && res.ok) {
+      message.success(res.msg || '会籍续费成功')
       emits('reload')
       onCancel()
     } else {

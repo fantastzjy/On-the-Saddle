@@ -18,10 +18,10 @@
             club.club_name,
             m.is_membership,
             m.membership_status,
-            m.expire_date,
+            m.membership_expire_date,
             CASE 
-                WHEN m.expire_date IS NULL THEN NULL
-                ELSE DATEDIFF(m.expire_date, CURDATE())
+                WHEN m.membership_expire_date IS NULL THEN NULL
+                ELSE DATEDIFF(m.membership_expire_date, CURDATE())
             END as remaining_days,
             m.id_card_no,
             m.rider_cert_no,
@@ -29,7 +29,7 @@
             m.created_by_guardian,
             m.disabled_flag,
             m.membership_status,
-            m.expire_date,
+            m.membership_expire_date,
             fg.family_group_id,
             fg.family_name,
             fmr.is_guardian,
@@ -120,10 +120,10 @@
             club.club_name,
             m.is_membership,
             m.membership_status,
-            m.expire_date,
+            m.membership_expire_date,
             CASE 
-                WHEN m.expire_date IS NULL THEN NULL
-                ELSE DATEDIFF(m.expire_date, CURDATE())
+                WHEN m.membership_expire_date IS NULL THEN NULL
+                ELSE DATEDIFF(m.membership_expire_date, CURDATE())
             END as membership_remaining_days,
             m.id_card_no,
             m.rider_cert_no,

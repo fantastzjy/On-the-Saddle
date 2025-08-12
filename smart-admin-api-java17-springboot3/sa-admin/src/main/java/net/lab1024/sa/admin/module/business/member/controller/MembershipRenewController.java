@@ -22,7 +22,7 @@ import java.util.List;
  */
 @Tag(name = "会籍续费管理")
 @RestController
-@RequestMapping("/membershipRenew")
+@RequestMapping("/club/member/membership")
 public class MembershipRenewController {
 
     @Resource

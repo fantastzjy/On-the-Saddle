@@ -5,7 +5,9 @@
       "Bash(mv:*)",
       "Bash(find:*)",
       "Bash(ls:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(./mvnw:*)",
+      "Bash(java:*)"
     ],
     "deny": []
   }

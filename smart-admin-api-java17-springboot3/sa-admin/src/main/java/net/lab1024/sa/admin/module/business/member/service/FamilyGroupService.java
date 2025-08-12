@@ -71,8 +71,8 @@ public class FamilyGroupService {
 
         // 创建家庭组
         FamilyGroupEntity familyGroup = new FamilyGroupEntity();
-        familyGroup.setGroupName(createForm.getGroupName());
-        familyGroup.setRemark(createForm.getRemark());
+        familyGroup.setFamilyName(createForm.getFamilyName());
+        familyGroup.setDescription(createForm.getDescription());
         familyGroup.setCreateTime(LocalDateTime.now());
         familyGroup.setIsValid(1);
         familyGroup.setIsDelete(0);
@@ -93,7 +93,7 @@ public class FamilyGroupService {
         familyMemberRelationDao.insert(guardianRelation);
 
         // 记录数据变更日志
-        dataTracerService.insert(familyGroup.getFamilyGroupId(), DataTracerTypeEnum.BUSINESS);
+        dataTracerService.insert(familyGroup.getFamilyGroupId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP);
 
         return ResponseDTO.ok();
     }
@@ -157,7 +157,7 @@ public class FamilyGroupService {
         familyMemberRelationDao.insert(relation);
 
         // 记录数据变更日志
-        dataTracerService.insert(relation.getId(), DataTracerTypeEnum.BUSINESS);
+        dataTracerService.insert(relation.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP);
 
         return ResponseDTO.ok();
     }
@@ -187,11 +187,11 @@ public class FamilyGroupService {
         int result = familyMemberRelationDao.removeFamilyMember(familyGroupId, memberId);
         if (result > 0) {
             // 记录数据变更日志
-            dataTracerService.delete(relation.getId(), DataTracerTypeEnum.BUSINESS);
+            dataTracerService.delete(relation.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP);
             return ResponseDTO.ok();
         }
 
-        return ResponseDTO.error("移除家庭成员失败");
+        return ResponseDTO.userErrorParam("移除家庭成员失败");
     }
 
     /**
@@ -227,8 +227,13 @@ public class FamilyGroupService {
         familyMemberRelationDao.setGuardian(familyGroupId, newGuardianId, 1);
 
         // 记录数据变更日志
-        dataTracerService.update(oldGuardian.getId(), DataTracerTypeEnum.BUSINESS);
-        dataTracerService.update(newGuardian.getId(), DataTracerTypeEnum.BUSINESS);
+        FamilyMemberRelationEntity oldGuardianCopy = SmartBeanUtil.copy(oldGuardian, FamilyMemberRelationEntity.class);
+        oldGuardianCopy.setIsGuardian(0);
+        dataTracerService.update(oldGuardian.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP, oldGuardian, oldGuardianCopy);
+        
+        FamilyMemberRelationEntity newGuardianCopy = SmartBeanUtil.copy(newGuardian, FamilyMemberRelationEntity.class);
+        newGuardianCopy.setIsGuardian(1);
+        dataTracerService.update(newGuardian.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP, newGuardian, newGuardianCopy);
 
         return ResponseDTO.ok();
     }
@@ -253,8 +258,8 @@ public class FamilyGroupService {
         // 构建返回对象
         FamilyInfoVO familyInfo = new FamilyInfoVO();
         familyInfo.setFamilyGroupId(familyGroup.getFamilyGroupId());
-        familyInfo.setGroupName(familyGroup.getGroupName());
-        familyInfo.setRemark(familyGroup.getRemark());
+        familyInfo.setFamilyName(familyGroup.getFamilyName());
+        familyInfo.setDescription(familyGroup.getDescription());
         familyInfo.setCreateTime(familyGroup.getCreateTime());
         familyInfo.setMemberList(memberList);
 
@@ -301,7 +306,7 @@ public class FamilyGroupService {
         familyMemberRelationDao.deleteByFamilyGroupId(familyGroupId);
 
         // 记录数据变更日志
-        dataTracerService.delete(familyGroupId, DataTracerTypeEnum.BUSINESS);
+        dataTracerService.delete(familyGroupId, DataTracerTypeEnum.CLUB_FAMILY_GROUP);
 
         return ResponseDTO.ok();
     }

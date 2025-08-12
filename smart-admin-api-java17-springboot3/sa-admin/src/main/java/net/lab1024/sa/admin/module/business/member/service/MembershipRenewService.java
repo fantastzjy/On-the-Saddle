@@ -64,9 +64,9 @@ public class MembershipRenewService {
         }
 
         // 获取会员当前到期日期
-        LocalDate currentExpireDate = member.getExpireDate();
-        LocalDate baseDate = currentExpireDate != null && currentExpireDate.isAfter(LocalDate.now()) 
-            ? currentExpireDate 
+        LocalDate currentExpireDate = member.getMembershipExpireDate();
+        LocalDate baseDate = currentExpireDate != null && currentExpireDate.isAfter(LocalDate.now())
+            ? currentExpireDate
             : LocalDate.now();
 
         // 计算新的到期日期
@@ -84,9 +84,9 @@ public class MembershipRenewService {
         membershipRenewHistoryDao.insert(renewHistory);
 
         // 更新会员到期日期
-        member.setExpireDate(newExpireDate);
+        member.setMembershipExpireDate(newExpireDate);
         member.setUpdateTime(LocalDateTime.now());
-        
+
         // 如果会员之前已过期或即将过期，更新会员状态为正常
         if (member.getMembershipStatus() == null || member.getMembershipStatus() != 1) {
             member.setMembershipStatus(1); // 正常
@@ -95,8 +95,13 @@ public class MembershipRenewService {
         memberDao.updateById(member);
 
         // 记录数据变更日志
-        dataTracerService.insert(renewHistory.getId(), DataTracerTypeEnum.BUSINESS);
-        dataTracerService.update(renewForm.getMemberId(), DataTracerTypeEnum.BUSINESS);
+        MemberEntity oldMember = SmartBeanUtil.copy(member, MemberEntity.class);
+        MemberEntity newMember = SmartBeanUtil.copy(member, MemberEntity.class);
+        newMember.setMembershipExpireDate(newExpireDate);
+        newMember.setMembershipStatus(member.getMembershipStatus());
+        
+        dataTracerService.insert(renewHistory.getId(), DataTracerTypeEnum.CLUB_MEMBERSHIP_RENEW);
+        dataTracerService.update(renewForm.getMemberId(), DataTracerTypeEnum.CLUB_MEMBER, oldMember, newMember);
 
         return ResponseDTO.ok();
     }
@@ -144,7 +149,7 @@ public class MembershipRenewService {
             return ResponseDTO.userErrorParam("会员不存在");
         }
 
-        if (member.getExpireDate() == null) {
+        if (member.getMembershipExpireDate() == null) {
             return ResponseDTO.ok(true); // 没有到期日期，需要续费
         }
 
@@ -154,8 +159,8 @@ public class MembershipRenewService {
         }
 
         LocalDate reminderDate = LocalDate.now().plusDays(reminderDays);
-        boolean needReminder = member.getExpireDate().isBefore(reminderDate) || member.getExpireDate().equals(reminderDate);
-        
+        boolean needReminder = member.getMembershipExpireDate().isBefore(reminderDate) || member.getMembershipExpireDate().equals(reminderDate);
+
         return ResponseDTO.ok(needReminder);
     }
 
@@ -172,17 +177,17 @@ public class MembershipRenewService {
             return ResponseDTO.userErrorParam("会员不存在");
         }
 
-        if (member.getExpireDate() == null) {
+        if (member.getMembershipExpireDate() == null) {
             return ResponseDTO.ok("未设置到期日期");
         }
 
         LocalDate today = LocalDate.now();
-        if (member.getExpireDate().isBefore(today)) {
+        if (member.getMembershipExpireDate().isBefore(today)) {
             return ResponseDTO.ok("已过期");
-        } else if (member.getExpireDate().equals(today)) {
+        } else if (member.getMembershipExpireDate().equals(today)) {
             return ResponseDTO.ok("今日到期");
         } else {
-            long daysLeft = today.until(member.getExpireDate()).getDays();
+            long daysLeft = today.until(member.getMembershipExpireDate()).getDays();
             if (daysLeft <= 30) {
                 return ResponseDTO.ok("即将到期(" + daysLeft + "天)");
             } else {
@@ -199,37 +204,42 @@ public class MembershipRenewService {
     public ResponseDTO<String> batchUpdateMembershipStatus() {
         // 查询所有有效会员
         List<MemberEntity> members = memberDao.queryAllValidMembers();
-        
+
         int updatedCount = 0;
         LocalDate today = LocalDate.now();
-        
+
         for (MemberEntity member : members) {
-            if (member.getExpireDate() == null) {
+            if (member.getMembershipExpireDate() == null) {
                 continue;
             }
-            
+
             Integer newStatus;
-            if (member.getExpireDate().isBefore(today)) {
+            if (member.getMembershipExpireDate().isBefore(today)) {
                 newStatus = 3; // 已过期
-            } else if (member.getExpireDate().equals(today) || 
-                      today.until(member.getExpireDate()).getDays() <= 30) {
+            } else if (member.getMembershipExpireDate().equals(today) ||
+                      today.until(member.getMembershipExpireDate()).getDays() <= 30) {
                 newStatus = 2; // 即将到期
             } else {
                 newStatus = 1; // 正常
             }
-            
+
             // 只有状态发生变化时才更新
             if (!newStatus.equals(member.getMembershipStatus())) {
                 member.setMembershipStatus(newStatus);
                 member.setUpdateTime(LocalDateTime.now());
                 memberDao.updateById(member);
                 updatedCount++;
-                
+
                 // 记录数据变更日志
-                dataTracerService.update(member.getMemberId(), DataTracerTypeEnum.BUSINESS);
+                MemberEntity oldMember = SmartBeanUtil.copy(member, MemberEntity.class);
+                oldMember.setMembershipStatus(member.getMembershipStatus()); // 原状态
+                MemberEntity newMember = SmartBeanUtil.copy(member, MemberEntity.class);
+                newMember.setMembershipStatus(newStatus); // 新状态
+                
+                dataTracerService.update(member.getMemberId(), DataTracerTypeEnum.CLUB_MEMBER, oldMember, newMember);
             }
         }
-        
+
         return ResponseDTO.ok("成功更新" + updatedCount + "个会员的到期状态");
     }
 }

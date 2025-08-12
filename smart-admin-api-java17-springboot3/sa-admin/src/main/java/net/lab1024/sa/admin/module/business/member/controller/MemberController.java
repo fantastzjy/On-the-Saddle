@@ -26,20 +26,20 @@ import java.util.List;
  */
 @Tag(name = "会员管理")
 @RestController
-@RequestMapping("/member")
+@RequestMapping("/club/member")
 public class MemberController {
 
     @Resource
     private MemberService memberService;
 
     @Operation(summary = "分页查询会员列表")
-    @PostMapping("/queryByPage")
+    @PostMapping("/page/query")
     public ResponseDTO<PageResult<MemberVO>> queryByPage(@RequestBody @Valid MemberQueryForm queryForm) {
         return memberService.queryByPage(queryForm);
     }
 
     @Operation(summary = "查询会员详情")
-    @GetMapping("/{memberId}")
+    @GetMapping("/get/{memberId}")
     public ResponseDTO<MemberDetailVO> getDetail(@PathVariable Long memberId) {
         return memberService.getDetail(memberId);
     }
@@ -57,7 +57,7 @@ public class MemberController {
     }
 
     @Operation(summary = "删除会员")
-    @DeleteMapping("/{memberId}")
+    @GetMapping("/delete/{memberId}")
     public ResponseDTO<String> delete(@PathVariable Long memberId) {
         return memberService.delete(memberId);
     }
@@ -69,40 +69,48 @@ public class MemberController {
     }
 
     @Operation(summary = "更新会员状态")
-    @PostMapping("/updateStatus/{memberId}/{disabledFlag}")
-    public ResponseDTO<String> updateStatus(@PathVariable Long memberId, @PathVariable Integer disabledFlag) {
-        return memberService.updateStatus(memberId, disabledFlag);
+    @PostMapping("/update-status")
+    public ResponseDTO<String> updateStatus(@RequestParam Long memberId, @RequestParam Integer status) {
+        return memberService.updateStatus(memberId, status);
     }
 
     @Operation(summary = "重置会员密码")
-    @PostMapping("/resetPassword/{memberId}")
-    public ResponseDTO<String> resetPassword(@PathVariable Long memberId) {
+    @PostMapping("/reset-password")
+    public ResponseDTO<String> resetPassword(@RequestParam Long memberId) {
         return memberService.resetPassword(memberId);
     }
 
     @Operation(summary = "检查手机号是否存在")
-    @GetMapping("/checkPhone")
-    public ResponseDTO<Boolean> checkPhoneExists(@RequestParam String phone, 
+    @GetMapping("/check-phone/{phone}")
+    public ResponseDTO<Boolean> checkPhoneExists(@PathVariable String phone, 
                                                @RequestParam(required = false) Long excludeId) {
         return memberService.checkPhoneExists(phone, excludeId);
     }
 
     @Operation(summary = "检查登录名是否存在")
-    @GetMapping("/checkLoginName")
-    public ResponseDTO<Boolean> checkLoginNameExists(@RequestParam String loginName, 
+    @GetMapping("/check-login-name/{loginName}")
+    public ResponseDTO<Boolean> checkLoginNameExists(@PathVariable String loginName, 
                                                    @RequestParam(required = false) Long excludeId) {
         return memberService.checkLoginNameExists(loginName, excludeId);
     }
 
     @Operation(summary = "生成会员编号")
-    @GetMapping("/generateMemberNo")
+    @GetMapping("/generate-no")
     public ResponseDTO<String> generateMemberNo() {
         return memberService.generateMemberNoApi();
     }
 
     @Operation(summary = "根据俱乐部查询会员列表")
-    @GetMapping("/queryByClub/{clubId}")
-    public ResponseDTO<List<MemberVO>> queryListByClub(@PathVariable Long clubId) {
+    @GetMapping("/query/list")
+    public ResponseDTO<List<MemberVO>> queryListByClub(@RequestParam Long clubId) {
         return memberService.queryListByClub(clubId);
+    }
+
+    @Operation(summary = "查询会员家庭信息")
+    @GetMapping("/family/{memberId}")
+    public ResponseDTO<Object> getFamilyInfo(@PathVariable Long memberId) {
+        // 这个接口需要调用家庭服务来获取家庭信息
+        // 暂时返回空对象，需要后续完善
+        return ResponseDTO.ok(null);
     }
 }

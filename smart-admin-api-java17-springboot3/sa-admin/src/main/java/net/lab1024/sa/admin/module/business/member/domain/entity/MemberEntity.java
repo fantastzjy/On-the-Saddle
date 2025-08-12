@@ -62,6 +62,9 @@ public class MemberEntity {
     @DataTracerFieldLabel("是否为会籍会员")
     private Integer isMembership;
 
+    @DataTracerFieldLabel("会籍状态")
+    private Integer membershipStatus;
+
     @DataTracerFieldLabel("会籍有效期")
     private LocalDate membershipExpireDate;
 

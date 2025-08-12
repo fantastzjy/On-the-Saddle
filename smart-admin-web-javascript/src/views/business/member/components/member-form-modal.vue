@@ -84,10 +84,20 @@
       <a-divider orientation="left">身份信息</a-divider>
       <a-row :gutter="24">
         <a-col :span="12">
+          <a-form-item label="所属俱乐部" name="clubId">
+            <a-select v-model:value="form.clubId" placeholder="请选择所属俱乐部">
+              <a-select-option :value="1">默认俱乐部</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
           <a-form-item label="身份证号" name="idCardNo">
             <a-input v-model:value="form.idCardNo" placeholder="请输入身份证号" />
           </a-form-item>
         </a-col>
+      </a-row>
+      
+      <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="骑手证号" name="riderCertNo">
             <a-input v-model:value="form.riderCertNo" placeholder="请输入骑手证号" />
@@ -114,7 +124,7 @@
               :name="isEdit ? 'newPassword' : 'loginPwd'"
             >
               <a-input-password
-                v-model:value="isEdit ? form.newPassword : form.loginPwd"
+                v-model:value="passwordFieldValue"
                 :placeholder="isEdit ? '留空则不修改' : '请输入登录密码'"
                 autocomplete="new-password"
               />
@@ -205,7 +215,7 @@ import dayjs from 'dayjs'
 import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { memberApi } from '/@/api/business/member-api'
 import { smartSentry } from '/@/lib/smart-sentry'
-import Upload from '/@/components/support/upload/index.vue'
+import Upload from '/@/components/support/file-upload/index.vue'
 import {
   REGISTRATION_STATUS,
   MEMBERSHIP_STATUS,
@@ -224,6 +234,7 @@ const isEdit = ref(false)
 
 const form = reactive({
   memberId: undefined,
+  clubId: undefined,
   actualName: '',
   gender: 1,
   birthDate: undefined,
@@ -247,6 +258,9 @@ const rules = {
     { required: true, message: '请输入真实姓名', trigger: 'blur' },
     { max: 50, message: '姓名长度不能超过50个字符', trigger: 'blur' }
   ],
+  clubId: [
+    { required: true, message: '请选择所属俱乐部', trigger: 'change' }
+  ],
   phone: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' },
@@ -256,7 +270,14 @@ const rules = {
     { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
   ],
   idCardNo: [
-    { pattern: /^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[0-9Xx]$/, message: '身份证号格式不正确', trigger: 'blur' }
+    { 
+      validator: (rule, value) => {
+        if (!value) return Promise.resolve()
+        const pattern = /^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[0-9Xx]$/
+        return pattern.test(value) ? Promise.resolve() : Promise.reject(new Error('身份证号格式不正确'))
+      }, 
+      trigger: 'blur' 
+    }
   ],
   loginName: [
     { required: true, message: '请输入登录账号', trigger: 'blur' },
@@ -284,6 +305,19 @@ const showAccountInfo = computed(() => {
 
 const showMinorAlert = computed(() => {
   return form.birthDate && calculateAge(form.birthDate) < 18
+})
+
+const passwordFieldValue = computed({
+  get() {
+    return isEdit.value ? form.newPassword : form.loginPwd
+  },
+  set(value) {
+    if (isEdit.value) {
+      form.newPassword = value
+    } else {
+      form.loginPwd = value
+    }
+  }
 })
 
 // ----------------------- 监听器 -----------------------
@@ -367,7 +401,7 @@ function generateTempLoginName() {
 async function generateMemberNo() {
   try {
     const res = await memberApi.generateMemberNo()
-    if (res.code === 1) {
+    if (res.code === 0 && res.ok) {
       return res.data
     }
   } catch (e) {
@@ -379,12 +413,21 @@ async function generateMemberNo() {
 // ----------------------- 弹窗操作 -----------------------
 async function showModal(record) {
   visible.value = true
-  isEdit.value = !!record
   
-  if (record) {
+  // 加强record验证：只有包含memberId的有效记录才被认为是编辑模式
+  const isValidRecord = record && typeof record === 'object' && record.memberId
+  isEdit.value = isValidRecord
+  
+  // 开发环境调试日志
+  if (process.env.NODE_ENV === 'development') {
+    console.log('showModal called:', { record, isValidRecord, isEdit: isEdit.value })
+  }
+  
+  if (isValidRecord) {
     // 编辑模式
     Object.assign(form, {
       memberId: record.memberId,
+      clubId: record.clubId,
       actualName: record.actualName,
       gender: record.gender,
       birthDate: record.birthDate ? dayjs(record.birthDate) : undefined,
@@ -407,6 +450,7 @@ async function showModal(record) {
     const memberNo = await generateMemberNo()
     Object.assign(form, {
       memberId: undefined,
+      clubId: 1, // 默认俱乐部ID，或从用户上下文获取
       actualName: '',
       gender: 1,
       birthDate: undefined,
@@ -466,19 +510,29 @@ async function onSubmit() {
     
     let res
     if (isEdit.value) {
-      // 编辑时处理密码
+      // 编辑模式
       if (form.newPassword) {
         submitData.loginPwd = form.newPassword
       } else {
         delete submitData.loginPwd
       }
+      
+      // 开发环境调试
+      if (process.env.NODE_ENV === 'development') {
+        console.log('调用更新接口:', submitData)
+      }
       res = await memberApi.update(submitData)
     } else {
+      // 新建模式
+      // 开发环境调试
+      if (process.env.NODE_ENV === 'development') {
+        console.log('调用创建接口:', submitData)
+      }
       res = await memberApi.create(submitData)
     }
     
-    if (res.code === 1) {
-      message.success(isEdit.value ? '编辑成功' : '新建成功')
+    if (res.code === 0 && res.ok) {
+      message.success(res.msg || (isEdit.value ? '编辑成功' : '新建成功'))
       emits('reload')
       onCancel()
     } else {

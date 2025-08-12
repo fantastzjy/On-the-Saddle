@@ -3,10 +3,10 @@ package net.lab1024.sa.admin.module.business.member.domain.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 /**
@@ -22,6 +22,13 @@ public class FamilyMemberAddForm {
     @Schema(description = "家庭组ID")
     @NotNull(message = "家庭组ID不能为空")
     private Long familyGroupId;
+
+    @Schema(description = "会员ID")
+    @NotNull(message = "会员ID不能为空")
+    private Long memberId;
+
+    @Schema(description = "是否监护人: 1-是 0-否")
+    private Integer isGuardian;
 
     @Schema(description = "俱乐部ID")
     @NotNull(message = "俱乐部ID不能为空")
