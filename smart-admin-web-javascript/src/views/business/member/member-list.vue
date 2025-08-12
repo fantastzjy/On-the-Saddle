@@ -390,14 +390,14 @@ async function onSearch() {
   tableLoading.value = true
   try {
     let params = { ...queryForm }
-    
+
     // 处理时间范围
     if (queryForm.createTimeRange && queryForm.createTimeRange.length === 2) {
       params.createTimeBegin = dayjs(queryForm.createTimeRange[0]).format('YYYY-MM-DD HH:mm:ss')
       params.createTimeEnd = dayjs(queryForm.createTimeRange[1]).format('YYYY-MM-DD HH:mm:ss')
     }
     delete params.createTimeRange
-    
+
     const res = await memberApi.pageQuery(params)
     if (res.code === 0 && res.ok) {
       tableData.value = res.data.list || []
@@ -509,7 +509,7 @@ async function onBatchDelete() {
 async function onUpdateStatus(record) {
   const newStatus = record.disabledFlag === DISABLED_FLAG.ENABLED ? DISABLED_FLAG.DISABLED : DISABLED_FLAG.ENABLED
   const statusText = newStatus === DISABLED_FLAG.ENABLED ? '启用' : '禁用'
-  
+
   Modal.confirm({
     title: '提示',
     content: `确定要${statusText}该会员吗？`,
@@ -554,16 +554,16 @@ async function onExport() {
   exportLoading.value = true
   try {
     let params = { ...queryForm }
-    
+
     // 处理时间范围
     if (queryForm.createTimeRange && queryForm.createTimeRange.length === 2) {
       params.createTimeBegin = dayjs(queryForm.createTimeRange[0]).format('YYYY-MM-DD HH:mm:ss')
       params.createTimeEnd = dayjs(queryForm.createTimeRange[1]).format('YYYY-MM-DD HH:mm:ss')
     }
     delete params.createTimeRange
-    
+
     const res = await memberApi.exportMembers(params)
-    
+
     // 创建下载链接
     const blob = new Blob([res], { type: 'application/vnd.ms-excel' })
     const link = document.createElement('a')
@@ -571,7 +571,7 @@ async function onExport() {
     link.download = `会员数据_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.xlsx`
     link.click()
     window.URL.revokeObjectURL(link.href)
-    
+
     message.success('导出成功')
   } catch (e) {
     smartSentry.captureError(e)
@@ -595,7 +595,7 @@ function maskIdCard(idCard) {
 
 function getMembershipExpireStyle(expireDate) {
   if (!expireDate) return {}
-  
+
   const diff = dayjs(expireDate).diff(dayjs(), 'day')
   if (diff < 0) {
     return { color: '#ff4d4f' } // 已过期 - 红色
@@ -613,7 +613,7 @@ function getMembershipExpireStyle(expireDate) {
 
 .smart-query-form-card {
   margin-bottom: 10px;
-  
+
   .smart-query-form-button {
     margin-top: 10px;
   }
@@ -624,15 +624,15 @@ function getMembershipExpireStyle(expireDate) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   .smart-table-operate-block {
     flex: 1;
-    
+
     .ant-btn {
       margin-right: 10px;
     }
   }
-  
+
   .smart-table-setting-block {
     flex: none;
   }
@@ -646,16 +646,16 @@ function getMembershipExpireStyle(expireDate) {
 .member-info {
   display: flex;
   align-items: center;
-  
+
   .member-info-text {
     margin-left: 10px;
-    
+
     .member-name {
       font-weight: 500;
       font-size: 14px;
       color: #262626;
     }
-    
+
     .member-no {
       font-size: 12px;
       color: #8c8c8c;
