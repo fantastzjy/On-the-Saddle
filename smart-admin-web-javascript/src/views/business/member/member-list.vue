@@ -6,11 +6,11 @@
         ref="queryFormRef"
         :model="queryForm"
         layout="horizontal"
-        :label-col="{ span: 6 }"
-        :wrapper-col="{ span: 18 }"
+        :label-col="{ span: 4 }"
+        :wrapper-col="{ span: 20 }"
       >
         <a-row :gutter="24">
-          <a-col :span="8">
+          <a-col :span="12">
             <a-form-item label="关键字">
               <a-input
                 v-model:value="queryForm.keywords"
@@ -19,77 +19,7 @@
               />
             </a-form-item>
           </a-col>
-          <a-col :span="8">
-            <a-form-item label="注册状态">
-              <a-select
-                v-model:value="queryForm.registrationStatus"
-                placeholder="请选择注册状态"
-                allow-clear
-                style="width: 100%"
-              >
-                <a-select-option :value="REGISTRATION_STATUS.UNACTIVATED">未激活</a-select-option>
-                <a-select-option :value="REGISTRATION_STATUS.ACTIVATED">已注册</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="会籍状态">
-              <a-select
-                v-model:value="queryForm.isMembership"
-                placeholder="请选择会籍状态"
-                allow-clear
-                style="width: 100%"
-              >
-                <a-select-option :value="MEMBERSHIP_STATUS.NORMAL">普通会员</a-select-option>
-                <a-select-option :value="MEMBERSHIP_STATUS.MEMBER">会籍会员</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="24">
-          <a-col :span="8">
-            <a-form-item label="创建方式">
-              <a-select
-                v-model:value="queryForm.createdByGuardian"
-                placeholder="请选择创建方式"
-                allow-clear
-                style="width: 100%"
-              >
-                <a-select-option :value="CREATED_BY.SELF">自主注册</a-select-option>
-                <a-select-option :value="CREATED_BY.GUARDIAN">监护人创建</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="状态">
-              <a-select
-                v-model:value="queryForm.disabledFlag"
-                placeholder="请选择状态"
-                allow-clear
-                style="width: 100%"
-              >
-                <a-select-option :value="DISABLED_FLAG.ENABLED">启用</a-select-option>
-                <a-select-option :value="DISABLED_FLAG.DISABLED">禁用</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="创建时间">
-              <a-range-picker
-                v-model:value="queryForm.createTimeRange"
-                style="width: 100%"
-                :presets="[
-                  { label: '今天', value: [dayjs(), dayjs()] },
-                  { label: '昨天', value: [dayjs().subtract(1, 'day'), dayjs().subtract(1, 'day')] },
-                  { label: '近7天', value: [dayjs().subtract(6, 'day'), dayjs()] },
-                  { label: '近30天', value: [dayjs().subtract(29, 'day'), dayjs()] }
-                ]"
-              />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row class="smart-query-form-button">
-          <a-col :span="24" style="text-align: right">
+          <a-col :span="12" style="text-align: right">
             <a-button type="primary" @click="onSearch">
               <SearchOutlined />
               查询
@@ -117,16 +47,6 @@
             新建
           </a-button>
           <a-button
-            v-privilege="'club:member:batch'"
-            type="danger"
-            size="small"
-            :disabled="selectedRowKeyList.length == 0"
-            @click="onBatchDelete"
-          >
-            <DeleteOutlined />
-            批量删除
-          </a-button>
-          <a-button
             v-privilege="'club:member:export'"
             size="small"
             @click="onExport"
@@ -150,11 +70,6 @@
         :pagination="false"
         :scroll="{ x: 1800 }"
         row-key="memberId"
-        :row-selection="{
-          type: 'checkbox',
-          selectedRowKeys: selectedRowKeyList,
-          onChange: onSelectChange,
-        }"
         size="small"
         bordered
       >
@@ -174,6 +89,22 @@
         <!-- 性别 -->
         <template #gender="{ record }">
           {{ GENDER_TEXT[record.gender] }}
+        </template>
+
+        <!-- 手机号 -->
+        <template #phone="{ record }">
+          <div class="sensitive-field">
+            <span>{{ getDisplayPhone(record.phone, record.memberId) }}</span>
+            <a-button 
+              type="text" 
+              size="small" 
+              @click="togglePhoneVisibility(record.memberId)"
+              class="visibility-btn"
+            >
+              <EyeOutlined v-if="!phoneVisibilityMap[record.memberId]" />
+              <EyeInvisibleOutlined v-else />
+            </a-button>
+          </div>
         </template>
 
         <!-- 年龄 -->
@@ -207,7 +138,18 @@
 
         <!-- 身份证号 -->
         <template #idCardNo="{ record }">
-          {{ maskIdCard(record.idCardNo) }}
+          <div class="sensitive-field">
+            <span>{{ getDisplayIdCard(record.idCardNo, record.memberId) }}</span>
+            <a-button 
+              type="text" 
+              size="small" 
+              @click="toggleIdCardVisibility(record.memberId)"
+              class="visibility-btn"
+            >
+              <EyeOutlined v-if="!idCardVisibilityMap[record.memberId]" />
+              <EyeInvisibleOutlined v-else />
+            </a-button>
+          </div>
         </template>
 
         <!-- 创建方式 -->
@@ -317,8 +259,9 @@ import {
   SearchOutlined,
   ReloadOutlined,
   PlusOutlined,
-  DeleteOutlined,
-  ExportOutlined
+  ExportOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined
 } from '@ant-design/icons-vue'
 import { memberApi } from '/@/api/business/member-api'
 import { smartSentry } from '/@/lib/smart-sentry'
@@ -327,19 +270,10 @@ import TableOperator from '/@/components/support/table-operator/index.vue'
 import MemberFormModal from './components/member-form-modal.vue'
 import FamilyManageModal from './components/family-manage-modal.vue'
 import {
-  REGISTRATION_STATUS,
-  REGISTRATION_STATUS_TEXT,
-  REGISTRATION_STATUS_COLOR,
-  MEMBERSHIP_STATUS,
   MEMBERSHIP_STATUS_TEXT,
   MEMBERSHIP_STATUS_COLOR,
   GENDER_TEXT,
-  CREATED_BY,
-  CREATED_BY_TEXT,
-  CREATED_BY_COLOR,
   DISABLED_FLAG,
-  DISABLED_FLAG_TEXT,
-  DISABLED_FLAG_COLOR,
   TABLE_COLUMNS
 } from './constants/member-constants'
 
@@ -355,11 +289,6 @@ const familyManageModalRef = ref()
 
 const queryForm = reactive({
   keywords: '',
-  registrationStatus: undefined,
-  isMembership: undefined,
-  createdByGuardian: undefined,
-  disabledFlag: undefined,
-  createTimeRange: undefined,
   pageNum: 1,
   pageSize: 10
 })
@@ -367,9 +296,12 @@ const queryForm = reactive({
 const tableLoading = ref(false)
 const tableData = ref([])
 const total = ref(0)
-const selectedRowKeyList = ref([])
 const columns = ref(TABLE_COLUMNS)
 const exportLoading = ref(false)
+
+// 脱敏相关状态
+const phoneVisibilityMap = ref({})
+const idCardVisibilityMap = ref({})
 
 // ----------------------- 页面函数 -----------------------
 
@@ -381,13 +313,6 @@ async function onSearch() {
   tableLoading.value = true
   try {
     let params = { ...queryForm }
-
-    // 处理时间范围
-    if (queryForm.createTimeRange && queryForm.createTimeRange.length === 2) {
-      params.createTimeBegin = dayjs(queryForm.createTimeRange[0]).format('YYYY-MM-DD HH:mm:ss')
-      params.createTimeEnd = dayjs(queryForm.createTimeRange[1]).format('YYYY-MM-DD HH:mm:ss')
-    }
-    delete params.createTimeRange
 
     const res = await memberApi.pageQuery(params)
     if (res.code === 0 && res.ok) {
@@ -407,11 +332,6 @@ function onResetQuery() {
   queryFormRef.value?.resetFields()
   Object.assign(queryForm, {
     keywords: '',
-    registrationStatus: undefined,
-    isMembership: undefined,
-    createdByGuardian: undefined,
-    disabledFlag: undefined,
-    createTimeRange: undefined,
     pageNum: 1,
     pageSize: 10
   })
@@ -439,11 +359,6 @@ function showFamilyModal(record) {
   familyManageModalRef.value.showModal(record)
 }
 
-// ----------------------- 表格操作 -----------------------
-
-function onSelectChange(selectedRowKeys) {
-  selectedRowKeyList.value = selectedRowKeys
-}
 
 async function onDelete(record) {
   Modal.confirm({
@@ -468,34 +383,6 @@ async function onDelete(record) {
   })
 }
 
-async function onBatchDelete() {
-  if (selectedRowKeyList.value.length === 0) {
-    message.warning('请选择要删除的会员')
-    return
-  }
-
-  Modal.confirm({
-    title: '批量删除',
-    content: `确定要删除选中的 ${selectedRowKeyList.value.length} 个会员吗？`,
-    okText: '删除',
-    okType: 'danger',
-    onOk: async () => {
-      try {
-        const res = await memberApi.batchDelete(selectedRowKeyList.value)
-        if (res.code === 0 && res.ok) {
-          message.success(res.msg || '批量删除成功')
-          selectedRowKeyList.value = []
-          onSearch()
-        } else {
-          message.error('批量删除失败：' + res.msg)
-        }
-      } catch (e) {
-        smartSentry.captureError(e)
-        message.error('批量删除失败')
-      }
-    }
-  })
-}
 
 async function onUpdateStatus(record) {
   const newStatus = record.disabledFlag === DISABLED_FLAG.ENABLED ? DISABLED_FLAG.DISABLED : DISABLED_FLAG.ENABLED
@@ -527,13 +414,6 @@ async function onExport() {
   try {
     let params = { ...queryForm }
 
-    // 处理时间范围
-    if (queryForm.createTimeRange && queryForm.createTimeRange.length === 2) {
-      params.createTimeBegin = dayjs(queryForm.createTimeRange[0]).format('YYYY-MM-DD HH:mm:ss')
-      params.createTimeEnd = dayjs(queryForm.createTimeRange[1]).format('YYYY-MM-DD HH:mm:ss')
-    }
-    delete params.createTimeRange
-
     const res = await memberApi.exportMembers(params)
 
     // 创建下载链接
@@ -554,6 +434,36 @@ async function onExport() {
 }
 
 // ----------------------- 工具函数 -----------------------
+
+// 脱敏功能相关
+function togglePhoneVisibility(memberId) {
+  phoneVisibilityMap.value[memberId] = !phoneVisibilityMap.value[memberId]
+}
+
+function toggleIdCardVisibility(memberId) {
+  idCardVisibilityMap.value[memberId] = !idCardVisibilityMap.value[memberId]
+}
+
+function getDisplayPhone(phone, memberId) {
+  if (!phone) return '-'
+  if (phoneVisibilityMap.value[memberId]) {
+    return phone
+  }
+  return maskPhone(phone)
+}
+
+function getDisplayIdCard(idCard, memberId) {
+  if (!idCard) return '-'
+  if (idCardVisibilityMap.value[memberId]) {
+    return idCard
+  }
+  return maskIdCard(idCard)
+}
+
+function maskPhone(phone) {
+  if (!phone || phone.length < 7) return phone
+  return phone.replace(/^(.{3}).*(.{4})$/, '$1****$2')
+}
 
 function calculateAge(birthDate) {
   if (!birthDate) return '-'
@@ -638,6 +548,23 @@ function getMembershipExpireStyle(expireDate) {
 .smart-table-operate {
   .ant-btn {
     padding: 0 4px;
+  }
+}
+
+.sensitive-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  
+  .visibility-btn {
+    padding: 0;
+    min-width: 20px;
+    height: 20px;
+    color: #666;
+    
+    &:hover {
+      color: #1890ff;
+    }
   }
 }
 </style>

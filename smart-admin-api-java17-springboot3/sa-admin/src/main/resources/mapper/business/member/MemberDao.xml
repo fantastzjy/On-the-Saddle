@@ -89,11 +89,6 @@
         WHERE member_no = #{memberNo} AND is_delete = 0
     </select>
 
-    <!-- 根据登录名查询 -->
-    <select id="selectByLoginName" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity">
-        SELECT * FROM m_member 
-        WHERE login_name = #{loginName} AND is_delete = 0
-    </select>
 
     <!-- 根据手机号查询 -->
     <select id="selectByPhone" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity">
@@ -108,7 +103,6 @@
             m.member_no,
             m.union_id,
             m.open_id,
-            m.login_name,
             m.actual_name,
             m.phone,
             m.email,
@@ -150,14 +144,6 @@
         </if>
     </select>
 
-    <!-- 检查登录名是否存在 -->
-    <select id="checkLoginNameExists" resultType="int">
-        SELECT COUNT(1) FROM m_member 
-        WHERE login_name = #{loginName} AND is_delete = 0
-        <if test="excludeId != null">
-            AND member_id != #{excludeId}
-        </if>
-    </select>
 
     <!-- 检查会员编号是否存在 -->
     <select id="checkMemberNoExists" resultType="int">
@@ -191,12 +177,6 @@
         WHERE member_id = #{memberId}
     </update>
 
-    <!-- 重置密码 -->
-    <update id="resetPassword">
-        UPDATE m_member 
-        SET login_pwd = #{newPassword}, update_time = NOW()
-        WHERE member_id = #{memberId}
-    </update>
 
     <!-- 更新最后登录时间 -->
     <update id="updateLastLoginTime">

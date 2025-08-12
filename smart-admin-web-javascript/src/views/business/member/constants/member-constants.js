@@ -109,7 +109,8 @@ export const TABLE_COLUMNS = [
   {
     title: '手机号',
     dataIndex: 'phone',
-    width: 120
+    width: 140,
+    slots: { customRender: 'phone' }
   },
   {
     title: '性别',
@@ -144,7 +145,8 @@ export const TABLE_COLUMNS = [
   {
     title: '身份证号',
     dataIndex: 'idCardNo',
-    width: 150
+    width: 180,
+    slots: { customRender: 'idCardNo' }
   },
   {
     title: '骑手证号',

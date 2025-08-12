@@ -31,10 +31,6 @@ public interface MemberDao extends BaseMapper<MemberEntity> {
      */
     MemberEntity selectByMemberNo(@Param("memberNo") String memberNo);
 
-    /**
-     * 根据登录名查询
-     */
-    MemberEntity selectByLoginName(@Param("loginName") String loginName);
 
     /**
      * 根据手机号查询
@@ -51,10 +47,6 @@ public interface MemberDao extends BaseMapper<MemberEntity> {
      */
     int checkPhoneExists(@Param("phone") String phone, @Param("excludeId") Long excludeId);
 
-    /**
-     * 检查登录名是否存在
-     */
-    int checkLoginNameExists(@Param("loginName") String loginName, @Param("excludeId") Long excludeId);
 
     /**
      * 检查会员编号是否存在
@@ -71,10 +63,6 @@ public interface MemberDao extends BaseMapper<MemberEntity> {
      */
     int updateMemberStatus(@Param("memberId") Long memberId, @Param("disabledFlag") Integer disabledFlag);
 
-    /**
-     * 重置密码
-     */
-    int resetPassword(@Param("memberId") Long memberId, @Param("newPassword") String newPassword);
 
     /**
      * 更新最后登录时间
