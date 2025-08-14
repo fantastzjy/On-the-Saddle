@@ -21,8 +21,8 @@ INSERT INTO `t_menu` (
     `frame_flag`, `frame_url`, `cache_flag`, `visible_flag`, `disabled_flag`, 
     `deleted_flag`, `create_user_id`, `create_time`, `update_time`
 ) VALUES 
-('家庭组列表', 1, @family_menu_id, 1, 'list', '/business/family-group/family-group-list', 1, 'family-group:query', 'family-group:query', '', NULL, 0, NULL, 1, 1, 0, 0, 1, NOW(), NOW()),
-('家庭组详情', 1, @family_menu_id, 2, 'detail/:id', '/business/family-group/family-group-detail', 1, 'family-group:detail', 'family-group:detail', '', NULL, 0, NULL, 1, 0, 0, 0, 1, NOW(), NOW());
+('家庭组列表', 1, @family_menu_id, 1, 'list', '/business/family-group/family-group-list.vue', 1, 'family-group:query', 'family-group:query', '', NULL, 0, NULL, 1, 1, 0, 0, 1, NOW(), NOW()),
+('家庭组详情', 1, @family_menu_id, 2, '/family-group/detail/:id', '/business/family-group/family-group-detail.vue', 1, 'family-group:detail', 'family-group:detail', '', NULL, 0, NULL, 1, 0, 0, 0, 1, NOW(), NOW());
 
 -- 3. 插入家庭组管理相关功能点
 INSERT INTO `t_menu` (
