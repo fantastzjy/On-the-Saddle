@@ -32,4 +32,34 @@
         WHERE family_group_id = #{familyGroupId}
     </update>
 
+    <!-- 搜索家庭组 -->
+    <select id="searchFamilyGroups" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupSearchVO">
+        SELECT DISTINCT
+            fg.family_group_id,
+            fg.family_name,
+            mc.actual_name as main_contact_name,
+            fg.description,
+            fg.create_time,
+            (SELECT COUNT(*) FROM m_family_member_relation fmr2 
+             WHERE fmr2.family_group_id = fg.family_group_id AND fmr2.is_delete = 0) as member_count
+        FROM m_family_group fg
+        LEFT JOIN m_member mc ON fg.main_contact_id = mc.member_id AND mc.is_delete = 0
+        <if test="searchType == 'memberName' or searchType == 'memberPhone'">
+            INNER JOIN m_family_member_relation fmr ON fg.family_group_id = fmr.family_group_id AND fmr.is_delete = 0
+            INNER JOIN m_member m ON fmr.member_id = m.member_id AND m.is_delete = 0
+        </if>
+        WHERE fg.club_id = #{clubId} AND fg.is_delete = 0
+        <if test="searchType == 'familyName'">
+            AND fg.family_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="searchType == 'memberName'">
+            AND m.actual_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="searchType == 'memberPhone'">
+            AND m.phone = #{keyword}
+        </if>
+        ORDER BY fg.create_time DESC
+        LIMIT 20
+    </select>
+
 </mapper>

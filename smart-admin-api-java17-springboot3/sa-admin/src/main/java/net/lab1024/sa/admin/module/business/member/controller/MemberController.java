@@ -7,7 +7,9 @@ import net.lab1024.sa.admin.module.business.member.domain.form.MemberQueryForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberDetailVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
 import net.lab1024.sa.admin.module.business.member.service.MemberService;
+import net.lab1024.sa.admin.module.business.member.service.FamilyGroupService;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.domain.ValidateList;
@@ -31,6 +33,9 @@ public class MemberController {
 
     @Resource
     private MemberService memberService;
+
+    @Resource
+    private FamilyGroupService familyGroupService;
 
     @Operation(summary = "分页查询会员列表")
     @PostMapping("/page/query")
@@ -95,9 +100,7 @@ public class MemberController {
 
     @Operation(summary = "查询会员家庭信息")
     @GetMapping("/family/{memberId}")
-    public ResponseDTO<Object> getFamilyInfo(@PathVariable Long memberId) {
-        // 这个接口需要调用家庭服务来获取家庭信息
-        // 暂时返回空对象，需要后续完善
-        return ResponseDTO.ok(null);
+    public ResponseDTO<FamilyInfoVO> getFamilyInfo(@PathVariable Long memberId) {
+        return familyGroupService.getFamilyInfoByMemberId(memberId);
     }
 }

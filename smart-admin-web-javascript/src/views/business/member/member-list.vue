@@ -39,15 +39,6 @@
             <PlusOutlined />
             新建
           </a-button>
-          <a-button
-            v-privilege="'club:member:export'"
-            size="small"
-            @click="onExport"
-            :loading="exportLoading"
-          >
-            <ExportOutlined />
-            导出
-          </a-button>
         </div>
         <div class="smart-table-setting-block">
           <TableOperator v-model="columns" :table-id="TABLE_ID_CONST.BUSINESS.CLUB.MEMBER" :refresh="onSearch" />

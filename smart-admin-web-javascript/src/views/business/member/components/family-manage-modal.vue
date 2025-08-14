@@ -55,7 +55,10 @@
             image="simple"
             description="该会员尚未加入任何家庭组"
           >
-            <a-button type="primary" @click="showCreateFamilyModal">创建家庭组</a-button>
+            <a-space>
+              <a-button type="primary" @click="showCreateFamilyModal">创建家庭组</a-button>
+              <a-button @click="showJoinFamilyModal">加入现有家庭组</a-button>
+            </a-space>
           </a-empty>
         </div>
       </a-card>
@@ -185,6 +188,12 @@
     ref="familyMemberAddModalRef"
     @success="onMemberAdded"
   />
+
+  <!-- 加入家庭组弹窗 -->
+  <JoinFamilyModal
+    ref="joinFamilyModalRef"
+    @success="onJoinFamilySuccess"
+  />
 </template>
 
 <script setup>
@@ -194,6 +203,7 @@ import dayjs from 'dayjs'
 import { memberApi } from '/@/api/business/member-api'
 import { smartSentry } from '/@/lib/smart-sentry'
 import FamilyMemberAddModal from './family-member-add-modal.vue'
+import JoinFamilyModal from './join-family-modal.vue'
 import {
   REGISTRATION_STATUS_TEXT,
   REGISTRATION_STATUS_COLOR
@@ -228,6 +238,7 @@ const familyFormRules = {
 
 // 子组件引用
 const familyMemberAddModalRef = ref()
+const joinFamilyModalRef = ref()
 
 // ----------------------- 表格列配置 -----------------------
 const memberColumns = [
@@ -306,8 +317,9 @@ async function loadFamilyInfo() {
   try {
     const res = await memberApi.getFamilyInfo(memberInfo.value.memberId)
     if (res.code === 0 && res.ok && res.data) {
-      familyInfo.value = res.data.familyGroup
-      familyMembers.value = res.data.members || []
+      // 直接使用返回的数据结构
+      familyInfo.value = res.data
+      familyMembers.value = res.data.memberList || []
     } else {
       familyInfo.value = null
       familyMembers.value = []
@@ -352,7 +364,7 @@ async function submitFamilyForm() {
     
     const submitData = {
       ...familyForm,
-      memberId: memberInfo.value.memberId,
+      guardianMemberId: memberInfo.value.memberId,
       clubId: memberInfo.value.clubId
     }
     
@@ -440,6 +452,15 @@ function removeMember(member) {
 }
 
 function onMemberAdded() {
+  loadFamilyInfo()
+  emits('reload')
+}
+
+function showJoinFamilyModal() {
+  joinFamilyModalRef.value.showModal(memberInfo.value)
+}
+
+function onJoinFamilySuccess() {
   loadFamilyInfo()
   emits('reload')
 }

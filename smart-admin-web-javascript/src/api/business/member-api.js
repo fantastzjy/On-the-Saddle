@@ -11,9 +11,11 @@ export const memberApi = {
   
   // 家庭管理
   getFamilyInfo: (memberId) => getRequest(`/club/member/family/${memberId}`),
+  searchFamilyGroups: (param) => postRequest('/club/family/search', param),
   createFamily: (param) => postRequest('/club/family/create', param),
   updateFamily: (param) => postRequest('/club/family/update', param),
-  addFamilyMember: (param) => postRequest('/club/family/add-member', param),
+  addFamilyMember: (param) => postRequest('/club/family/addMember', param),
+  joinFamilyGroup: (param) => postRequest('/club/family/joinMember', param),
   removeFamilyMember: (familyGroupId, memberId) => postRequest('/club/family/remove-member', {familyGroupId, memberId}),
   setGuardian: (familyGroupId, memberId, isGuardian) => postRequest('/club/family/set-guardian', {familyGroupId, memberId, isGuardian}),
   

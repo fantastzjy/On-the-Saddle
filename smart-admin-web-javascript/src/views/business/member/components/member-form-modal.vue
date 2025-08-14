@@ -17,6 +17,19 @@
     >
       <a-row :gutter="24">
         <a-col :span="12">
+          <a-form-item label="Union ID" name="unionId">
+            <a-input v-model:value="form.unionId" placeholder="请输入Union ID" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="Open ID" name="openId">
+            <a-input v-model:value="form.openId" placeholder="请输入Open ID" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="24">
+        <a-col :span="12">
           <a-form-item label="真实姓名" name="actualName">
             <a-input v-model:value="form.actualName" placeholder="请输入真实姓名" />
           </a-form-item>
@@ -204,7 +217,9 @@ import {
   MEMBERSHIP_STATUS,
   GENDER_OPTIONS,
   CREATED_BY,
-  COURSE_LEVEL_DICT_CODE
+  COURSE_LEVEL_DICT_CODE,
+  COURSE_LEVEL_CONVERT_MAP,
+  COURSE_LEVEL_REVERSE_MAP
 } from '../constants/member-constants'
 
 // ----------------------- 事件 -----------------------
@@ -219,6 +234,8 @@ const coachList = ref([])
 
 const form = reactive({
   memberId: undefined,
+  unionId: '',
+  openId: '',
   clubId: undefined,
   actualName: '',
   gender: 1,
@@ -352,6 +369,24 @@ function calculateAge(birthDate) {
   return dayjs().diff(dayjs(birthDate), 'year')
 }
 
+// 课程级别智能转换函数（兼容中文和枚举编码）
+function normalizeCourseLevelForEdit(courseLevel) {
+  if (!courseLevel) return ''
+  
+  // 如果已经是枚举编码，直接返回
+  if (COURSE_LEVEL_REVERSE_MAP[courseLevel]) {
+    return courseLevel
+  }
+  
+  // 如果是中文，转换为枚举编码
+  if (COURSE_LEVEL_CONVERT_MAP[courseLevel]) {
+    return COURSE_LEVEL_CONVERT_MAP[courseLevel]
+  }
+  
+  // 其他情况直接返回原值
+  return courseLevel
+}
+
 function disabledBirthDate(current) {
   // 不能选择未来日期
   return current && current > dayjs().endOf('day')
@@ -392,6 +427,8 @@ async function showModal(record) {
     // 编辑模式
     Object.assign(form, {
       memberId: record.memberId,
+      unionId: record.unionId || '',
+      openId: record.openId || '',
       clubId: record.clubId,
       actualName: record.actualName,
       gender: record.gender,
@@ -401,7 +438,7 @@ async function showModal(record) {
       idCardNo: record.idCardNo,
       riderCertNo: record.riderCertNo,
       defaultCoachId: record.defaultCoachId,
-      defaultCourseLevel: record.defaultCourseLevel || '',
+      defaultCourseLevel: normalizeCourseLevelForEdit(record.defaultCourseLevel || ''),
       isMembership: record.isMembership,
       membershipExpireDate: record.membershipExpireDate ? dayjs(record.membershipExpireDate) : undefined,
       registrationStatus: record.registrationStatus,
@@ -413,6 +450,8 @@ async function showModal(record) {
     const memberNo = await generateMemberNo()
     Object.assign(form, {
       memberId: undefined,
+      unionId: '',
+      openId: '',
       clubId: 1, // 默认俱乐部ID，或从用户上下文获取
       actualName: '',
       gender: 1,

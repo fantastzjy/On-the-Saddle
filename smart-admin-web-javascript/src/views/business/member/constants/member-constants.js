@@ -96,13 +96,39 @@ export const SEARCH_TYPE_OPTIONS = [
 // 课程级别字典编码
 export const COURSE_LEVEL_DICT_CODE = 'COURSE_LEVEL'
 
+// 课程级别转换映射（用于兼容旧数据）
+export const COURSE_LEVEL_CONVERT_MAP = {
+  '初级': 'BEGINNER',
+  '中级': 'INTERMEDIATE', 
+  '高级': 'ADVANCED',
+  '专业级': 'EXPERT',
+  '专业': 'EXPERT'
+}
+
+// 课程级别反向转换映射（枚举编码 -> 中文显示）
+export const COURSE_LEVEL_REVERSE_MAP = {
+  'BEGINNER': '初级',
+  'INTERMEDIATE': '中级',
+  'ADVANCED': '高级',
+  'EXPERT': '专业级'
+}
+
 // 表格列配置
 export const TABLE_COLUMNS = [
   {
+    title: 'Union ID',
+    dataIndex: 'unionId',
+    width: 150
+  },
+  {
+    title: 'Open ID',
+    dataIndex: 'openId',
+    width: 150
+  },
+  {
     title: '会员姓名',
     dataIndex: 'actualName',
-    width: 120,
-    fixed: 'left'
+    width: 120
   },
   {
     title: '会员编号',

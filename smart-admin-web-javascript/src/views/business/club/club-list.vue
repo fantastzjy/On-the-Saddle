@@ -14,27 +14,6 @@
         <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="俱乐部名称/联系人/电话" />
       </a-form-item>
 
-      <a-form-item label="省份" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.province" placeholder="省份" />
-      </a-form-item>
-
-      <a-form-item label="城市" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.city" placeholder="城市" />
-      </a-form-item>
-
-      <a-form-item label="状态" class="smart-query-form-item">
-        <a-select style="width: 120px" v-model:value="queryForm.isValid" placeholder="状态" allowClear>
-          <a-select-option :value="true">有效</a-select-option>
-          <a-select-option :value="false">无效</a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item label="创建时间" class="smart-query-form-item">
-        <a-space direction="vertical" :size="12">
-          <a-range-picker v-model:value="searchDate" :presets="defaultTimeRanges" @change="dateChange" />
-        </a-space>
-      </a-form-item>
-
       <a-form-item class="smart-query-form-item smart-margin-left10">
         <a-button-group>
           <a-button type="primary" @click="onSearch">

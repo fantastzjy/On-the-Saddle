@@ -22,6 +22,12 @@ public class MemberVO {
     @Schema(description = "会员编号")
     private String memberNo;
 
+    @Schema(description = "微信unionId")
+    private String unionId;
+
+    @Schema(description = "微信openId")  
+    private String openId;
+
     @Schema(description = "真实姓名")
     private String actualName;
 

@@ -23,6 +23,9 @@ public class FamilyInfoVO {
     @Schema(description = "家庭名称")
     private String familyName;
 
+    @Schema(description = "主要联系人姓名")
+    private String mainContactName;
+
     @Schema(description = "家庭描述")
     private String description;
 

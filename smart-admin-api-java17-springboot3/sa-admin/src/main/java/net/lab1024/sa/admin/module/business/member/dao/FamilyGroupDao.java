@@ -3,8 +3,11 @@ package net.lab1024.sa.admin.module.business.member.dao;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import net.lab1024.sa.admin.module.business.member.domain.entity.FamilyGroupEntity;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupSearchVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * 家庭组DAO
@@ -30,4 +33,11 @@ public interface FamilyGroupDao extends BaseMapper<FamilyGroupEntity> {
      * 更新主要联系人
      */
     int updateMainContact(@Param("familyGroupId") Long familyGroupId, @Param("mainContactId") Long mainContactId);
+
+    /**
+     * 搜索家庭组
+     */
+    List<FamilyGroupSearchVO> searchFamilyGroups(@Param("searchType") String searchType, 
+                                                @Param("keyword") String keyword, 
+                                                @Param("clubId") Long clubId);
 }

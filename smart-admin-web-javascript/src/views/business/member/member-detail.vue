@@ -46,6 +46,8 @@
             </a-col>
             <a-col :span="20">
               <a-descriptions :column="3" size="middle">
+                <a-descriptions-item label="Union ID">{{ memberInfo.unionId || '-' }}</a-descriptions-item>
+                <a-descriptions-item label="Open ID">{{ memberInfo.openId || '-' }}</a-descriptions-item>
                 <a-descriptions-item label="姓名">{{ memberInfo.actualName }}</a-descriptions-item>
                 <a-descriptions-item label="会员编号">{{ memberInfo.memberNo }}</a-descriptions-item>
                 <a-descriptions-item label="性别">{{ getGenderText(memberInfo.gender) }}</a-descriptions-item>
