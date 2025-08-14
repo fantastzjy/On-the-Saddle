@@ -329,6 +329,48 @@ public class FamilyGroupService {
     }
 
     /**
+     * 设置监护人
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @OperateLog
+    public ResponseDTO<String> setGuardian(Long familyGroupId, Long memberId, Integer isGuardian) {
+        log.info("开始设置监护人，familyGroupId: {}, memberId: {}, isGuardian: {}", familyGroupId, memberId, isGuardian);
+        
+        if (familyGroupId == null || memberId == null || isGuardian == null) {
+            return ResponseDTO.userErrorParam("参数不能为空");
+        }
+
+        // 检查家庭组是否存在
+        FamilyGroupEntity familyGroup = familyGroupDao.selectById(familyGroupId);
+        if (familyGroup == null || familyGroup.getIsDelete() == 1) {
+            return ResponseDTO.userErrorParam("家庭组不存在");
+        }
+
+        // 检查成员是否在该家庭组中
+        FamilyMemberRelationEntity relation = familyMemberRelationDao.selectByFamilyAndMember(familyGroupId, memberId);
+        if (relation == null) {
+            return ResponseDTO.userErrorParam("该成员不在此家庭组中");
+        }
+
+        if (isGuardian == 1) {
+            // 设为监护人：先清除当前监护人，再设置新监护人
+            familyMemberRelationDao.clearGuardianByFamilyGroup(familyGroupId);
+            familyMemberRelationDao.setGuardian(familyGroupId, memberId, 1);
+            
+            // 更新家庭组主联系人
+            familyGroupDao.updateMainContact(familyGroupId, memberId);
+            
+            log.info("成功设置会员{}为家庭组{}的监护人", memberId, familyGroupId);
+            return ResponseDTO.ok("设置监护人成功");
+        } else {
+            // 取消监护人身份
+            familyMemberRelationDao.setGuardian(familyGroupId, memberId, 0);
+            log.info("成功取消会员{}在家庭组{}的监护人身份", memberId, familyGroupId);
+            return ResponseDTO.ok("取消监护人成功");
+        }
+    }
+
+    /**
      * 删除家庭组
      */
     @Transactional(rollbackFor = Exception.class)

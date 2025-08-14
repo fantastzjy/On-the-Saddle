@@ -59,6 +59,15 @@
                     OR INSTR(m.rider_cert_no, #{queryForm.keywords}) > 0
                 )
             </if>
+            <if test="queryForm.name != null and queryForm.name != ''">
+                AND INSTR(m.actual_name, #{queryForm.name}) > 0
+            </if>
+            <if test="queryForm.phone != null and queryForm.phone != ''">
+                AND INSTR(m.phone, #{queryForm.phone}) > 0
+            </if>
+            <if test="queryForm.memberNo != null and queryForm.memberNo != ''">
+                AND INSTR(m.member_no, #{queryForm.memberNo}) > 0
+            </if>
             <if test="queryForm.clubId != null">
                 AND m.club_id = #{queryForm.clubId}
             </if>

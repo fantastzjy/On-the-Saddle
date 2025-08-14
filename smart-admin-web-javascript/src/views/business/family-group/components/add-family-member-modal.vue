@@ -289,6 +289,7 @@ async function onSearchMembers() {
     const params = {
       [searchType.value]: searchKeyword.value.trim(),
       clubId: familyGroupInfo.value.clubId,
+      pageNum: 1,
       pageSize: 10
     }
     

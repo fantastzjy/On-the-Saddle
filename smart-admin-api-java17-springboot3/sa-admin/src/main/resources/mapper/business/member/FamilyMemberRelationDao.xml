@@ -35,6 +35,13 @@
         WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId}
     </update>
 
+    <!-- 清除家庭组中所有成员的监护人身份 -->
+    <update id="clearGuardianByFamilyGroup">
+        UPDATE m_family_member_relation 
+        SET is_guardian = 0, update_time = NOW()
+        WHERE family_group_id = #{familyGroupId} AND is_delete = 0
+    </update>
+
     <!-- 移除家庭成员（软删除） -->
     <update id="removeFamilyMember">
         UPDATE m_family_member_relation 

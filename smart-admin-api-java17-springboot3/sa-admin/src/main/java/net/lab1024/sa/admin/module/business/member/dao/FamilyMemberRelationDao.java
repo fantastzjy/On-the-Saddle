@@ -34,6 +34,11 @@ public interface FamilyMemberRelationDao extends BaseMapper<FamilyMemberRelation
     int setGuardian(@Param("familyGroupId") Long familyGroupId, @Param("memberId") Long memberId, @Param("isGuardian") Integer isGuardian);
 
     /**
+     * 清除家庭组中所有成员的监护人身份
+     */
+    int clearGuardianByFamilyGroup(@Param("familyGroupId") Long familyGroupId);
+
+    /**
      * 移除家庭成员（软删除）
      */
     int removeFamilyMember(@Param("familyGroupId") Long familyGroupId, @Param("memberId") Long memberId);

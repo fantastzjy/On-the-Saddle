@@ -6,6 +6,8 @@ import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupCreate
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupSearchForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyMemberAddForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.JoinFamilyGroupForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.SetGuardianForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.RemoveFamilyMemberForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupSearchVO;
 import net.lab1024.sa.admin.module.business.member.service.FamilyGroupService;
@@ -59,6 +61,20 @@ public class FamilyGroupController {
     @DeleteMapping("/{familyGroupId}/member/{memberId}")
     public ResponseDTO<String> removeFamilyMember(@PathVariable Long familyGroupId, @PathVariable Long memberId) {
         return familyGroupService.removeFamilyMember(familyGroupId, memberId);
+    }
+
+    @Operation(summary = "移除家庭成员")
+    @PostMapping("/remove-member")
+    public ResponseDTO<String> removeFamilyMemberPost(@RequestBody @Valid RemoveFamilyMemberForm removeForm) {
+        return familyGroupService.removeFamilyMember(removeForm.getFamilyGroupId(), removeForm.getMemberId());
+    }
+
+    @Operation(summary = "设置监护人")
+    @PostMapping("/set-guardian")
+    public ResponseDTO<String> setGuardian(@RequestBody @Valid SetGuardianForm setGuardianForm) {
+        return familyGroupService.setGuardian(setGuardianForm.getFamilyGroupId(), 
+                                             setGuardianForm.getMemberId(), 
+                                             setGuardianForm.getIsGuardian());
     }
 
     @Operation(summary = "转移监护权")

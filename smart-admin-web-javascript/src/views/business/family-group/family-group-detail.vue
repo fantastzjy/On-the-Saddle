@@ -65,16 +65,10 @@
           <span>家庭成员 ({{ familyMembers.length }}人)</span>
         </template>
         <template #extra>
-          <a-space>
-            <a-button type="primary" @click="onAddMember">
-              <template #icon><PlusOutlined /></template>
-              添加成员
-            </a-button>
-            <a-button @click="onBatchImport">
-              <template #icon><UploadOutlined /></template>
-              批量导入
-            </a-button>
-          </a-space>
+          <a-button type="primary" @click="onAddMember">
+            <template #icon><PlusOutlined /></template>
+            添加成员
+          </a-button>
         </template>
 
         <a-table
@@ -192,7 +186,6 @@ import {
   EditOutlined,
   ReloadOutlined,
   PlusOutlined,
-  UploadOutlined,
   CrownOutlined
 } from '@ant-design/icons-vue'
 import { adminFamilyGroupApi } from '/@/api/business/admin-family-group-api'
@@ -334,10 +327,6 @@ function onAddMember() {
     familyGroupId: familyDetail.familyGroupId,
     clubId: familyDetail.clubId
   })
-}
-
-function onBatchImport() {
-  message.info('批量导入功能开发中...')
 }
 
 function onViewMember(member) {
