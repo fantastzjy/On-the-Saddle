@@ -62,4 +62,124 @@
         LIMIT 20
     </select>
 
+    <!-- 分页查询家庭组列表 -->
+    <select id="queryFamilyGroupList" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO">
+        SELECT
+            fg.family_group_id,
+            fg.family_name,
+            fg.club_id,
+            c.club_name,
+            fg.main_contact_id,
+            mc.actual_name as main_contact_name,
+            mc.phone as main_contact_phone,
+            fg.description,
+            fg.create_time,
+            fg.update_time,
+            fg.is_valid,
+            fg.is_delete,
+            (SELECT COUNT(*) FROM m_family_member_relation fmr 
+             WHERE fmr.family_group_id = fg.family_group_id AND fmr.is_delete = 0) as member_count
+        FROM m_family_group fg
+        LEFT JOIN m_club c ON fg.club_id = c.club_id AND c.is_delete = 0
+        LEFT JOIN m_member mc ON fg.main_contact_id = mc.member_id AND mc.is_delete = 0
+        <where>
+            <if test="queryForm.clubId != null">
+                AND fg.club_id = #{queryForm.clubId}
+            </if>
+            <if test="queryForm.familyName != null and queryForm.familyName != ''">
+                AND fg.family_name LIKE CONCAT('%', #{queryForm.familyName}, '%')
+            </if>
+            <if test="queryForm.mainContactName != null and queryForm.mainContactName != ''">
+                AND mc.actual_name LIKE CONCAT('%', #{queryForm.mainContactName}, '%')
+            </if>
+            <if test="queryForm.mainContactPhone != null and queryForm.mainContactPhone != ''">
+                AND mc.phone = #{queryForm.mainContactPhone}
+            </if>
+            <if test="queryForm.createTimeStart != null">
+                AND fg.create_time >= #{queryForm.createTimeStart}
+            </if>
+            <if test="queryForm.createTimeEnd != null">
+                AND fg.create_time &lt;= #{queryForm.createTimeEnd}
+            </if>
+            <if test="queryForm.status != null">
+                AND fg.is_delete = #{queryForm.status}
+            </if>
+        </where>
+        <if test="queryForm.minMemberCount != null or queryForm.maxMemberCount != null">
+            HAVING 1=1
+            <if test="queryForm.minMemberCount != null">
+                AND member_count >= #{queryForm.minMemberCount}
+            </if>
+            <if test="queryForm.maxMemberCount != null">
+                AND member_count &lt;= #{queryForm.maxMemberCount}
+            </if>
+        </if>
+        ORDER BY fg.create_time DESC
+    </select>
+
+    <!-- 获取家庭组详情 -->
+    <select id="getFamilyGroupDetail" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO">
+        SELECT
+            fg.family_group_id,
+            fg.family_name,
+            fg.club_id,
+            c.club_name,
+            fg.main_contact_id,
+            mc.actual_name as main_contact_name,
+            mc.phone as main_contact_phone,
+            fg.description,
+            fg.create_time,
+            fg.update_time,
+            fg.is_valid,
+            fg.is_delete
+        FROM m_family_group fg
+        LEFT JOIN m_club c ON fg.club_id = c.club_id AND c.is_delete = 0
+        LEFT JOIN m_member mc ON fg.main_contact_id = mc.member_id AND mc.is_delete = 0
+        WHERE fg.family_group_id = #{familyGroupId}
+    </select>
+
+    <!-- 获取家庭组成员详情列表 -->
+    <select id="getFamilyMemberDetails" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO$FamilyMemberDetailVO">
+        SELECT
+            fmr.id as relation_id,
+            m.member_id,
+            m.member_no,
+            m.actual_name,
+            m.avatar_url,
+            m.phone,
+            m.gender,
+            TIMESTAMPDIFF(YEAR, m.birth_date, CURDATE()) as age,
+            m.registration_status,
+            fmr.is_guardian,
+            fmr.join_date,
+            fmr.remark,
+            fmr.create_time
+        FROM m_family_member_relation fmr
+        INNER JOIN m_member m ON fmr.member_id = m.member_id AND m.is_delete = 0
+        WHERE fmr.family_group_id = #{familyGroupId} AND fmr.is_delete = 0
+        ORDER BY fmr.is_guardian DESC, m.birth_date DESC
+    </select>
+
+    <!-- 批量删除家庭组 -->
+    <update id="batchDelete">
+        UPDATE m_family_group 
+        SET is_delete = 1, update_time = NOW()
+        WHERE family_group_id IN
+        <foreach collection="familyGroupIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND is_delete = 0
+    </update>
+
+    <!-- 批量恢复家庭组 -->
+    <update id="batchRestore">
+        UPDATE m_family_group 
+        SET is_delete = 0, update_time = NOW()
+        WHERE family_group_id IN
+        <foreach collection="familyGroupIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        AND is_delete = 1
+    </update>
+
 </mapper>
