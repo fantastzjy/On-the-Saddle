@@ -109,6 +109,14 @@
         <a-space>
           <a-button 
             type="primary" 
+            @click="onCreateFamily"
+          >
+            <template #icon><PlusOutlined /></template>
+            新建家庭
+          </a-button>
+          
+          <a-button 
+            type="primary" 
             danger
             :disabled="selectedRowKeys.length === 0"
             @click="onBatchDelete"
@@ -236,6 +244,12 @@
       ref="editFamilyGroupModalRef"
       @success="onSearch"
     />
+
+    <!-- 新建家庭组弹窗 -->
+    <CreateFamilyGroupModal
+      ref="createFamilyGroupModalRef"
+      @success="onSearch"
+    />
   </div>
 </template>
 
@@ -249,12 +263,14 @@ import {
   ReloadOutlined,
   DeleteOutlined,
   RedoOutlined,
-  ExportOutlined
+  ExportOutlined,
+  PlusOutlined
 } from '@ant-design/icons-vue'
 import { adminFamilyGroupApi } from '/@/api/business/admin-family-group-api'
 import { clubApi } from '/@/api/business/club/club-api'
 import { smartSentry } from '/@/lib/smart-sentry'
 import EditFamilyGroupModal from './components/edit-family-group-modal.vue'
+import CreateFamilyGroupModal from './components/create-family-group-modal.vue'
 
 const router = useRouter()
 
@@ -263,6 +279,7 @@ const tableLoading = ref(false)
 const exportLoading = ref(false)
 const searchFormRef = ref()
 const editFamilyGroupModalRef = ref()
+const createFamilyGroupModalRef = ref()
 const clubList = ref([])
 const tableData = ref([])
 const selectedRowKeys = ref([])
@@ -436,6 +453,10 @@ function onTableChange(pag) {
 
 function onViewDetail(record) {
   router.push(`/family-group/detail/${record.familyGroupId}`)
+}
+
+function onCreateFamily() {
+  createFamilyGroupModalRef.value.showModal()
 }
 
 function onEdit(record) {

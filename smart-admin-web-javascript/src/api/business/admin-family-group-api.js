@@ -1,6 +1,9 @@
 import { postRequest, getRequest } from '/@/lib/axios'
 
 export const adminFamilyGroupApi = {
+  // 创建家庭组
+  create: (param) => postRequest('/admin/family-group/create', param),
+  
   // 分页查询家庭组列表
   pageQuery: (param) => postRequest('/admin/family-group/page/query', param),
   

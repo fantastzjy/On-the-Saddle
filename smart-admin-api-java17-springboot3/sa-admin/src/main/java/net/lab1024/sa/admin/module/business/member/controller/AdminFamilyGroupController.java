@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupQueryForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupUpdateForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO;
 import net.lab1024.sa.admin.module.business.member.service.AdminFamilyGroupService;
@@ -30,6 +31,12 @@ public class AdminFamilyGroupController {
 
     @Resource
     private AdminFamilyGroupService adminFamilyGroupService;
+
+    @Operation(summary = "创建家庭组")
+    @PostMapping("/create")
+    public ResponseDTO<String> create(@RequestBody @Valid FamilyGroupCreateForm createForm) {
+        return adminFamilyGroupService.create(createForm);
+    }
 
     @Operation(summary = "分页查询家庭组列表")
     @PostMapping("/page/query")
