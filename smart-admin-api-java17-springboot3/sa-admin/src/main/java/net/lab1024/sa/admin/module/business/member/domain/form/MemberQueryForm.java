@@ -17,6 +17,15 @@ public class MemberQueryForm extends PageParam {
     @Schema(description = "关键字(会员编号/姓名/手机号/骑手证号)")
     private String keywords;
 
+    @Schema(description = "姓名")
+    private String name;
+
+    @Schema(description = "手机号")
+    private String phone;
+
+    @Schema(description = "会员编号")
+    private String memberNo;
+
     @Schema(description = "俱乐部ID")
     private Long clubId;
 

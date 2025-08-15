@@ -11,7 +11,7 @@
             m.avatar_url,
             m.phone,
             m.gender,
-            TIMESTAMPDIFF(YEAR, m.birth_date, CURDATE()) as age,
+            COALESCE(TIMESTAMPDIFF(YEAR, m.birth_date, CURDATE()), 0) as age,
             m.registration_status,
             fmr.is_guardian,
             fmr.join_date,
@@ -24,49 +24,55 @@
 
     <!-- 根据家庭组和会员ID查询关系 -->
     <select id="selectByFamilyAndMember" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.FamilyMemberRelationEntity">
-        SELECT * FROM m_family_member_relation 
+        SELECT * FROM m_family_member_relation
         WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId} AND is_delete = 0
     </select>
 
     <!-- 设置监护人 -->
     <update id="setGuardian">
-        UPDATE m_family_member_relation 
+        UPDATE m_family_member_relation
         SET is_guardian = #{isGuardian}, update_time = NOW()
         WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId}
     </update>
 
     <!-- 清除家庭组中所有成员的监护人身份 -->
     <update id="clearGuardianByFamilyGroup">
-        UPDATE m_family_member_relation 
+        UPDATE m_family_member_relation
         SET is_guardian = 0, update_time = NOW()
         WHERE family_group_id = #{familyGroupId} AND is_delete = 0
     </update>
 
     <!-- 移除家庭成员（软删除） -->
     <update id="removeFamilyMember">
-        UPDATE m_family_member_relation 
+        UPDATE m_family_member_relation
         SET is_delete = 1, update_time = NOW()
         WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId}
     </update>
 
     <!-- 查询家庭组中的监护人数量 -->
     <select id="countGuardiansByFamilyGroupId" resultType="int">
-        SELECT COUNT(1) FROM m_family_member_relation 
+        SELECT COUNT(1) FROM m_family_member_relation
         WHERE family_group_id = #{familyGroupId} AND is_guardian = 1 AND is_delete = 0
     </select>
 
     <!-- 查询会员所属的家庭组ID -->
     <select id="getFamilyGroupIdByMemberId" resultType="Long">
-        SELECT family_group_id FROM m_family_member_relation 
+        SELECT family_group_id FROM m_family_member_relation
         WHERE member_id = #{memberId} AND is_delete = 0
         LIMIT 1
     </select>
 
     <!-- 根据家庭组ID删除所有成员关系 -->
     <update id="deleteByFamilyGroupId">
-        UPDATE m_family_member_relation 
+        UPDATE m_family_member_relation
         SET is_delete = 1, update_time = NOW()
         WHERE family_group_id = #{familyGroupId}
     </update>
+
+    <!-- 根据家庭组和会员ID查询关系（包括已删除的记录） -->
+    <select id="selectByFamilyAndMemberIncludeDeleted" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.FamilyMemberRelationEntity">
+        SELECT * FROM m_family_member_relation
+        WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId}
+    </select>
 
 </mapper>

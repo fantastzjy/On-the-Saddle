@@ -353,6 +353,12 @@ public class FamilyGroupService {
         }
 
         if (isGuardian == 1) {
+            // 检查该成员是否已经是监护人
+            if (relation.getIsGuardian() == 1) {
+                log.info("会员{}已经是家庭组{}的监护人，无需重复设置", memberId, familyGroupId);
+                return ResponseDTO.ok("该成员已是监护人");
+            }
+            
             // 设为监护人：先清除当前监护人，再设置新监护人
             familyMemberRelationDao.clearGuardianByFamilyGroup(familyGroupId);
             familyMemberRelationDao.setGuardian(familyGroupId, memberId, 1);
@@ -361,8 +367,14 @@ public class FamilyGroupService {
             familyGroupDao.updateMainContact(familyGroupId, memberId);
             
             log.info("成功设置会员{}为家庭组{}的监护人", memberId, familyGroupId);
-            return ResponseDTO.ok("设置监护人成功");
+            return ResponseDTO.ok("监护人设置成功");
         } else {
+            // 检查该成员是否已经不是监护人
+            if (relation.getIsGuardian() == 0) {
+                log.info("会员{}已经不是家庭组{}的监护人，无需重复取消", memberId, familyGroupId);
+                return ResponseDTO.ok("该成员已不是监护人");
+            }
+            
             // 取消监护人身份
             familyMemberRelationDao.setGuardian(familyGroupId, memberId, 0);
             log.info("成功取消会员{}在家庭组{}的监护人身份", memberId, familyGroupId);
@@ -456,12 +468,46 @@ public class FamilyGroupService {
             return ResponseDTO.userErrorParam("会员不存在");
         }
 
-        // 检查会员是否已在此家庭组中
-        FamilyMemberRelationEntity existingRelation = familyMemberRelationDao.selectByFamilyAndMember(
+        // 检查会员是否已在此家庭组中（包括已删除的记录）
+        FamilyMemberRelationEntity existingRelation = familyMemberRelationDao.selectByFamilyAndMemberIncludeDeleted(
             joinForm.getFamilyGroupId(), joinForm.getMemberId());
+        
         if (existingRelation != null) {
-            log.warn("该会员已在此家庭组中");
-            return ResponseDTO.userErrorParam("该会员已在此家庭组中");
+            if (existingRelation.getIsDelete() == 0) {
+                // 已存在且未删除，返回提示
+                log.warn("该会员已在此家庭组中，existingRelation: {}", existingRelation);
+                return ResponseDTO.userErrorParam("该会员已在此家庭组中");
+            } else {
+                // 已存在但已删除，恢复该记录
+                log.info("发现已删除的关系记录，准备恢复，existingRelation: {}", existingRelation);
+                
+                // 更新为活跃状态
+                existingRelation.setIsGuardian(joinForm.getIsGuardian() == null ? 0 : joinForm.getIsGuardian());
+                existingRelation.setJoinDate(joinForm.getJoinDate() == null ? LocalDate.now() : joinForm.getJoinDate());
+                existingRelation.setRemark(joinForm.getRemark());
+                existingRelation.setUpdateTime(LocalDateTime.now());
+                existingRelation.setIsValid(1);
+                existingRelation.setIsDelete(0);
+                
+                // 如果要设置为监护人，检查是否已有监护人
+                if (existingRelation.getIsGuardian() == 1) {
+                    int guardianCount = familyMemberRelationDao.countGuardiansByFamilyGroupId(joinForm.getFamilyGroupId());
+                    if (guardianCount > 0) {
+                        log.warn("该家庭组已有监护人");
+                        return ResponseDTO.userErrorParam("该家庭组已有监护人，每个家庭组只能有一个监护人");
+                    }
+                }
+                
+                log.info("准备更新的家庭成员关系数据: {}", existingRelation);
+                familyMemberRelationDao.updateById(existingRelation);
+                log.info("家庭成员关系更新成功，ID: {}", existingRelation.getId());
+                
+                // 记录数据变更日志
+                dataTracerService.update(existingRelation.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP, existingRelation, existingRelation);
+                log.info("会员重新加入家庭组完成，relationId: {}", existingRelation.getId());
+                
+                return ResponseDTO.ok("会员重新加入家庭组成功");
+            }
         }
 
         // 检查会员是否属于其他家庭组
@@ -499,6 +545,6 @@ public class FamilyGroupService {
         dataTracerService.insert(relation.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP);
         log.info("会员加入家庭组完成，relationId: {}", relation.getId());
 
-        return ResponseDTO.ok();
+        return ResponseDTO.ok("会员加入家庭组成功");
     }
 }

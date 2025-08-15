@@ -1,7 +1,7 @@
 spring:
   # 数据库连接信息
   datasource:
-    url: jdbc:p6spy:mysql://115.120.213.163:65234/on_the_saddle?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai
+    url: jdbc:p6spy:mysql://115.120.213.163:65234/on_the_saddle_new?autoReconnect=true&useServerPreparedStmts=false&rewriteBatchedStatements=true&characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true&serverTimezone=Asia/Shanghai
     username: user
     password: user
     driver-class-name: com.p6spy.engine.spy.P6SpyDriver

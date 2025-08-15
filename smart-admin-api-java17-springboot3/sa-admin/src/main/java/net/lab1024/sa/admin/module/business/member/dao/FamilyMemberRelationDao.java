@@ -57,4 +57,9 @@ public interface FamilyMemberRelationDao extends BaseMapper<FamilyMemberRelation
      * 根据家庭组ID删除所有成员关系
      */
     int deleteByFamilyGroupId(@Param("familyGroupId") Long familyGroupId);
+
+    /**
+     * 根据家庭组和会员ID查询关系（包括已删除的记录）
+     */
+    FamilyMemberRelationEntity selectByFamilyAndMemberIncludeDeleted(@Param("familyGroupId") Long familyGroupId, @Param("memberId") Long memberId);
 }

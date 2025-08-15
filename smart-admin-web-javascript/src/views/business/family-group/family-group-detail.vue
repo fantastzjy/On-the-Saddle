@@ -101,7 +101,7 @@
 
           <!-- 年龄 -->
           <template #age="{ record }">
-            {{ record.age }}岁
+            {{ record.age || 0 }}岁
           </template>
 
           <!-- 注册状态 -->
