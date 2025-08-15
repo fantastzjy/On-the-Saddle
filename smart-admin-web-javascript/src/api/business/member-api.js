@@ -1,6 +1,14 @@
 import { postRequest, getRequest } from '/@/lib/axios'
 
 export const memberApi = {
+  // 会员搜索（使用分页查询接口）
+  search: (param) => postRequest('/club/member/page/query', {
+    keywords: param.keyword,
+    pageNum: param.pageNum || 1,
+    pageSize: param.pageSize || 20,
+    clubId: param.clubId || null // 可选的俱乐部筛选
+  }),
+  
   // 会员管理
   pageQuery: (param) => postRequest('/club/member/page/query', param),
   detail: (memberId) => getRequest(`/club/member/get/${memberId}`),

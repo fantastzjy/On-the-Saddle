@@ -20,23 +20,13 @@
       </a-form-item>
 
       <a-form-item label="主要联系人" name="mainContactId">
-        <a-select
+        <MemberSelector
           v-model:value="form.mainContactId"
+          mode="edit"
+          :family-group-id="form.familyGroupId"
           placeholder="请选择主要联系人"
-          allow-clear
-          show-search
-          :filter-option="false"
-          @search="onSearchMembers"
           @change="onContactChange"
-        >
-          <a-select-option
-            v-for="member in memberList"
-            :key="member.memberId"
-            :value="member.memberId"
-          >
-            {{ member.actualName }} ({{ member.memberNo }})
-          </a-select-option>
-        </a-select>
+        />
       </a-form-item>
 
       <a-form-item label="家庭描述" name="description">
@@ -54,8 +44,9 @@
 import { ref, reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import { adminFamilyGroupApi } from '/@/api/business/admin-family-group-api'
-import { memberApi } from '/@/api/business/member-api'
 import { smartSentry } from '/@/lib/smart-sentry'
+import MemberSelector from './member-selector.vue'
+import { getEditValidationRules, formatEditFormData } from '../utils/validation-rules.js'
 
 // ----------------------- 事件 -----------------------
 const emits = defineEmits(['success'])
@@ -64,7 +55,6 @@ const emits = defineEmits(['success'])
 const visible = ref(false)
 const confirmLoading = ref(false)
 const formRef = ref()
-const memberList = ref([])
 
 const form = reactive({
   familyGroupId: null,
@@ -73,32 +63,11 @@ const form = reactive({
   description: ''
 })
 
-const rules = {
-  familyName: [
-    { required: true, message: '请输入家庭名称', trigger: 'blur' },
-    { max: 50, message: '家庭名称长度不能超过50个字符', trigger: 'blur' }
-  ]
-}
+const rules = getEditValidationRules()
 
 // ----------------------- 方法 -----------------------
-async function loadMembers(familyGroupId) {
-  try {
-    const res = await adminFamilyGroupApi.getDetail(familyGroupId)
-    if (res.code === 0 && res.ok && res.data) {
-      memberList.value = res.data.members || []
-    }
-  } catch (e) {
-    console.warn('获取家庭成员列表失败：', e)
-  }
-}
-
-async function onSearchMembers(searchText) {
-  // 这里可以实现成员搜索逻辑
-  console.log('搜索成员：', searchText)
-}
-
 function onContactChange(contactId) {
-  console.log('选择联系人：', contactId)
+  console.log('选择联系人ID：', contactId)
 }
 
 function showModal(familyData) {
@@ -108,11 +77,6 @@ function showModal(familyData) {
     mainContactId: familyData.mainContactId,
     description: familyData.description || ''
   })
-  
-  // 加载家庭成员列表
-  if (familyData.familyGroupId) {
-    loadMembers(familyData.familyGroupId)
-  }
   
   visible.value = true
   
@@ -133,7 +97,10 @@ async function onSubmit() {
     
     confirmLoading.value = true
     
-    const res = await adminFamilyGroupApi.update(form)
+    // 使用统一的数据格式化方法
+    const updateData = formatEditFormData(form)
+    
+    const res = await adminFamilyGroupApi.update(updateData)
     
     if (res.code === 0 && res.ok) {
       message.success(res.msg || '编辑成功')

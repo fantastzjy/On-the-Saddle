@@ -26,6 +26,7 @@
           allow-clear
           show-search
           :filter-option="filterClubOption"
+          @change="onClubChange"
         >
           <a-select-option
             v-for="club in clubList"
@@ -37,25 +38,14 @@
         </a-select>
       </a-form-item>
 
-      <a-form-item label="监护人" name="guardianMemberId">
-        <a-select
-          v-model:value="form.guardianMemberId"
-          placeholder="请选择监护人（输入姓名或手机号搜索）"
-          allow-clear
-          show-search
-          :filter-option="false"
-          @search="onSearchMembers"
-          @change="onGuardianChange"
-          :loading="memberSearchLoading"
-        >
-          <a-select-option
-            v-for="member in memberList"
-            :key="member.memberId"
-            :value="member.memberId"
-          >
-            {{ member.actualName }} ({{ member.phone || member.memberNo }})
-          </a-select-option>
-        </a-select>
+      <a-form-item label="主要联系人" name="mainContactId">
+        <MemberSelector
+          v-model:value="form.mainContactId"
+          mode="create"
+          :club-id="form.clubId"
+          placeholder="请选择主要联系人（输入姓名/手机号/会员编号搜索）"
+          @change="onMainContactChange"
+        />
       </a-form-item>
 
       <a-form-item label="家庭描述" name="description">
@@ -73,9 +63,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { adminFamilyGroupApi } from '/@/api/business/admin-family-group-api'
-import { memberApi } from '/@/api/business/member-api'
 import { clubApi } from '/@/api/business/club/club-api'
 import { smartSentry } from '/@/lib/smart-sentry'
+import MemberSelector from './member-selector.vue'
+import { getCreateValidationRules, formatCreateFormData } from '../utils/validation-rules.js'
 
 // ----------------------- 事件 -----------------------
 const emits = defineEmits(['success'])
@@ -83,33 +74,17 @@ const emits = defineEmits(['success'])
 // ----------------------- 响应式数据 -----------------------
 const visible = ref(false)
 const confirmLoading = ref(false)
-const memberSearchLoading = ref(false)
 const formRef = ref()
 const clubList = ref([])
-const memberList = ref([])
 
 const form = reactive({
   familyName: '',
   clubId: null,
-  guardianMemberId: null,
+  mainContactId: null, // 统一改名：guardianMemberId → mainContactId
   description: ''
 })
 
-const rules = {
-  familyName: [
-    { required: true, message: '请输入家庭名称', trigger: 'blur' },
-    { max: 50, message: '家庭名称长度不能超过50个字符', trigger: 'blur' }
-  ],
-  clubId: [
-    { required: true, message: '请选择俱乐部', trigger: 'change' }
-  ],
-  guardianMemberId: [
-    { required: true, message: '请选择监护人', trigger: 'change' }
-  ],
-  description: [
-    { max: 200, message: '家庭描述长度不能超过200个字符', trigger: 'blur' }
-  ]
-}
+const rules = getCreateValidationRules()
 
 // ----------------------- 生命周期 -----------------------
 onMounted(() => {
@@ -128,34 +103,20 @@ async function loadClubList() {
   }
 }
 
-async function onSearchMembers(searchText) {
-  if (!searchText || searchText.length < 2) {
-    memberList.value = []
-    return
-  }
-  
-  memberSearchLoading.value = true
-  try {
-    const res = await memberApi.search({
-      keyword: searchText.trim(),
-      pageNum: 1,
-      pageSize: 20
-    })
-    if (res.code === 0 && res.ok) {
-      memberList.value = res.data.list || []
-    } else {
-      memberList.value = []
-    }
-  } catch (e) {
-    console.warn('搜索会员失败：', e)
-    memberList.value = []
-  } finally {
-    memberSearchLoading.value = false
-  }
+function onMainContactChange(mainContactId) {
+  console.log('选择主要联系人ID：', mainContactId)
 }
 
-function onGuardianChange(guardianId) {
-  console.log('选择监护人：', guardianId)
+function onClubChange(clubId) {
+  // 清除之前的主要联系人选择
+  form.mainContactId = null
+  
+  if (clubId) {
+    const selectedClub = clubList.value.find(c => c.clubId === clubId)
+    if (selectedClub) {
+      console.log('选择俱乐部：', selectedClub.clubName)
+    }
+  }
 }
 
 function filterClubOption(input, option) {
@@ -166,11 +127,10 @@ function showModal() {
   Object.assign(form, {
     familyName: '',
     clubId: null,
-    guardianMemberId: null,
+    mainContactId: null,
     description: ''
   })
   
-  memberList.value = []
   visible.value = true
   
   // 重置表单验证
@@ -182,7 +142,6 @@ function showModal() {
 function onCancel() {
   visible.value = false
   formRef.value?.resetFields()
-  memberList.value = []
 }
 
 async function onSubmit() {
@@ -191,7 +150,10 @@ async function onSubmit() {
     
     confirmLoading.value = true
     
-    const res = await adminFamilyGroupApi.create(form)
+    // 使用统一的数据格式化方法
+    const createData = formatCreateFormData(form)
+    
+    const res = await adminFamilyGroupApi.create(createData)
     
     if (res.code === 0 && res.ok) {
       message.success(res.msg || '家庭组创建成功')
