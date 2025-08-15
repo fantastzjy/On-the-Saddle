@@ -9,12 +9,7 @@ export const memberApi = {
   updateStatus: (memberId, status) => postRequest('/club/member/update-status', {memberId, status}),
   delete: (memberId) => getRequest(`/club/member/delete/${memberId}`),
   
-  // 家庭管理
-  getFamilyInfo: (memberId) => getRequest(`/club/member/family/${memberId}`),
-  searchFamilyGroups: (param) => postRequest('/club/family/search', param),
-  createFamily: (param) => postRequest('/club/family/create', param),
-  updateFamily: (param) => postRequest('/club/family/update', param),
-  addFamilyMember: (param) => postRequest('/club/family/addMember', param),
+  // 保留的家庭管理接口（被家庭管理模块使用）
   joinFamilyGroup: (param) => postRequest('/club/family/joinMember', param),
   removeFamilyMember: (familyGroupId, memberId) => postRequest('/club/family/remove-member', {familyGroupId, memberId}),
   setGuardian: (familyGroupId, memberId, isGuardian) => postRequest('/club/family/set-guardian', {familyGroupId, memberId, isGuardian}),

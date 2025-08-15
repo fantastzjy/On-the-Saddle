@@ -182,4 +182,27 @@
         AND is_delete = 1
     </update>
 
+    <!-- 根据会员ID查询家庭组详情 -->
+    <select id="getFamilyByMemberId" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO">
+        SELECT
+            fg.family_group_id,
+            fg.family_name,
+            fg.club_id,
+            c.club_name,
+            fg.main_contact_id,
+            mc.actual_name as main_contact_name,
+            mc.phone as main_contact_phone,
+            fg.description,
+            fg.create_time,
+            fg.update_time,
+            fg.is_valid,
+            fg.is_delete
+        FROM m_family_group fg
+        LEFT JOIN m_club c ON fg.club_id = c.club_id AND c.is_delete = 0
+        LEFT JOIN m_member mc ON fg.main_contact_id = mc.member_id AND mc.is_delete = 0
+        INNER JOIN m_family_member_relation fmr ON fg.family_group_id = fmr.family_group_id AND fmr.is_delete = 0
+        WHERE fmr.member_id = #{memberId} AND fg.is_delete = 0
+        LIMIT 1
+    </select>
+
 </mapper>

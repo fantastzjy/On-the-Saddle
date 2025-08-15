@@ -60,4 +60,10 @@ public class AdminFamilyGroupController {
     public ResponseDTO<String> batchRestore(@RequestBody @Valid ValidateList<Long> familyGroupIds) {
         return adminFamilyGroupService.batchRestore(familyGroupIds);
     }
+
+    @Operation(summary = "根据会员ID查询家庭信息")
+    @GetMapping("/member/{memberId}")
+    public ResponseDTO<FamilyGroupDetailVO> getMemberFamily(@PathVariable Long memberId) {
+        return adminFamilyGroupService.getMemberFamily(memberId);
+    }
 }

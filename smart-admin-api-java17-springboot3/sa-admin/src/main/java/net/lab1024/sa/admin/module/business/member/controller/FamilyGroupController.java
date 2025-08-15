@@ -2,21 +2,16 @@ package net.lab1024.sa.admin.module.business.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupCreateForm;
-import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupSearchForm;
-import net.lab1024.sa.admin.module.business.member.domain.form.FamilyMemberAddForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.JoinFamilyGroupForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.SetGuardianForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.RemoveFamilyMemberForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupSearchVO;
 import net.lab1024.sa.admin.module.business.member.service.FamilyGroupService;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
-import java.util.List;
 
 /**
  * 家庭组管理控制器
@@ -33,23 +28,8 @@ public class FamilyGroupController {
     @Resource
     private FamilyGroupService familyGroupService;
 
-    @Operation(summary = "创建家庭组")
-    @PostMapping("/create")
-    public ResponseDTO<String> createFamilyGroup(@RequestBody @Valid FamilyGroupCreateForm createForm) {
-        return familyGroupService.createFamilyGroup(createForm);
-    }
 
-    @Operation(summary = "搜索家庭组")
-    @PostMapping("/search")
-    public ResponseDTO<List<FamilyGroupSearchVO>> searchFamilyGroups(@RequestBody @Valid FamilyGroupSearchForm searchForm) {
-        return familyGroupService.searchFamilyGroups(searchForm);
-    }
 
-    @Operation(summary = "添加家庭成员")
-    @PostMapping("/addMember")
-    public ResponseDTO<String> addFamilyMember(@RequestBody @Valid FamilyMemberAddForm addForm) {
-        return familyGroupService.addFamilyMember(addForm);
-    }
 
     @Operation(summary = "现有会员加入家庭组")
     @PostMapping("/joinMember")
@@ -77,13 +57,6 @@ public class FamilyGroupController {
                                              setGuardianForm.getIsGuardian());
     }
 
-    @Operation(summary = "转移监护权")
-    @PostMapping("/transferGuardianship")
-    public ResponseDTO<String> transferGuardianship(@RequestParam Long familyGroupId,
-                                                  @RequestParam Long oldGuardianId,
-                                                  @RequestParam Long newGuardianId) {
-        return familyGroupService.transferGuardianship(familyGroupId, oldGuardianId, newGuardianId);
-    }
 
     @Operation(summary = "查询家庭信息")
     @GetMapping("/{familyGroupId}")

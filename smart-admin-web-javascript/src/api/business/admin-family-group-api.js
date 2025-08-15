@@ -14,5 +14,8 @@ export const adminFamilyGroupApi = {
   batchDelete: (familyGroupIds) => postRequest('/admin/family-group/batch/delete', familyGroupIds),
   
   // 批量恢复家庭组
-  batchRestore: (familyGroupIds) => postRequest('/admin/family-group/batch/restore', familyGroupIds)
+  batchRestore: (familyGroupIds) => postRequest('/admin/family-group/batch/restore', familyGroupIds),
+
+  // 根据会员ID查询家庭信息
+  getMemberFamily: (memberId) => getRequest(`/admin/family-group/member/${memberId}`)
 }

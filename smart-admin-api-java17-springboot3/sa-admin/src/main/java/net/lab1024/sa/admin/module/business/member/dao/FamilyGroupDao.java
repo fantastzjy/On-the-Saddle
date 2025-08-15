@@ -70,4 +70,9 @@ public interface FamilyGroupDao extends BaseMapper<FamilyGroupEntity> {
      * 批量恢复家庭组
      */
     int batchRestore(@Param("familyGroupIds") List<Long> familyGroupIds);
+
+    /**
+     * 根据会员ID查询家庭组详情
+     */
+    FamilyGroupDetailVO getFamilyByMemberId(@Param("memberId") Long memberId);
 }

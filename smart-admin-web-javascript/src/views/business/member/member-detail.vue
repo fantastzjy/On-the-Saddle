@@ -15,13 +15,6 @@
           编辑
         </a-button>
         <a-button
-          v-privilege="'club:member:family'"
-          @click="showFamilyModal"
-        >
-          <TeamOutlined />
-          家庭管理
-        </a-button>
-        <a-button
           v-if="memberInfo.isMembership"
           v-privilege="'club:member:membership'"
           @click="showMembershipModal"
@@ -139,60 +132,6 @@
     <!-- 详细信息标签页 -->
     <a-card class="detail-tabs-card">
       <a-tabs v-model:activeKey="activeTabKey">
-        <!-- 家庭信息 -->
-        <a-tab-pane key="family" tab="家庭信息">
-          <div v-if="familyInfo">
-            <a-descriptions :column="2" size="middle" title="家庭组信息">
-              <a-descriptions-item label="家庭名称">{{ familyInfo.familyName }}</a-descriptions-item>
-              <a-descriptions-item label="主要联系人">{{ familyInfo.mainContactName }}</a-descriptions-item>
-              <a-descriptions-item label="家庭描述" :span="2">
-                {{ familyInfo.description || '暂无描述' }}
-              </a-descriptions-item>
-            </a-descriptions>
-            
-            <a-divider />
-            
-            <div class="family-members-section">
-              <h4>家庭成员 ({{ familyMembers.length }}人)</h4>
-              <a-table
-                :data-source="familyMembers"
-                :columns="familyMemberColumns"
-                :pagination="false"
-                size="small"
-                row-key="memberId"
-              >
-                <template #memberInfo="{ record }">
-                  <div class="family-member-info">
-                    <a-avatar :src="record.avatarUrl" :size="32">
-                      {{ record.actualName?.charAt(0) }}
-                    </a-avatar>
-                    <div class="member-info-text">
-                      <div class="member-name">{{ record.actualName }}</div>
-                      <div class="member-no">{{ record.memberNo }}</div>
-                    </div>
-                  </div>
-                </template>
-                
-                <template #age="{ record }">
-                  {{ calculateAge(record.birthDate) }}岁
-                </template>
-                
-                <template #registrationStatus="{ record }">
-                  <a-tag :color="getRegistrationStatusColor(record.registrationStatus)">
-                    {{ getRegistrationStatusText(record.registrationStatus) }}
-                  </a-tag>
-                </template>
-                
-                <template #isGuardian="{ record }">
-                  <a-tag v-if="record.isGuardian" color="gold">监护人</a-tag>
-                  <span v-else>-</span>
-                </template>
-              </a-table>
-            </div>
-          </div>
-          <a-empty v-else description="该会员尚未加入任何家庭组" />
-        </a-tab-pane>
-
         <!-- 订单记录 -->
         <a-tab-pane key="orders" tab="订单记录">
           <div class="orders-section">
@@ -259,9 +198,6 @@
     <!-- 会员表单弹窗 -->
     <MemberFormModal ref="memberFormModalRef" @reload="loadMemberDetail" />
     
-    <!-- 家庭管理弹窗 -->
-    <FamilyManageModal ref="familyManageModalRef" @reload="loadFamilyInfo" />
-    
     <!-- 会籍续费弹窗 -->
     <MembershipRenewModal ref="membershipRenewModalRef" @reload="loadMemberDetail" />
   </div>
@@ -274,13 +210,11 @@ import { Modal, message } from 'ant-design-vue'
 import dayjs from 'dayjs'
 import {
   EditOutlined,
-  TeamOutlined,
   CrownOutlined
 } from '@ant-design/icons-vue'
 import { memberApi } from '/@/api/business/member-api'
 import { smartSentry } from '/@/lib/smart-sentry'
 import MemberFormModal from './components/member-form-modal.vue'
-import FamilyManageModal from './components/family-manage-modal.vue'
 import MembershipRenewModal from './components/membership-renew-modal.vue'
 import {
   REGISTRATION_STATUS,
@@ -301,14 +235,11 @@ const router = useRouter()
 
 // ----------------------- 组件引用 -----------------------
 const memberFormModalRef = ref()
-const familyManageModalRef = ref()
 const membershipRenewModalRef = ref()
 
 // ----------------------- 响应式数据 -----------------------
 const memberInfo = ref({})
-const familyInfo = ref(null)
-const familyMembers = ref([])
-const activeTabKey = ref('family')
+const activeTabKey = ref('orders')
 
 // 订单相关
 const orderList = ref([])
@@ -324,44 +255,6 @@ const packageList = ref([])
 const packageLoading = ref(false)
 
 // ----------------------- 表格列配置 -----------------------
-const familyMemberColumns = [
-  {
-    title: '成员信息',
-    dataIndex: 'memberInfo',
-    width: 150,
-    customRender: { name: 'memberInfo' }
-  },
-  {
-    title: '性别',
-    dataIndex: 'gender',
-    width: 60,
-    customRender: ({ text }) => getGenderText(text)
-  },
-  {
-    title: '年龄',
-    dataIndex: 'age',
-    width: 60,
-    customRender: { name: 'age' }
-  },
-  {
-    title: '手机号',
-    dataIndex: 'phone',
-    width: 120
-  },
-  {
-    title: '注册状态',
-    dataIndex: 'registrationStatus',
-    width: 80,
-    customRender: { name: 'registrationStatus' }
-  },
-  {
-    title: '监护人',
-    dataIndex: 'isGuardian',
-    width: 80,
-    customRender: { name: 'isGuardian' }
-  }
-]
-
 const orderColumns = [
   {
     title: '订单号',
@@ -437,7 +330,6 @@ async function loadMemberDetail() {
     if (res.code === 0 && res.ok) {
       memberInfo.value = res.data || {}
       await Promise.all([
-        loadFamilyInfo(),
         loadOrderList(),
         loadPackageList()
       ])
@@ -447,23 +339,6 @@ async function loadMemberDetail() {
   } catch (e) {
     smartSentry.captureError(e)
     message.error('获取会员信息失败')
-  }
-}
-
-async function loadFamilyInfo() {
-  if (!memberInfo.value.memberId) return
-  
-  try {
-    const res = await memberApi.getFamilyInfo(memberInfo.value.memberId)
-    if (res.code === 0 && res.ok && res.data) {
-      familyInfo.value = res.data.familyGroup
-      familyMembers.value = res.data.members || []
-    } else {
-      familyInfo.value = null
-      familyMembers.value = []
-    }
-  } catch (e) {
-    console.warn('获取家庭信息失败：', e)
   }
 }
 
@@ -507,10 +382,6 @@ async function loadPackageList() {
 // ----------------------- 操作函数 -----------------------
 function showEditModal() {
   memberFormModalRef.value.showModal(memberInfo.value)
-}
-
-function showFamilyModal() {
-  familyManageModalRef.value.showModal(memberInfo.value)
 }
 
 function showMembershipModal() {
@@ -679,33 +550,6 @@ function getOrderStatusColor(status) {
 
 
 .detail-tabs-card {
-  .family-members-section {
-    h4 {
-      margin-bottom: 16px;
-      color: #262626;
-    }
-  }
-  
-  .family-member-info {
-    display: flex;
-    align-items: center;
-    
-    .member-info-text {
-      margin-left: 8px;
-      
-      .member-name {
-        font-weight: 500;
-        font-size: 14px;
-        color: #262626;
-      }
-      
-      .member-no {
-        font-size: 12px;
-        color: #8c8c8c;
-      }
-    }
-  }
-  
   .orders-section,
   .packages-section {
     min-height: 200px;

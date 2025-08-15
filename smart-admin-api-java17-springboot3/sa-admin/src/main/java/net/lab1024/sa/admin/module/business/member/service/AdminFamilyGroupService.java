@@ -168,4 +168,26 @@ public class AdminFamilyGroupService {
 
         return ResponseDTO.userErrorParam("批量恢复家庭组失败");
     }
+
+    /**
+     * 根据会员ID查询家庭信息
+     */
+    public ResponseDTO<FamilyGroupDetailVO> getMemberFamily(Long memberId) {
+        log.info("根据会员ID查询家庭信息，memberId: {}", memberId);
+        
+        if (memberId == null) {
+            return ResponseDTO.userErrorParam("会员ID不能为空");
+        }
+
+        // 查询会员所在的家庭组
+        FamilyGroupDetailVO familyDetail = familyGroupDao.getFamilyByMemberId(memberId);
+        
+        if (familyDetail != null) {
+            log.info("查询到家庭信息: {}", familyDetail);
+            return ResponseDTO.ok(familyDetail);
+        } else {
+            log.info("该会员未加入任何家庭组，memberId: {}", memberId);
+            return ResponseDTO.userErrorParam("该会员未加入任何家庭组");
+        }
+    }
 }

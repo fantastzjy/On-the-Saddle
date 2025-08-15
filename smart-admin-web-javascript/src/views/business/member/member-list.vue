@@ -181,7 +181,7 @@
             </a-button>
             <a-button
               v-privilege="'club:member:family'"
-              @click="showFamilyModal(record)"
+              @click="handleFamilyNavigation(record)"
               size="small"
               type="link"
             >
@@ -231,11 +231,6 @@
       @reload="onSearch"
     />
 
-    <!-- 家庭管理弹窗 -->
-    <FamilyManageModal
-      ref="familyManageModalRef"
-      @reload="onSearch"
-    />
   </div>
 </template>
 
@@ -253,12 +248,12 @@ import {
   EyeInvisibleOutlined
 } from '@ant-design/icons-vue'
 import { memberApi } from '/@/api/business/member-api'
+import { adminFamilyGroupApi } from '/@/api/business/admin-family-group-api'
 import { smartSentry } from '/@/lib/smart-sentry'
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const'
 import TableOperator from '/@/components/support/table-operator/index.vue'
 import DictLabel from '/@/components/support/dict-label/index.vue'
 import MemberFormModal from './components/member-form-modal.vue'
-import FamilyManageModal from './components/family-manage-modal.vue'
 import {
   MEMBERSHIP_STATUS_TEXT,
   MEMBERSHIP_STATUS_COLOR,
@@ -280,7 +275,6 @@ const router = useRouter()
 const tableRef = ref()
 const queryFormRef = ref()
 const memberFormModalRef = ref()
-const familyManageModalRef = ref()
 
 // ----------------------- 表格和查询相关 -----------------------
 
@@ -352,9 +346,23 @@ function showDetail(memberId) {
   router.push({ name: 'MemberDetail', params: { memberId } })
 }
 
-function showFamilyModal(record) {
-  familyManageModalRef.value.showModal(record)
+async function handleFamilyNavigation(record) {
+  try {
+    const res = await adminFamilyGroupApi.getMemberFamily(record.memberId)
+    if (res.code === 0 && res.ok && res.data) {
+      // 有家庭，跳转到家庭详情
+      router.push(`/family-group/detail/${res.data.familyGroupId}`)
+    } else {
+      // 无家庭，跳转到家庭管理列表页面
+      router.push('/family-group/list')
+    }
+  } catch (e) {
+    smartSentry.captureError(e)
+    // 发生错误时也跳转到家庭管理页面
+    router.push('/family-group/list')
+  }
 }
+
 
 
 async function onDelete(record) {

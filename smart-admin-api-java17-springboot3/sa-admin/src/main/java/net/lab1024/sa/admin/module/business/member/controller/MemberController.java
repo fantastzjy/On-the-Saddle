@@ -34,8 +34,6 @@ public class MemberController {
     @Resource
     private MemberService memberService;
 
-    @Resource
-    private FamilyGroupService familyGroupService;
 
     @Operation(summary = "分页查询会员列表")
     @PostMapping("/page/query")
@@ -98,9 +96,4 @@ public class MemberController {
         return memberService.queryListByClub(clubId);
     }
 
-    @Operation(summary = "查询会员家庭信息")
-    @GetMapping("/family/{memberId}")
-    public ResponseDTO<FamilyInfoVO> getFamilyInfo(@PathVariable Long memberId) {
-        return familyGroupService.getFamilyInfoByMemberId(memberId);
-    }
 }
