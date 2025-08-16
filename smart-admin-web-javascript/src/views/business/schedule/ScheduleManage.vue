@@ -295,7 +295,8 @@ import {
   SCHEDULE_SEARCH_FORM,
   SCHEDULE_VIEW_TYPE_ENUM
 } from '/@/constants/business/schedule/schedule-const';
-import { PAGE_SIZE_OPTIONS, TABLE_ID_CONST } from '/@/constants';
+import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
+import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 import { defaultTimeRanges } from '/@/lib/default-time-ranges';
 import TableOperator from '/@/components/support/table-operator/index.vue';
 import CalendarView from './components/CalendarView.vue';

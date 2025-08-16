@@ -280,7 +280,8 @@ import {
   PRODUCT_TABLE_COLUMNS, 
   PRODUCT_SEARCH_FORM 
 } from '/@/constants/business/product/product-const';
-import { PAGE_SIZE_OPTIONS, TABLE_ID_CONST } from '/@/constants';
+import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
+import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 import { defaultTimeRanges } from '/@/lib/default-time-ranges';
 import TableOperator from '/@/components/support/table-operator/index.vue';
 import PriceCalculatorModal from './components/PriceCalculatorModal.vue';
