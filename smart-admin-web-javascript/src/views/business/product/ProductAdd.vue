@@ -90,11 +90,12 @@
 
         <a-form-item label="商品图片" name="images">
           <FileUpload
-            v-model:value="formData.images"
+            :default-file-list="formData.images"
             :max-count="PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_COUNT"
             :max-size="PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_SIZE"
             :accepted-types="PRODUCT_DEFAULT_CONFIG.IMAGE.ACCEPTED_TYPES"
             list-type="picture-card"
+            @change="onImageChange"
           >
             <div v-if="getImageCount() < PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_COUNT">
               <PlusOutlined />
@@ -232,16 +233,98 @@ async function loadProductDetail() {
     const response = await productApi.getProductDetail(route.params.id);
     if (response.ok) {
       const product = response.data;
+      
+      // 先设置基础信息（不包括dynamicConfig和productType）
       Object.assign(formData, {
         productId: product.productId,
         productName: product.productName,
         productCode: product.productCode,
-        productType: product.productType,
         description: product.description,
         images: parseImages(product.images),
-        sortOrder: product.sortOrder,
-        dynamicConfig: product.dynamicConfig || {}
+        sortOrder: product.sortOrder
       });
+      
+      // 构建dynamicConfig数据
+      let dynamicConfig = {};
+      
+      // 根据商品类型获取对应的详情配置
+      if (product.productType === 1 && product.courseDetails && Object.keys(product.courseDetails).length > 0) {
+        // 课程类型：从courseDetails获取数据
+        dynamicConfig = {
+          classType: product.courseDetails.classType,
+          durationMinutes: product.courseDetails.durationMinutes,
+          durationPeriods: product.courseDetails.durationPeriods,
+          maxStudents: product.courseDetails.maxStudents,
+          coachFee: product.courseDetails.coachFee,
+          horseFee: product.courseDetails.horseFee,
+          multiPriceConfig: product.courseDetails.multiPriceConfig
+        };
+      } else if (product.productType === 2 && product.packageDetails && Object.keys(product.packageDetails).length > 0) {
+        // 课时包类型：从packageDetails获取数据
+        dynamicConfig = {
+          details: product.packageDetails.details,
+          price: product.packageDetails.price,
+          totalSessions: product.packageDetails.totalSessions,
+          validityDays: product.packageDetails.validityDays,
+          stockQuantity: product.packageDetails.stockQuantity
+        };
+      } else if (product.productType === 3 && product.activityDetails && Object.keys(product.activityDetails).length > 0) {
+        // 活动类型：从activityDetails获取数据
+        dynamicConfig = {
+          activityName: product.activityDetails.activityName,
+          activityDetails: product.activityDetails.activityDetails,
+          startTime: product.activityDetails.startTime,
+          endTime: product.activityDetails.endTime,
+          activityLocation: product.activityDetails.activityLocation,
+          activityPrice: product.activityDetails.activityPrice,
+          maxParticipants: product.activityDetails.maxParticipants,
+          refundRule: product.activityDetails.refundRule,
+          detailImages: parseImages(product.activityDetails.detailImages)
+        };
+      } else {
+        // 如果没有详情数据，尝试从旧的dynamicConfig字段获取
+        try {
+          if (product.dynamicConfig) {
+            if (typeof product.dynamicConfig === 'string') {
+              dynamicConfig = JSON.parse(product.dynamicConfig);
+            } else {
+              dynamicConfig = product.dynamicConfig;
+            }
+          }
+        } catch (e) {
+          console.warn('解析dynamicConfig失败:', e);
+          dynamicConfig = {};
+        }
+        
+        // 临时处理：为没有课程配置的现有课程商品提供默认值
+        if (product.productType === 1 && Object.keys(dynamicConfig).length === 0) {
+          console.log('为课程商品设置默认配置');
+          dynamicConfig = {
+            classType: 1, // 默认单人课
+            durationMinutes: 60, // 默认60分钟
+            durationPeriods: 1.0, // 默认1鞍时
+            maxStudents: 1, // 默认最大1人
+            coachFee: 200, // 默认教练费200
+            horseFee: 100, // 默认马匹费100
+            multiPriceConfig: null
+          };
+        }
+      }
+      
+      console.log('商品详情加载成功:', product);
+      console.log('解析的动态配置数据:', dynamicConfig);
+      
+      // 先加载表单配置，再设置数据
+      if (product.productType) {
+        await loadFormConfig(product.productType);
+        
+        // 配置加载完成后，设置productType和dynamicConfig
+        formData.productType = product.productType;
+        formData.dynamicConfig = dynamicConfig;
+        
+        console.log('最终设置的dynamicConfig:', formData.dynamicConfig);
+      }
+      
     } else {
       message.error(response.msg || '加载商品详情失败');
       goBack();
@@ -274,8 +357,16 @@ async function loadFormConfig(productType) {
         baseFormConfig.value = null;
       }
       
-      // 重置动态配置
-      formData.dynamicConfig = {};
+      // 只在新增模式下重置动态配置，编辑模式下保持数据
+      if (!isEdit.value) {
+        formData.dynamicConfig = {};
+      }
+      
+      console.log('表单配置加载完成:', {
+        needsDetailedConfig: needsDetailedConfig.value,
+        fields: dynamicFormConfig.value,
+        currentDynamicConfig: formData.dynamicConfig
+      });
     } else {
       message.error(response.msg || '加载表单配置失败');
     }
@@ -376,6 +467,13 @@ function onPriceChange(priceData) {
   console.log('价格变化:', priceData);
 }
 
+function onImageChange(fileList) {
+  // 更新图片列表
+  formData.images = fileList;
+  console.log('图片列表更新:', fileList);
+  console.log('提取的URL:', extractImageUrls(fileList));
+}
+
 async function onSubmit() {
   try {
     // 验证基础表单
@@ -400,11 +498,15 @@ async function onSubmit() {
 
     submitLoading.value = true;
 
+    console.log('提交前的图片数据:', formData.images);
+    console.log('提取的图片URLs:', extractImageUrls(formData.images));
+
     // 构造提交数据 - 严格按照数据库字段结构
     const submitData = {
       // 主表字段
       ...formData,
-      images: JSON.stringify(formData.images),
+      // 提取图片URL并序列化
+      images: JSON.stringify(extractImageUrls(formData.images)),
       
       // 根据商品类型构造对应的扩展表数据
       dynamicConfig: JSON.stringify(formData.dynamicConfig),
@@ -528,8 +630,46 @@ function parseImages(images) {
   if (!images) return [];
   
   try {
-    const parsed = JSON.parse(images);
-    return Array.isArray(parsed) ? parsed : [];
+    let parsed = [];
+    
+    // 如果已经是数组，直接处理
+    if (Array.isArray(images)) {
+      parsed = images;
+    } 
+    // 如果是字符串，尝试解析JSON
+    else if (typeof images === 'string') {
+      const temp = JSON.parse(images);
+      parsed = Array.isArray(temp) ? temp : [];
+    }
+    
+    // 确保每个图片对象有FileUpload组件需要的字段
+    return parsed.map((item, index) => {
+      if (typeof item === 'string') {
+        // 如果是字符串URL，转换为对象格式
+        return {
+          uid: `img-${index}`,
+          fileId: index,
+          name: `image-${index}.jpg`,
+          url: item,
+          fileUrl: item,
+          fileName: `image-${index}.jpg`,
+          status: 'done'
+        };
+      } else if (item && typeof item === 'object') {
+        // 确保对象有必要的字段
+        return {
+          uid: item.uid || `img-${index}`,
+          fileId: item.fileId || index,
+          name: item.name || item.fileName || `image-${index}.jpg`,
+          url: item.url || item.fileUrl,
+          fileUrl: item.fileUrl || item.url,
+          fileName: item.fileName || item.name || `image-${index}.jpg`,
+          status: item.status || 'done',
+          ...item
+        };
+      }
+      return null;
+    }).filter(Boolean);
   } catch {
     return [];
   }
@@ -537,6 +677,19 @@ function parseImages(images) {
 
 function getImageCount() {
   return Array.isArray(formData.images) ? formData.images.length : 0;
+}
+
+function extractImageUrls(images) {
+  if (!Array.isArray(images)) return [];
+  
+  return images.map(item => {
+    if (typeof item === 'string') {
+      return item;
+    } else if (item && typeof item === 'object') {
+      return item.url || item.fileUrl || item.src;
+    }
+    return null;
+  }).filter(Boolean);
 }
 </script>
 

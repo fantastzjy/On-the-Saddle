@@ -6,6 +6,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
+import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
+import net.lab1024.sa.admin.module.business.product.dao.ProductPackageDao;
+import net.lab1024.sa.admin.module.business.product.dao.ProductActivityDao;
+import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
+import net.lab1024.sa.admin.module.business.product.domain.entity.ProductPackageEntity;
+import net.lab1024.sa.admin.module.business.product.domain.entity.ProductActivityEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
@@ -22,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -39,6 +46,15 @@ public class ProductService {
 
     @Autowired
     private ProductDao productDao;
+
+    @Autowired
+    private ProductCourseDao productCourseDao;
+
+    @Autowired
+    private ProductPackageDao productPackageDao;
+
+    @Autowired
+    private ProductActivityDao productActivityDao;
 
     @Autowired
     private FileService fileService;
@@ -135,8 +151,8 @@ public class ProductService {
             // 保存商品基础信息
             productDao.insert(productEntity);
             
-            // 保存商品扩展配置
-            saveProductExtendedConfig(productEntity.getProductId(), addForm.getProductType(), addForm.getDynamicConfig());
+            // 保存商品扩展配置 - 优先使用表单中的直接字段
+            saveProductExtendedConfigFromForm(productEntity.getProductId(), addForm);
             
             log.info("新增商品成功，商品ID: {}", productEntity.getProductId());
             return ResponseDTO.ok();
@@ -172,8 +188,8 @@ public class ProductService {
             
             productDao.updateById(productEntity);
             
-            // 更新商品扩展配置
-            saveProductExtendedConfig(updateForm.getProductId(), updateForm.getProductType(), updateForm.getDynamicConfig());
+            // 更新商品扩展配置 - 优先使用表单中的直接字段
+            saveProductExtendedConfigFromForm(updateForm.getProductId(), updateForm);
             
             log.info("编辑商品成功，商品ID: {}", updateForm.getProductId());
             return ResponseDTO.ok();
@@ -525,54 +541,382 @@ public class ProductService {
     }
 
     /**
-     * 保存商品扩展配置
+     * 从表单保存商品扩展配置（适用于新增和更新）
      */
+    private void saveProductExtendedConfigFromForm(Long productId, Object formObject) {
+        if (formObject instanceof ProductAddForm) {
+            ProductAddForm form = (ProductAddForm) formObject;
+            saveProductExtendedConfigByType(productId, form.getProductType(), form);
+        } else if (formObject instanceof ProductUpdateForm) {
+            ProductUpdateForm form = (ProductUpdateForm) formObject;
+            saveProductExtendedConfigByType(productId, form.getProductType(), form);
+        }
+    }
+
+    /**
+     * 根据商品类型保存扩展配置
+     */
+    private void saveProductExtendedConfigByType(Long productId, Integer productType, Object form) {
+        try {
+            log.info("保存商品扩展配置，商品ID: {}, 类型: {}", productId, productType);
+            
+            switch (productType) {
+                case 1: // 课程
+                    saveCourseConfigFromForm(productId, form);
+                    break;
+                case 2: // 课时包
+                    savePackageConfigFromForm(productId, form);
+                    break;
+                case 3: // 活动
+                    saveActivityConfigFromForm(productId, form);
+                    break;
+            }
+        } catch (Exception e) {
+            log.error("保存商品扩展配置失败，商品ID: {}, 类型: {}", productId, productType, e);
+            throw new RuntimeException("保存商品扩展配置失败", e);
+        }
+    }
+
+    /**
+     * 从表单保存课程配置
+     */
+    private void saveCourseConfigFromForm(Long productId, Object form) {
+        try {
+            // 先删除已存在的配置
+            LambdaQueryWrapper<ProductCourseEntity> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(ProductCourseEntity::getProductId, productId);
+            productCourseDao.delete(deleteWrapper);
+            
+            // 创建新的课程配置
+            ProductCourseEntity courseEntity = new ProductCourseEntity();
+            courseEntity.setProductId(productId);
+            
+            // 从表单对象提取字段值
+            if (form instanceof ProductAddForm) {
+                ProductAddForm addForm = (ProductAddForm) form;
+                courseEntity.setClassType(addForm.getClassType());
+                courseEntity.setDurationMinutes(addForm.getDurationMinutes());
+                courseEntity.setDurationPeriods(addForm.getDurationPeriods());
+                courseEntity.setMaxStudents(addForm.getMaxStudents());
+                courseEntity.setCoachFee(addForm.getCoachFee());
+                courseEntity.setHorseFee(addForm.getHorseFee());
+                courseEntity.setMultiPriceConfig(addForm.getMultiPriceConfig());
+            } else if (form instanceof ProductUpdateForm) {
+                ProductUpdateForm updateForm = (ProductUpdateForm) form;
+                courseEntity.setClassType(updateForm.getClassType());
+                courseEntity.setDurationMinutes(updateForm.getDurationMinutes());
+                courseEntity.setDurationPeriods(updateForm.getDurationPeriods());
+                courseEntity.setMaxStudents(updateForm.getMaxStudents());
+                courseEntity.setCoachFee(updateForm.getCoachFee());
+                courseEntity.setHorseFee(updateForm.getHorseFee());
+                courseEntity.setMultiPriceConfig(updateForm.getMultiPriceConfig());
+            }
+            
+            // 计算基础价格：coach_fee + horse_fee
+            if (courseEntity.getCoachFee() != null && courseEntity.getHorseFee() != null) {
+                courseEntity.setBasePrice(courseEntity.getCoachFee().add(courseEntity.getHorseFee()));
+            }
+            
+            courseEntity.setCreateTime(LocalDateTime.now());
+            courseEntity.setUpdateTime(LocalDateTime.now());
+            
+            // 只有当有有效数据时才保存
+            if (courseEntity.getClassType() != null) {
+                productCourseDao.insert(courseEntity);
+                log.info("保存课程配置成功，商品ID: {}, 课程分类: {}", productId, courseEntity.getClassType());
+            }
+        } catch (Exception e) {
+            log.error("保存课程配置失败，商品ID: {}", productId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * 从表单保存课时包配置
+     */
+    private void savePackageConfigFromForm(Long productId, Object form) {
+        try {
+            // 先删除已存在的配置
+            LambdaQueryWrapper<ProductPackageEntity> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(ProductPackageEntity::getProductId, productId);
+            productPackageDao.delete(deleteWrapper);
+            
+            // 创建新的课时包配置
+            ProductPackageEntity packageEntity = new ProductPackageEntity();
+            packageEntity.setProductId(productId);
+            
+            // 从表单对象提取字段值
+            if (form instanceof ProductAddForm) {
+                ProductAddForm addForm = (ProductAddForm) form;
+                packageEntity.setDetails(addForm.getDetails());
+                packageEntity.setPrice(addForm.getPrice());
+                packageEntity.setTotalSessions(addForm.getTotalSessions());
+                packageEntity.setValidityDays(addForm.getValidityDays());
+                packageEntity.setStockQuantity(addForm.getStockQuantity());
+            } else if (form instanceof ProductUpdateForm) {
+                ProductUpdateForm updateForm = (ProductUpdateForm) form;
+                packageEntity.setDetails(updateForm.getDetails());
+                packageEntity.setPrice(updateForm.getPrice());
+                packageEntity.setTotalSessions(updateForm.getTotalSessions());
+                packageEntity.setValidityDays(updateForm.getValidityDays());
+                packageEntity.setStockQuantity(updateForm.getStockQuantity());
+            }
+            
+            packageEntity.setCreateTime(LocalDateTime.now());
+            packageEntity.setUpdateTime(LocalDateTime.now());
+            
+            // 只有当有有效数据时才保存
+            if (packageEntity.getDetails() != null && !packageEntity.getDetails().trim().isEmpty()) {
+                productPackageDao.insert(packageEntity);
+                log.info("保存课时包配置成功，商品ID: {}", productId);
+            }
+        } catch (Exception e) {
+            log.error("保存课时包配置失败，商品ID: {}", productId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * 从表单保存活动配置
+     */
+    private void saveActivityConfigFromForm(Long productId, Object form) {
+        try {
+            // 先删除已存在的配置
+            LambdaQueryWrapper<ProductActivityEntity> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(ProductActivityEntity::getProductId, productId);
+            productActivityDao.delete(deleteWrapper);
+            
+            // 创建新的活动配置
+            ProductActivityEntity activityEntity = new ProductActivityEntity();
+            activityEntity.setProductId(productId);
+            
+            // 从表单对象提取字段值
+            if (form instanceof ProductAddForm) {
+                ProductAddForm addForm = (ProductAddForm) form;
+                activityEntity.setActivityName(addForm.getActivityName());
+                activityEntity.setActivityDetails(addForm.getActivityDetails());
+                activityEntity.setStartTime(parseDateTime(addForm.getStartTime()));
+                activityEntity.setEndTime(parseDateTime(addForm.getEndTime()));
+                activityEntity.setActivityLocation(addForm.getActivityLocation());
+                activityEntity.setPrice(addForm.getActivityPrice());
+                activityEntity.setMaxParticipants(addForm.getMaxParticipants());
+                activityEntity.setRefundRule(addForm.getRefundRule());
+                activityEntity.setDetailImages(addForm.getDetailImages());
+            } else if (form instanceof ProductUpdateForm) {
+                ProductUpdateForm updateForm = (ProductUpdateForm) form;
+                activityEntity.setActivityName(updateForm.getActivityName());
+                activityEntity.setActivityDetails(updateForm.getActivityDetails());
+                activityEntity.setStartTime(parseDateTime(updateForm.getStartTime()));
+                activityEntity.setEndTime(parseDateTime(updateForm.getEndTime()));
+                activityEntity.setActivityLocation(updateForm.getActivityLocation());
+                activityEntity.setPrice(updateForm.getActivityPrice());
+                activityEntity.setMaxParticipants(updateForm.getMaxParticipants());
+                activityEntity.setRefundRule(updateForm.getRefundRule());
+                activityEntity.setDetailImages(updateForm.getDetailImages());
+            }
+            
+            activityEntity.setCreateTime(LocalDateTime.now());
+            activityEntity.setUpdateTime(LocalDateTime.now());
+            
+            // 只有当有有效数据时才保存
+            if (activityEntity.getActivityName() != null && !activityEntity.getActivityName().trim().isEmpty()) {
+                productActivityDao.insert(activityEntity);
+                log.info("保存活动配置成功，商品ID: {}", productId);
+            }
+        } catch (Exception e) {
+            log.error("保存活动配置失败，商品ID: {}", productId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * 解析时间字符串为LocalDateTime
+     */
+    private LocalDateTime parseDateTime(String timeStr) {
+        if (timeStr == null || timeStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            // 尝试解析不同的时间格式
+            if (timeStr.contains("T")) {
+                return LocalDateTime.parse(timeStr);
+            } else {
+                // 处理其他可能的时间格式
+                return LocalDateTime.parse(timeStr.replace(" ", "T"));
+            }
+        } catch (Exception e) {
+            log.warn("解析时间字符串失败: {}", timeStr, e);
+            return null;
+        }
+    }
     private void saveProductExtendedConfig(Long productId, Integer productType, String configDataJson) {
         if (configDataJson == null || configDataJson.trim().isEmpty()) {
             return;
         }
         
-        // 解析JSON配置（简化处理，实际应使用JSON库）
-        // 这里简化实现，实际项目中应该使用Jackson或其他JSON库解析
-        log.info("保存商品扩展配置，商品ID: {}, 类型: {}, 配置: {}", productId, productType, configDataJson);
-        
-        // 根据商品类型保存到对应的扩展表
-        switch (productType) {
-            case 1: // 课程
-                // saveCourseConfig(productId, configData);
-                break;
-            case 2: // 课时包
-                // savePackageConfig(productId, configData);
-                break;
-            case 3: // 活动
-                // saveActivityConfig(productId, configData);
-                break;
+        try {
+            // 解析JSON配置
+            Map<String, Object> configData = JSON.parseObject(configDataJson, Map.class);
+            log.info("保存商品扩展配置，商品ID: {}, 类型: {}, 配置: {}", productId, productType, configDataJson);
+            
+            // 根据商品类型保存到对应的扩展表
+            switch (productType) {
+                case 1: // 课程
+                    saveCourseConfig(productId, configData);
+                    break;
+                case 2: // 课时包
+                    savePackageConfig(productId, configData);
+                    break;
+                case 3: // 活动
+                    saveActivityConfig(productId, configData);
+                    break;
+            }
+        } catch (Exception e) {
+            log.error("保存商品扩展配置失败，商品ID: {}, 类型: {}", productId, productType, e);
+            throw new RuntimeException("保存商品扩展配置失败", e);
         }
     }
 
     /**
-     * 保存课程配置 (暂时未实现)
+     * 保存课程配置
      */
-    // private void saveCourseConfig(Long productId, Map<String, Object> configData) {
-    //     // TODO: 保存到 m_product_course 表
-    //     log.info("保存课程配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
-    // }
+    private void saveCourseConfig(Long productId, Map<String, Object> configData) {
+        try {
+            // 先删除已存在的配置
+            LambdaQueryWrapper<ProductCourseEntity> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(ProductCourseEntity::getProductId, productId);
+            productCourseDao.delete(deleteWrapper);
+            
+            // 创建新的课程配置
+            ProductCourseEntity courseEntity = new ProductCourseEntity();
+            courseEntity.setProductId(productId);
+            courseEntity.setClassType(getIntegerFromConfig(configData, "classType"));
+            courseEntity.setDurationMinutes(getIntegerFromConfig(configData, "durationMinutes"));
+            courseEntity.setDurationPeriods(getBigDecimalFromConfig(configData, "durationPeriods"));
+            courseEntity.setMaxStudents(getIntegerFromConfig(configData, "maxStudents"));
+            courseEntity.setCoachFee(getBigDecimalFromConfig(configData, "coachFee"));
+            courseEntity.setHorseFee(getBigDecimalFromConfig(configData, "horseFee"));
+            courseEntity.setMultiPriceConfig(getStringFromConfig(configData, "multiPriceConfig"));
+            
+            // 计算基础价格：coach_fee + horse_fee
+            if (courseEntity.getCoachFee() != null && courseEntity.getHorseFee() != null) {
+                courseEntity.setBasePrice(courseEntity.getCoachFee().add(courseEntity.getHorseFee()));
+            }
+            
+            courseEntity.setCreateTime(LocalDateTime.now());
+            courseEntity.setUpdateTime(LocalDateTime.now());
+            
+            productCourseDao.insert(courseEntity);
+            log.info("保存课程配置成功，商品ID: {}", productId);
+        } catch (Exception e) {
+            log.error("保存课程配置失败，商品ID: {}", productId, e);
+            throw e;
+        }
+    }
 
     /**
-     * 保存课时包配置 (暂时未实现)
+     * 保存课时包配置
      */
-    // private void savePackageConfig(Long productId, Map<String, Object> configData) {
-    //     // TODO: 保存到 m_product_package 表
-    //     log.info("保存课时包配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
-    // }
+    private void savePackageConfig(Long productId, Map<String, Object> configData) {
+        try {
+            // 先删除已存在的配置
+            LambdaQueryWrapper<ProductPackageEntity> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(ProductPackageEntity::getProductId, productId);
+            productPackageDao.delete(deleteWrapper);
+            
+            // 创建新的课时包配置
+            ProductPackageEntity packageEntity = new ProductPackageEntity();
+            packageEntity.setProductId(productId);
+            packageEntity.setDetails(getStringFromConfig(configData, "details"));
+            packageEntity.setPrice(getBigDecimalFromConfig(configData, "price"));
+            packageEntity.setTotalSessions(getIntegerFromConfig(configData, "totalSessions"));
+            packageEntity.setValidityDays(getIntegerFromConfig(configData, "validityDays"));
+            packageEntity.setStockQuantity(getIntegerFromConfig(configData, "stockQuantity"));
+            packageEntity.setCreateTime(LocalDateTime.now());
+            packageEntity.setUpdateTime(LocalDateTime.now());
+            
+            productPackageDao.insert(packageEntity);
+            log.info("保存课时包配置成功，商品ID: {}", productId);
+        } catch (Exception e) {
+            log.error("保存课时包配置失败，商品ID: {}", productId, e);
+            throw e;
+        }
+    }
 
     /**
-     * 保存活动配置 (暂时未实现)
+     * 保存活动配置
      */
-    // private void saveActivityConfig(Long productId, Map<String, Object> configData) {
-    //     // TODO: 保存到 m_product_activity 表
-    //     log.info("保存活动配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
-    // }
+    private void saveActivityConfig(Long productId, Map<String, Object> configData) {
+        try {
+            // 先删除已存在的配置
+            LambdaQueryWrapper<ProductActivityEntity> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(ProductActivityEntity::getProductId, productId);
+            productActivityDao.delete(deleteWrapper);
+            
+            // 创建新的活动配置
+            ProductActivityEntity activityEntity = new ProductActivityEntity();
+            activityEntity.setProductId(productId);
+            activityEntity.setActivityName(getStringFromConfig(configData, "activityName"));
+            activityEntity.setActivityDetails(getStringFromConfig(configData, "activityDetails"));
+            activityEntity.setStartTime(getLocalDateTimeFromConfig(configData, "startTime"));
+            activityEntity.setEndTime(getLocalDateTimeFromConfig(configData, "endTime"));
+            activityEntity.setActivityLocation(getStringFromConfig(configData, "activityLocation"));
+            activityEntity.setPrice(getBigDecimalFromConfig(configData, "activityPrice"));
+            activityEntity.setMaxParticipants(getIntegerFromConfig(configData, "maxParticipants"));
+            activityEntity.setRefundRule(getStringFromConfig(configData, "refundRule"));
+            activityEntity.setDetailImages(getStringFromConfig(configData, "detailImages"));
+            activityEntity.setCreateTime(LocalDateTime.now());
+            activityEntity.setUpdateTime(LocalDateTime.now());
+            
+            productActivityDao.insert(activityEntity);
+            log.info("保存活动配置成功，商品ID: {}", productId);
+        } catch (Exception e) {
+            log.error("保存活动配置失败，商品ID: {}", productId, e);
+            throw e;
+        }
+    }
+
+    // 辅助方法：从配置Map中安全获取各种类型的值
+    private String getStringFromConfig(Map<String, Object> configData, String key) {
+        Object value = configData.get(key);
+        return value != null ? value.toString() : null;
+    }
+
+    private Integer getIntegerFromConfig(Map<String, Object> configData, String key) {
+        Object value = configData.get(key);
+        if (value == null) return null;
+        if (value instanceof Integer) return (Integer) value;
+        if (value instanceof Number) return ((Number) value).intValue();
+        try {
+            return Integer.valueOf(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private BigDecimal getBigDecimalFromConfig(Map<String, Object> configData, String key) {
+        Object value = configData.get(key);
+        if (value == null) return null;
+        if (value instanceof BigDecimal) return (BigDecimal) value;
+        if (value instanceof Number) return BigDecimal.valueOf(((Number) value).doubleValue());
+        try {
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private LocalDateTime getLocalDateTimeFromConfig(Map<String, Object> configData, String key) {
+        Object value = configData.get(key);
+        if (value == null) return null;
+        if (value instanceof LocalDateTime) return (LocalDateTime) value;
+        try {
+            // 这里可以根据前端传递的时间格式进行解析
+            return LocalDateTime.parse(value.toString());
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     /**
      * 补充商品列表数据
@@ -643,23 +987,81 @@ public class ProductService {
      * 获取课程详情配置
      */
     private Map<String, Object> getCourseDetails(Long productId) {
-        // TODO: 从 m_product_course 表查询
-        return new HashMap<>();
+        try {
+            LambdaQueryWrapper<ProductCourseEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ProductCourseEntity::getProductId, productId);
+            ProductCourseEntity courseEntity = productCourseDao.selectOne(wrapper);
+            
+            Map<String, Object> courseDetails = new HashMap<>();
+            if (courseEntity != null) {
+                courseDetails.put("classType", courseEntity.getClassType());
+                courseDetails.put("durationMinutes", courseEntity.getDurationMinutes());
+                courseDetails.put("durationPeriods", courseEntity.getDurationPeriods());
+                courseDetails.put("maxStudents", courseEntity.getMaxStudents());
+                courseDetails.put("coachFee", courseEntity.getCoachFee());
+                courseDetails.put("horseFee", courseEntity.getHorseFee());
+                courseDetails.put("basePrice", courseEntity.getBasePrice());
+                courseDetails.put("multiPriceConfig", courseEntity.getMultiPriceConfig());
+            }
+            
+            return courseDetails;
+        } catch (Exception e) {
+            log.error("获取课程详情失败，商品ID: {}", productId, e);
+            return new HashMap<>();
+        }
     }
 
     /**
      * 获取课时包详情配置
      */
     private Map<String, Object> getPackageDetails(Long productId) {
-        // TODO: 从 m_product_package 表查询
-        return new HashMap<>();
+        try {
+            LambdaQueryWrapper<ProductPackageEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ProductPackageEntity::getProductId, productId);
+            ProductPackageEntity packageEntity = productPackageDao.selectOne(wrapper);
+            
+            Map<String, Object> packageDetails = new HashMap<>();
+            if (packageEntity != null) {
+                packageDetails.put("details", packageEntity.getDetails());
+                packageDetails.put("price", packageEntity.getPrice());
+                packageDetails.put("totalSessions", packageEntity.getTotalSessions());
+                packageDetails.put("validityDays", packageEntity.getValidityDays());
+                packageDetails.put("stockQuantity", packageEntity.getStockQuantity());
+            }
+            
+            return packageDetails;
+        } catch (Exception e) {
+            log.error("获取课时包详情失败，商品ID: {}", productId, e);
+            return new HashMap<>();
+        }
     }
 
     /**
      * 获取活动详情配置
      */
     private Map<String, Object> getActivityDetails(Long productId) {
-        // TODO: 从 m_product_activity 表查询
-        return new HashMap<>();
+        try {
+            LambdaQueryWrapper<ProductActivityEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ProductActivityEntity::getProductId, productId);
+            ProductActivityEntity activityEntity = productActivityDao.selectOne(wrapper);
+            
+            Map<String, Object> activityDetails = new HashMap<>();
+            if (activityEntity != null) {
+                activityDetails.put("activityName", activityEntity.getActivityName());
+                activityDetails.put("activityDetails", activityEntity.getActivityDetails());
+                activityDetails.put("startTime", activityEntity.getStartTime());
+                activityDetails.put("endTime", activityEntity.getEndTime());
+                activityDetails.put("activityLocation", activityEntity.getActivityLocation());
+                activityDetails.put("activityPrice", activityEntity.getPrice());
+                activityDetails.put("maxParticipants", activityEntity.getMaxParticipants());
+                activityDetails.put("refundRule", activityEntity.getRefundRule());
+                activityDetails.put("detailImages", activityEntity.getDetailImages());
+            }
+            
+            return activityDetails;
+        } catch (Exception e) {
+            log.error("获取活动详情失败，商品ID: {}", productId, e);
+            return new HashMap<>();
+        }
     }
 }

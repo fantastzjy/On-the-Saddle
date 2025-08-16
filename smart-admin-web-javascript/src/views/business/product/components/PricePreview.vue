@@ -10,65 +10,141 @@
     <a-spin :spinning="calculating" tip="计算价格中...">
       <!-- 基础价格信息 -->
       <a-row :gutter="16">
-        <a-col :span="8">
-          <a-statistic
-            title="基础价格"
-            :value="priceData.basePrice || 0"
-            :precision="2"
-            prefix="¥"
-            :value-style="{ color: '#666' }"
-          />
-        </a-col>
-        <a-col :span="8">
-          <a-statistic
-            title="预估价格"
-            :value="priceData.estimatedPrice || 0"
-            :precision="2"
-            prefix="¥"
-            :value-style="{ color: '#1890ff' }"
-          />
-        </a-col>
-        <a-col :span="8">
-          <a-statistic
-            title="价格区间"
-            :value="`${Number(priceData.minPrice || 0).toFixed(2)} - ${Number(priceData.maxPrice || 0).toFixed(2)}`"
-            prefix="¥"
-            :value-style="{ color: '#52c41a', fontSize: '14px' }"
-          />
-        </a-col>
+        <!-- 单人课显示价格构成 -->
+        <template v-if="isSingleClass">
+          <a-col :span="8">
+            <a-statistic
+              title="教练费"
+              :value="props.dynamicConfig.coachFee || 0"
+              :precision="2"
+              prefix="¥"
+              :value-style="{ color: '#666' }"
+            />
+          </a-col>
+          <a-col :span="8">
+            <a-statistic
+              title="马匹费"
+              :value="props.dynamicConfig.horseFee || 0"
+              :precision="2"
+              prefix="¥"
+              :value-style="{ color: '#666' }"
+            />
+          </a-col>
+          <a-col :span="8">
+            <a-statistic
+              title="总价"
+              :value="calculateBasePrice()"
+              :precision="2"
+              prefix="¥"
+              :value-style="{ color: '#1890ff', fontWeight: 'bold' }"
+            />
+          </a-col>
+        </template>
+        
+        <!-- 多人课显示价格区间 -->
+        <template v-else-if="isMultiClass">
+          <a-col :span="12">
+            <a-statistic
+              title="基础价格"
+              :value="calculateBasePrice()"
+              :precision="2"
+              prefix="¥"
+              :value-style="{ color: '#666' }"
+            />
+          </a-col>
+          <a-col :span="12">
+            <a-statistic
+              title="价格区间"
+              :value="getPriceRange()"
+              prefix="¥"
+              :value-style="{ color: '#52c41a', fontSize: '16px', fontWeight: 'bold' }"
+            />
+          </a-col>
+        </template>
+        
+        <!-- 其他类型商品 -->
+        <template v-else>
+          <a-col :span="24">
+            <a-statistic
+              title="商品价格"
+              :value="getProductPrice()"
+              :precision="2"
+              prefix="¥"
+              :value-style="{ color: '#1890ff', fontWeight: 'bold' }"
+            />
+          </a-col>
+        </template>
       </a-row>
 
       <a-divider />
 
       <!-- 详细价格计算 -->
-      <div v-if="priceDetails && priceDetails.length > 0">
-        <h4>价格构成</h4>
-        <a-table
-          :dataSource="priceDetails"
-          :columns="priceDetailColumns"
-          :pagination="false"
-          size="small"
-          :showHeader="false"
-          rowKey="key"
-        >
-          <template #bodyCell="{ column, record }">
-            <template v-if="column.dataIndex === 'label'">
-              <span :style="{ fontWeight: record.important ? 'bold' : 'normal' }">
-                {{ record.label }}
-              </span>
+      <div v-if="showPriceDetails">
+        <h4>{{ getDetailsTitle() }}</h4>
+        <template v-if="isSingleClass">
+          <!-- 单人课显示价格构成明细 -->
+          <a-descriptions size="small" :column="1" bordered>
+            <a-descriptions-item label="教练费">
+              <span style="color: #666;">¥{{ Number(props.dynamicConfig.coachFee || 0).toFixed(2) }}</span>
+            </a-descriptions-item>
+            <a-descriptions-item label="马匹费">
+              <span style="color: #666;">¥{{ Number(props.dynamicConfig.horseFee || 0).toFixed(2) }}</span>
+            </a-descriptions-item>
+            <a-descriptions-item label="总价">
+              <span style="color: #1890ff; font-weight: bold;">¥{{ calculateBasePrice().toFixed(2) }}</span>
+            </a-descriptions-item>
+          </a-descriptions>
+        </template>
+        
+        <template v-else-if="isMultiClass">
+          <!-- 多人课显示价格区间明细 -->
+          <a-descriptions size="small" :column="1" bordered>
+            <a-descriptions-item label="基础价格">
+              <span style="color: #666;">教练费(¥{{ Number(props.dynamicConfig.coachFee || 0).toFixed(2) }}) + 马匹费(¥{{ Number(props.dynamicConfig.horseFee || 0).toFixed(2) }}) = ¥{{ calculateBasePrice().toFixed(2) }}</span>
+            </a-descriptions-item>
+            <a-descriptions-item label="多人课价格配置">
+              <div v-if="getMultiPriceDetails().length > 0">
+                <div v-for="detail in getMultiPriceDetails()" :key="detail.people" style="margin-bottom: 4px;">
+                  {{ detail.people }}人：<span style="color: #1890ff;">¥{{ detail.price }}/人</span>
+                </div>
+              </div>
+              <span v-else style="color: #999;">未配置多人课价格</span>
+            </a-descriptions-item>
+            <a-descriptions-item label="价格区间">
+              <span style="color: #52c41a; font-weight: bold;">{{ getPriceRange() }}</span>
+            </a-descriptions-item>
+          </a-descriptions>
+        </template>
+        
+        <template v-else>
+          <!-- 其他类型商品显示原有明细 -->
+          <a-table
+            :dataSource="priceDetails"
+            :columns="priceDetailColumns"
+            :pagination="false"
+            size="small"
+            :showHeader="false"
+            rowKey="key"
+          >
+            <template #bodyCell="{ column, record }">
+              <template v-if="column.dataIndex === 'label'">
+                <span :style="{ fontWeight: record.important ? 'bold' : 'normal' }">
+                  {{ record.label }}
+                </span>
+              </template>
+              <template v-if="column.dataIndex === 'value'">
+                <span 
+                  :style="{ 
+                    color: record.important ? '#1890ff' : (record.negative ? '#ff4d4f' : '#666'),
+                    fontWeight: record.important ? 'bold' : 'normal'
+                  }"
+                >
+                  {{ record.negative && record.value > 0 ? '-' : '' }}¥{{ Number(record.value || 0).toFixed(2) }}
+                </span>
+              </template>
             </template>
-            <template v-if="column.dataIndex === 'value'">
-              <span 
-                :style="{ 
-                  color: record.important ? '#1890ff' : (record.negative ? '#ff4d4f' : '#666'),
-                  fontWeight: record.important ? 'bold' : 'normal'
-                }"
-              >
-                {{ record.negative && record.value > 0 ? '-' : '' }}¥{{ Number(record.value || 0).toFixed(2) }}
-              </span>
-            </template>
-          </template>
-        </a-table>
+          </a-table>
+        </template>
       </div>
 
       <!-- 价格计算规则说明 -->
@@ -177,6 +253,23 @@ const priceWarnings = ref([]);
 const priceSuggestions = ref([]);
 
 // ======================== 计算属性 ========================
+const isSingleClass = computed(() => {
+  return props.productData.productType === 1 && props.dynamicConfig.classType === 1;
+});
+
+const isMultiClass = computed(() => {
+  return props.productData.productType === 1 && props.dynamicConfig.classType === 2;
+});
+
+const showPriceDetails = computed(() => {
+  return props.productData.productType && (
+    (props.productData.productType === 1 && props.dynamicConfig.coachFee && props.dynamicConfig.horseFee) ||
+    (props.productData.productType === 2 && props.dynamicConfig.price) ||
+    (props.productData.productType === 3 && props.dynamicConfig.activityPrice) ||
+    (priceDetails.value && priceDetails.value.length > 0)
+  );
+});
+
 const priceDetailColumns = computed(() => [
   {
     dataIndex: 'label',
@@ -262,6 +355,83 @@ async function calculatePrice() {
   } finally {
     calculating.value = false;
   }
+}
+
+// ======================== 价格计算方法 ========================
+function calculateBasePrice() {
+  const coachFee = Number(props.dynamicConfig.coachFee || 0);
+  const horseFee = Number(props.dynamicConfig.horseFee || 0);
+  return coachFee + horseFee;
+}
+
+function getPriceRange() {
+  if (!isMultiClass.value) return '';
+  
+  const multiPriceDetails = getMultiPriceDetails();
+  if (multiPriceDetails.length === 0) {
+    const basePrice = calculateBasePrice();
+    return `¥${basePrice.toFixed(2)}/人`;
+  }
+  
+  const prices = multiPriceDetails.map(detail => Number(detail.price));
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  
+  if (minPrice === maxPrice) {
+    return `¥${minPrice.toFixed(2)}/人`;
+  }
+  
+  return `¥${minPrice.toFixed(2)} - ¥${maxPrice.toFixed(2)}/人`;
+}
+
+function getMultiPriceDetails() {
+  if (!props.dynamicConfig.multiPriceConfig) return [];
+  
+  try {
+    let config = props.dynamicConfig.multiPriceConfig;
+    if (typeof config === 'string') {
+      config = JSON.parse(config);
+    }
+    
+    const details = [];
+    if (config && config.coaches && Array.isArray(config.coaches)) {
+      // 取第一个教练的价格配置作为示例
+      const firstCoach = config.coaches[0];
+      if (firstCoach && firstCoach.prices) {
+        Object.entries(firstCoach.prices).forEach(([people, price]) => {
+          details.push({
+            people: Number(people),
+            price: Number(price).toFixed(2)
+          });
+        });
+      }
+    }
+    
+    return details.sort((a, b) => a.people - b.people);
+  } catch (e) {
+    console.warn('解析多人课价格配置失败:', e);
+    return [];
+  }
+}
+
+function getProductPrice() {
+  if (props.productData.productType === 2) {
+    // 课时包价格
+    return Number(props.dynamicConfig.price || 0);
+  } else if (props.productData.productType === 3) {
+    // 活动价格
+    return Number(props.dynamicConfig.activityPrice || 0);
+  }
+  return 0;
+}
+
+function getDetailsTitle() {
+  if (isSingleClass.value) {
+    return '价格构成';
+  } else if (isMultiClass.value) {
+    return '价格区间详情';
+  }
+  return '价格明细';
 }
 
 function buildPriceDetails(result) {
