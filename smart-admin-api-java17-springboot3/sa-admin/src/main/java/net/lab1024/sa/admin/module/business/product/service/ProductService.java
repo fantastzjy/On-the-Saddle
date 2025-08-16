@@ -743,7 +743,7 @@ public class ProductService {
                 activityEntity.setStartTime(parseDateTime(addForm.getStartTime()));
                 activityEntity.setEndTime(parseDateTime(addForm.getEndTime()));
                 activityEntity.setActivityLocation(addForm.getActivityLocation());
-                activityEntity.setPrice(addForm.getActivityPrice());
+                activityEntity.setPrice(addForm.getPrice());
                 activityEntity.setMaxParticipants(addForm.getMaxParticipants());
                 activityEntity.setRefundRule(addForm.getRefundRule());
                 activityEntity.setDetailImages(addForm.getDetailImages());
@@ -754,7 +754,7 @@ public class ProductService {
                 activityEntity.setStartTime(parseDateTime(updateForm.getStartTime()));
                 activityEntity.setEndTime(parseDateTime(updateForm.getEndTime()));
                 activityEntity.setActivityLocation(updateForm.getActivityLocation());
-                activityEntity.setPrice(updateForm.getActivityPrice());
+                activityEntity.setPrice(updateForm.getPrice());
                 activityEntity.setMaxParticipants(updateForm.getMaxParticipants());
                 activityEntity.setRefundRule(updateForm.getRefundRule());
                 activityEntity.setDetailImages(updateForm.getDetailImages());
@@ -1097,7 +1097,7 @@ public class ProductService {
                 activityDetails.put("startTime", activityEntity.getStartTime());
                 activityDetails.put("endTime", activityEntity.getEndTime());
                 activityDetails.put("activityLocation", activityEntity.getActivityLocation());
-                activityDetails.put("activityPrice", activityEntity.getPrice());
+                activityDetails.put("price", activityEntity.getPrice());
                 activityDetails.put("maxParticipants", activityEntity.getMaxParticipants());
                 activityDetails.put("refundRule", activityEntity.getRefundRule());
                 activityDetails.put("detailImages", activityEntity.getDetailImages());

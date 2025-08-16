@@ -265,7 +265,7 @@ const showPriceDetails = computed(() => {
   return props.productData.productType && (
     (props.productData.productType === 1 && props.dynamicConfig.coachFee && props.dynamicConfig.horseFee) ||
     (props.productData.productType === 2 && props.dynamicConfig.price) ||
-    (props.productData.productType === 3 && props.dynamicConfig.activityPrice) ||
+    (props.productData.productType === 3 && props.dynamicConfig.price) ||
     (priceDetails.value && priceDetails.value.length > 0)
   );
 });
@@ -420,7 +420,7 @@ function getProductPrice() {
     return Number(props.dynamicConfig.price || 0);
   } else if (props.productData.productType === 3) {
     // 活动价格
-    return Number(props.dynamicConfig.activityPrice || 0);
+    return Number(props.dynamicConfig.price || 0);
   }
   return 0;
 }

@@ -195,7 +195,7 @@ const formData = reactive({
     startTime: null,
     endTime: null,
     activityLocation: '',
-    activityPrice: null,
+    price: null,
     maxParticipants: null,
     refundRule: '',
     detailImages: []
@@ -276,7 +276,7 @@ async function loadProductDetail() {
           startTime: product.activityDetails.startTime,
           endTime: product.activityDetails.endTime,
           activityLocation: product.activityDetails.activityLocation,
-          activityPrice: product.activityDetails.activityPrice,
+          price: product.activityDetails.price,
           maxParticipants: product.activityDetails.maxParticipants,
           refundRule: product.activityDetails.refundRule,
           detailImages: parseImages(product.activityDetails.detailImages)
@@ -538,7 +538,7 @@ async function onSubmit() {
         startTime: formData.dynamicConfig.startTime,
         endTime: formData.dynamicConfig.endTime,
         activityLocation: formData.dynamicConfig.activityLocation,
-        activityPrice: formData.dynamicConfig.activityPrice,
+        price: formData.dynamicConfig.price,
         maxParticipants: formData.dynamicConfig.maxParticipants,
         refundRule: formData.dynamicConfig.refundRule,
         detailImages: JSON.stringify(formData.dynamicConfig.detailImages)
@@ -608,7 +608,7 @@ function resetForm() {
       startTime: null,
       endTime: null,
       activityLocation: '',
-      activityPrice: null,
+      price: null,
       maxParticipants: null,
       refundRule: '',
       detailImages: []
