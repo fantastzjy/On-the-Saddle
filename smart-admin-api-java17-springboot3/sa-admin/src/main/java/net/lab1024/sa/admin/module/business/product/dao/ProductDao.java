@@ -1,7 +1,11 @@
 package net.lab1024.sa.admin.module.business.product.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
+import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
+import net.lab1024.sa.admin.module.business.product.domain.vo.ProductDetailVO;
+import net.lab1024.sa.admin.module.business.product.domain.vo.ProductListVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -9,6 +13,7 @@ import java.util.List;
 
 /**
  * 商品数据访问层
+ * 扩展支持模块2.1的商品管理需求
  *
  * @Author 1024创新实验室
  * @Date 2024-08-16
@@ -41,4 +46,33 @@ public interface ProductDao extends BaseMapper<ProductEntity> {
      * 批量更新商品状态
      */
     int batchUpdateStatus(@Param("productIds") List<Long> productIds, @Param("status") Integer status);
+
+    // ========================================
+    // 新增方法 - 模块2.1商品管理功能
+    // ========================================
+
+    /**
+     * 分页查询商品列表（关联查询俱乐部信息）
+     */
+    Page<ProductListVO> queryProductList(Page<ProductEntity> page, @Param("queryForm") ProductQueryForm queryForm);
+
+    /**
+     * 查询商品详情（关联查询相关配置信息）
+     */
+    ProductDetailVO getProductDetail(@Param("productId") Long productId);
+
+    /**
+     * 统计商品数量
+     */
+    int countProductsByClub(@Param("clubId") Long clubId);
+
+    /**
+     * 查询热门商品
+     */
+    List<ProductListVO> getPopularProducts(@Param("clubId") Long clubId, @Param("limit") Integer limit);
+
+    /**
+     * 检查商品编码是否存在
+     */
+    int checkProductCodeExists(@Param("productCode") String productCode, @Param("clubId") Long clubId, @Param("excludeId") Long excludeId);
 }
