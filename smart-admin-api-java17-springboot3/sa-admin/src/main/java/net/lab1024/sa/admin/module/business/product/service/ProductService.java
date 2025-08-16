@@ -124,8 +124,12 @@ public class ProductService {
                 addForm.setClubId(1L); // 设置默认俱乐部ID，后续可以从用户信息中获取
             }
             
-            // 验证商品编码唯一性
-            if (SmartStringUtil.isNotBlank(addForm.getProductCode())) {
+            // 验证商品编码唯一性，如果为空则自动生成
+            if (SmartStringUtil.isBlank(addForm.getProductCode())) {
+                // 自动生成商品编码
+                addForm.setProductCode(generateProductCode(addForm.getProductType(), addForm.getClubId()));
+            } else {
+                // 验证用户提供的商品编码唯一性
                 if (checkProductCodeExists(addForm.getProductCode(), addForm.getClubId(), null)) {
                     return ResponseDTO.userErrorParam("商品编码已存在");
                 }
@@ -529,6 +533,47 @@ public class ProductService {
         }
         
         return productDao.selectCount(wrapper) > 0;
+    }
+
+    /**
+     * 自动生成商品编码
+     * 格式：{productType}_{clubId}_{timestamp}_{sequence}
+     * 示例：COURSE_1_20240816_001
+     */
+    private String generateProductCode(Integer productType, Long clubId) {
+        // 商品类型前缀
+        String typePrefix;
+        switch (productType) {
+            case 1:
+                typePrefix = "COURSE";
+                break;
+            case 2:
+                typePrefix = "PACKAGE";
+                break;
+            case 3:
+                typePrefix = "ACTIVITY";
+                break;
+            default:
+                typePrefix = "PRODUCT";
+                break;
+        }
+        
+        // 时间戳（年月日）
+        String dateStr = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+        
+        // 尝试生成唯一编码，最多尝试1000次
+        for (int sequence = 1; sequence <= 1000; sequence++) {
+            String productCode = String.format("%s_%d_%s_%03d", typePrefix, clubId, dateStr, sequence);
+            
+            // 检查编码是否已存在
+            if (!checkProductCodeExists(productCode, clubId, null)) {
+                return productCode;
+            }
+        }
+        
+        // 如果1000次都重复，使用时间戳确保唯一性
+        long timestamp = System.currentTimeMillis();
+        return String.format("%s_%d_%s_%d", typePrefix, clubId, dateStr, timestamp % 10000);
     }
 
     /**

@@ -36,7 +36,6 @@
               :maxlength="field.maxlength"
               :disabled="field.disabled"
               :allowClear="field.allowClear !== false"
-              @change="onFieldChange(field.key, $event)"
             />
             
             <!-- 数字输入框 -->
@@ -52,7 +51,6 @@
               :formatter="field.formatter"
               :parser="field.parser"
               style="width: 100%"
-              @change="onFieldChange(field.key, $event)"
             />
             
             <!-- 选择器 -->
@@ -65,7 +63,6 @@
               :allowClear="field.allowClear !== false"
               :showSearch="field.showSearch"
               :filterOption="field.filterOption"
-              @change="onFieldChange(field.key, $event)"
             >
               <a-select-option 
                 v-for="option in field.options" 
@@ -86,7 +83,6 @@
               :maxlength="field.maxlength"
               :disabled="field.disabled"
               :showCount="field.showCount"
-              @change="onFieldChange(field.key, $event)"
             />
             
             <!-- 日期时间选择器 -->
@@ -100,7 +96,6 @@
               :disabled="field.disabled"
               :allowClear="field.allowClear !== false"
               style="width: 100%"
-              @change="onFieldChange(field.key, $event)"
             />
             
             <!-- 开关 -->
@@ -110,7 +105,6 @@
               :checkedChildren="field.checkedChildren"
               :unCheckedChildren="field.unCheckedChildren"
               :disabled="field.disabled"
-              @change="onFieldChange(field.key, $event)"
             />
             
             <!-- 多选框组 -->
@@ -118,7 +112,6 @@
               v-else-if="field.type === FORM_FIELD_TYPE_ENUM.CHECKBOX"
               v-model:value="formData[field.key]"
               :disabled="field.disabled"
-              @change="onFieldChange(field.key, $event)"
             >
               <a-checkbox 
                 v-for="option in field.options" 
@@ -135,7 +128,6 @@
               v-else-if="field.type === FORM_FIELD_TYPE_ENUM.RADIO"
               v-model:value="formData[field.key]"
               :disabled="field.disabled"
-              @change="onFieldChange(field.key, $event)"
             >
               <a-radio 
                 v-for="option in field.options" 
@@ -156,7 +148,6 @@
               :accepted-types="field.acceptedTypes"
               :list-type="field.listType || 'text'"
               :disabled="field.disabled"
-              @change="onFieldChange(field.key, $event)"
             />
             
             <!-- 多人课价格配置 -->
@@ -166,7 +157,6 @@
               :base-price="getBasePrice()"
               :max-students="formData.maxStudents || 5"
               :disabled="field.disabled"
-              @change="onFieldChange(field.key, $event)"
             />
             
             <!-- 自定义插槽 -->
@@ -365,6 +355,7 @@ function getFieldDefaultValue(field) {
 }
 
 function onFieldChange(key, value) {
+  // 兼容自定义插槽的 onChange 回调
   formData[key] = value;
   
   // 触发表单验证
@@ -448,7 +439,9 @@ function getBasePrice() {
   // 计算基础价格：教练费 + 马匹费
   const coachFee = Number(formData.coachFee || 0);
   const horseFee = Number(formData.horseFee || 0);
-  return coachFee + horseFee;
+  const basePrice = coachFee + horseFee;
+  console.log('DynamicFormRenderer getBasePrice:', { coachFee, horseFee, basePrice });
+  return basePrice;
 }
 
 // ======================== 暴露方法 ========================
