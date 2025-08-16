@@ -344,6 +344,13 @@ async function ajaxQuery() {
       total.value = totalCount;
       
       console.log('解析后的表格数据:', tableData.value);
+      console.log('表格数据长度:', tableData.value.length);
+      if (tableData.value.length > 0) {
+        console.log('第一条数据:', tableData.value[0]);
+        console.log('第一条数据的字段:', Object.keys(tableData.value[0]));
+        console.log('rowKey字段值:', tableData.value[0].productId);
+        console.log('商品名称字段值:', tableData.value[0].productName);
+      }
       console.log('总数:', total.value);
     } else {
       console.error('API返回错误:', response);

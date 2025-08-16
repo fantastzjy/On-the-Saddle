@@ -182,10 +182,7 @@ export const PRODUCT_TABLE_COLUMNS = [
   {
     title: '商品类型',
     dataIndex: 'productType',
-    width: 100,
-    customRender: ({ text }) => {
-      return Object.values(PRODUCT_TYPE_ENUM).find(item => item.value === text)?.desc || '-';
-    }
+    width: 100
   },
   {
     title: '商品图片',
