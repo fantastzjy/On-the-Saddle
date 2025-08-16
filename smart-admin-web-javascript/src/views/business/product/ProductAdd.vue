@@ -151,7 +151,7 @@ const route = useRoute();
 const formRef = ref();
 const submitLoading = ref(false);
 const configLoading = ref(false);
-const dynamicFormConfig = ref(null);
+const dynamicFormConfig = ref([]);
 const dynamicFormValid = ref(false);
 
 const formData = reactive({
@@ -222,7 +222,8 @@ async function loadFormConfig(productType) {
     configLoading.value = true;
     const response = await productApi.getFormConfig(productType);
     if (response.ok) {
-      dynamicFormConfig.value = response.data;
+      // 从API响应中提取fields数组给DynamicFormRenderer使用
+      dynamicFormConfig.value = response.data?.fields || [];
       // 重置动态配置
       formData.dynamicConfig = {};
     } else {
@@ -308,7 +309,7 @@ function resetForm() {
     sortOrder: 0,
     dynamicConfig: {}
   });
-  dynamicFormConfig.value = null;
+  dynamicFormConfig.value = [];
   dynamicFormValid.value = false;
 }
 
