@@ -54,7 +54,7 @@
             </a-descriptions-item>
             <a-descriptions-item label="价格">
               <span style="font-size: 18px; font-weight: bold; color: #ff4d4f;">
-                ¥{{ productDetail.price }}
+                ¥{{ getProductPrice() }}
               </span>
             </a-descriptions-item>
             <a-descriptions-item label="状态">
@@ -126,17 +126,49 @@
           课程详情
         </h4>
         <a-descriptions :column="2" bordered>
+          <a-descriptions-item label="课程类型">
+            {{ productDetail.courseDetails?.classType === 1 ? '单人课' : '多人课' }}
+          </a-descriptions-item>
           <a-descriptions-item label="课程时长">
-            {{ productDetail.courseDetails?.duration || '-' }} 分钟
+            {{ productDetail.courseDetails?.durationMinutes || '-' }} 分钟
           </a-descriptions-item>
-          <a-descriptions-item label="适合年龄">
-            {{ productDetail.courseDetails?.ageRange || '-' }}
+          <a-descriptions-item label="鞍时数">
+            {{ productDetail.courseDetails?.durationPeriods || '-' }} 鞍时
           </a-descriptions-item>
-          <a-descriptions-item label="课程等级">
-            {{ productDetail.courseDetails?.level || '-' }}
+          <a-descriptions-item label="最大学员数">
+            {{ productDetail.courseDetails?.maxStudents || '-' }} 人
           </a-descriptions-item>
-          <a-descriptions-item label="最大人数">
-            {{ productDetail.courseDetails?.maxParticipants || '-' }} 人
+          <a-descriptions-item label="教练费">
+            ¥{{ productDetail.courseDetails?.coachFee || 0 }}
+          </a-descriptions-item>
+          <a-descriptions-item label="马匹费">
+            ¥{{ productDetail.courseDetails?.horseFee || 0 }}
+          </a-descriptions-item>
+          <a-descriptions-item v-if="productDetail.courseDetails?.classType === 1" label="课程价格" :span="2">
+            <span style="font-size: 16px; color: #1890ff; font-weight: bold;">
+              ¥{{ (Number(productDetail.courseDetails?.coachFee || 0) + Number(productDetail.courseDetails?.horseFee || 0)).toFixed(2) }}
+            </span>
+          </a-descriptions-item>
+          <a-descriptions-item v-if="productDetail.courseDetails?.classType === 2" label="多人课价格配置" :span="2">
+            <div v-if="getMultiPriceDetails().length > 0">
+              <div style="margin-bottom: 8px;">
+                <span style="color: #666;">基础价格：¥{{ (Number(productDetail.courseDetails?.coachFee || 0) + Number(productDetail.courseDetails?.horseFee || 0)).toFixed(2) }}</span>
+              </div>
+              <a-row :gutter="16">
+                <a-col v-for="detail in getMultiPriceDetails()" :key="detail.people" :span="6">
+                  <a-card size="small" style="text-align: center; margin-bottom: 8px;">
+                    <div>{{ detail.people }}人课</div>
+                    <div style="color: #1890ff; font-weight: bold; font-size: 14px;">
+                      ¥{{ detail.price }}/人
+                    </div>
+                  </a-card>
+                </a-col>
+              </a-row>
+              <div style="margin-top: 8px; color: #52c41a; font-weight: bold;">
+                价格区间：{{ getMultiPriceRange() }}
+              </div>
+            </div>
+            <span v-else style="color: #999;">未配置多人课价格</span>
           </a-descriptions-item>
         </a-descriptions>
       </div>
@@ -148,6 +180,12 @@
           课时包详情
         </h4>
         <a-descriptions :column="2" bordered>
+          <a-descriptions-item label="课包详情">
+            {{ productDetail.packageDetails?.details || '-' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="课包价格">
+            ¥{{ productDetail.packageDetails?.price || 0 }}
+          </a-descriptions-item>
           <a-descriptions-item label="总课时数">
             {{ productDetail.packageDetails?.totalSessions || '-' }} 节
           </a-descriptions-item>
@@ -156,9 +194,6 @@
           </a-descriptions-item>
           <a-descriptions-item label="库存数量">
             {{ productDetail.packageDetails?.stockQuantity || '-' }} 个
-          </a-descriptions-item>
-          <a-descriptions-item label="可用库存">
-            {{ productDetail.packageDetails?.availableStock || '-' }} 个
           </a-descriptions-item>
         </a-descriptions>
       </div>
@@ -170,18 +205,29 @@
           活动详情
         </h4>
         <a-descriptions :column="2" bordered>
-          <a-descriptions-item label="活动时间">
-            {{ formatDateTime(productDetail.activityDetails?.startTime) }} - 
+          <a-descriptions-item label="活动名称">
+            {{ productDetail.activityDetails?.activityName || '-' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="活动详情">
+            {{ productDetail.activityDetails?.activityDetails || '-' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="开始时间">
+            {{ formatDateTime(productDetail.activityDetails?.startTime) }}
+          </a-descriptions-item>
+          <a-descriptions-item label="结束时间">
             {{ formatDateTime(productDetail.activityDetails?.endTime) }}
           </a-descriptions-item>
           <a-descriptions-item label="活动地点">
-            {{ productDetail.activityDetails?.location || '-' }}
+            {{ productDetail.activityDetails?.activityLocation || '-' }}
           </a-descriptions-item>
-          <a-descriptions-item label="最大人数">
+          <a-descriptions-item label="活动价格">
+            ¥{{ productDetail.activityDetails?.price || 0 }}
+          </a-descriptions-item>
+          <a-descriptions-item label="最大参与人数">
             {{ productDetail.activityDetails?.maxParticipants || '-' }} 人
           </a-descriptions-item>
-          <a-descriptions-item label="已报名">
-            {{ productDetail.activityDetails?.registeredCount || 0 }} 人
+          <a-descriptions-item label="退款规则">
+            {{ productDetail.activityDetails?.refundRule || '-' }}
           </a-descriptions-item>
         </a-descriptions>
       </div>
@@ -307,6 +353,74 @@ const getStatusColor = (status) => {
 const formatDateTime = (dateTime) => {
   if (!dateTime) return '-';
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss');
+};
+
+const getProductPrice = () => {
+  const product = productDetail.value;
+  if (!product) return 0;
+  
+  switch (product.productType) {
+    case 1: // 课程类型
+      return product.courseDetails?.basePrice || 
+             (Number(product.courseDetails?.coachFee || 0) + Number(product.courseDetails?.horseFee || 0));
+    case 2: // 课时包类型
+      return product.packageDetails?.price || 0;
+    case 3: // 活动类型
+      return product.activityDetails?.price || 0;
+    default:
+      return 0;
+  }
+};
+
+const getMultiPriceDetails = () => {
+  const product = productDetail.value;
+  if (!product?.courseDetails?.multiPriceConfig) return [];
+  
+  try {
+    let config = product.courseDetails.multiPriceConfig;
+    if (typeof config === 'string') {
+      config = JSON.parse(config);
+    }
+    
+    const details = [];
+    if (config && config.coaches && Array.isArray(config.coaches)) {
+      // 取第一个教练的价格配置
+      const firstCoach = config.coaches[0];
+      if (firstCoach && firstCoach.prices) {
+        Object.entries(firstCoach.prices).forEach(([people, price]) => {
+          details.push({
+            people: Number(people),
+            price: Number(price).toFixed(2)
+          });
+        });
+      }
+    }
+    
+    // 按人数排序
+    return details.sort((a, b) => a.people - b.people);
+  } catch (e) {
+    console.warn('解析多人课价格配置失败:', e);
+    return [];
+  }
+};
+
+const getMultiPriceRange = () => {
+  const multiPriceDetails = getMultiPriceDetails();
+  if (multiPriceDetails.length === 0) {
+    const basePrice = Number(productDetail.value?.courseDetails?.coachFee || 0) + 
+                     Number(productDetail.value?.courseDetails?.horseFee || 0);
+    return `¥${basePrice.toFixed(2)}/人`;
+  }
+  
+  const prices = multiPriceDetails.map(detail => Number(detail.price));
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  
+  if (minPrice === maxPrice) {
+    return `¥${minPrice.toFixed(2)}/人`;
+  }
+  
+  return `¥${minPrice.toFixed(2)} - ¥${maxPrice.toFixed(2)}/人`;
 };
 </script>
 
