@@ -159,6 +159,16 @@
               @change="onFieldChange(field.key, $event)"
             />
             
+            <!-- 多人课价格配置 -->
+            <MultiClassPriceConfig
+              v-else-if="field.type === 'multi-price-config'"
+              v-model:value="formData[field.key]"
+              :base-price="getBasePrice()"
+              :max-students="formData.maxStudents || 5"
+              :disabled="field.disabled"
+              @change="onFieldChange(field.key, $event)"
+            />
+            
             <!-- 自定义插槽 -->
             <slot 
               v-else-if="field.type === 'slot'" 
@@ -187,6 +197,7 @@
 import { ref, reactive, computed, watch, nextTick } from 'vue';
 import { FORM_FIELD_TYPE_ENUM } from '/@/constants/business/product/product-const';
 import FileUpload from '/@/components/support/file-upload/index.vue';
+import MultiClassPriceConfig from './MultiClassPriceConfig.vue';
 
 // ======================== Props & Emits ========================
 const props = defineProps({
@@ -431,6 +442,13 @@ function getRangeMessage(label, min, max) {
     return `${label}不能大于${max}`;
   }
   return '';
+}
+
+function getBasePrice() {
+  // 计算基础价格：教练费 + 马匹费
+  const coachFee = Number(formData.coachFee || 0);
+  const horseFee = Number(formData.horseFee || 0);
+  return coachFee + horseFee;
 }
 
 // ======================== 暴露方法 ========================

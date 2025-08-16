@@ -165,13 +165,12 @@ public class DynamicFormConfigService {
                 
         } else {
             // 多人课配置 - 严格按照数据库字段 m_product_course
-            fields.add(createNumberField("maxStudents", "最大人数", true, 2, 10, 4));
+            fields.add(createNumberField("maxStudents", "最大人数", true, 2, 5, 2)); // 人数范围2-5，初始值为2
             fields.add(createNumberField("coachFee", "教练费", true, 0, 9999, 300));
             fields.add(createNumberField("horseFee", "马匹费用", true, 0, 9999, 80));
             
-            // 多人课价格配置 - 严格按照数据库字段 multi_price_config
-            fields.add(createTextareaField("multiPriceConfig", "多人课价格配置", true, 
-                "JSON格式：{\"coaches\":[{\"coach_id\":1,\"prices\":{\"2\":150.00,\"3\":200.00,\"4\":240.00}}]}"));
+            // 多人课价格配置 - 使用专门的价格配置组件
+            fields.add(createMultiPriceConfigField("multiPriceConfig", "多人课价格配置", false));
         }
         
         config.put("fields", fields);
@@ -334,6 +333,20 @@ public class DynamicFormConfigService {
     }
 
     /**
+     * 创建多人课价格配置字段
+     */
+    private Map<String, Object> createMultiPriceConfigField(String key, String label, boolean required) {
+        Map<String, Object> field = new HashMap<>();
+        field.put("key", key);
+        field.put("label", label);
+        field.put("type", "multi-price-config");
+        field.put("required", required);
+        field.put("help", "根据参与人数设置不同的价格，人数越多通常价格越优惠");
+        field.put("placeholder", "系统将自动生成价格配置表单");
+        return field;
+    }
+
+    /**
      * 创建开关字段
      */
     private Map<String, Object> createSwitchField(String key, String label, boolean required, boolean defaultValue) {
@@ -392,8 +405,8 @@ public class DynamicFormConfigService {
         rules.put("horseFee", List.of("required", "number", "min:0"));
         
         if (classType == 2) {
-            // 多人课需要价格配置
-            rules.put("multiPriceConfig", List.of("required", "string"));
+            // 多人课价格配置（可选）
+            rules.put("multiPriceConfig", List.of("string"));
         }
         
         return rules;
@@ -446,10 +459,14 @@ public class DynamicFormConfigService {
             return ResponseDTO.userErrorParam("时长必须在30-300分钟之间");
         }
         
-        // 验证多人课必须有价格配置
+        // 多人课价格配置为可选项，如果有则验证格式
         Integer classType = (Integer) formData.get("classType");
-        if (classType == 2 && (!formData.containsKey("multiPriceConfig") || formData.get("multiPriceConfig") == null)) {
-            return ResponseDTO.userErrorParam("多人课必须配置价格策略");
+        if (classType == 2 && formData.containsKey("multiPriceConfig") && formData.get("multiPriceConfig") != null) {
+            String multiPriceConfig = (String) formData.get("multiPriceConfig");
+            if (multiPriceConfig.trim().isEmpty()) {
+                return ResponseDTO.userErrorParam("多人课价格配置不能为空字符串");
+            }
+            // 可以添加JSON格式验证
         }
         
         return ResponseDTO.ok("验证通过");
