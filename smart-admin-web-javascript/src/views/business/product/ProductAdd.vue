@@ -443,7 +443,7 @@ function checkRequiredFields(data) {
            data.startTime &&
            data.endTime &&
            data.activityLocation &&
-           data.activityPrice !== null && data.activityPrice !== undefined &&
+           data.price !== null && data.price !== undefined &&
            data.maxParticipants &&
            data.refundRule;
   }
