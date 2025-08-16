@@ -477,4 +477,74 @@ public class PriceCalculationService {
     private BigDecimal getCurrentPrice(Long productId) {
         return BigDecimal.valueOf(300); // 简化实现
     }
+
+    /**
+     * 重载方法：使用Map参数计算价格
+     * 用于Controller调用
+     */
+    public ResponseDTO<Map<String, Object>> calculatePrice(Map<String, Object> priceParams) {
+        try {
+            Long productId = Long.valueOf(priceParams.get("productId").toString());
+            Integer quantity = Integer.valueOf(priceParams.getOrDefault("quantity", 1).toString());
+            Long coachId = priceParams.get("coachId") != null ? 
+                Long.valueOf(priceParams.get("coachId").toString()) : null;
+            Integer participantCount = priceParams.get("participantCount") != null ? 
+                Integer.valueOf(priceParams.get("participantCount").toString()) : 1;
+            Integer memberLevel = priceParams.get("memberLevel") != null ? 
+                Integer.valueOf(priceParams.get("memberLevel").toString()) : 1;
+            String couponCode = priceParams.get("couponCode") != null ? 
+                priceParams.get("couponCode").toString() : null;
+
+            return calculatePrice(productId, quantity, coachId, participantCount, memberLevel, couponCode);
+        } catch (Exception e) {
+            log.error("价格计算参数解析失败", e);
+            return ResponseDTO.userErrorParam("价格计算参数格式错误");
+        }
+    }
+
+    /**
+     * 获取价格明细
+     * 用于Controller调用
+     */
+    public ResponseDTO<Map<String, Object>> getPriceDetail(Map<String, Object> priceParams) {
+        // 复用价格计算逻辑，返回更详细的价格分解信息
+        ResponseDTO<Map<String, Object>> priceResult = calculatePrice(priceParams);
+        
+        if (!priceResult.getOk()) {
+            return priceResult;
+        }
+
+        Map<String, Object> priceData = priceResult.getData();
+        Map<String, Object> detailResult = new HashMap<>(priceData);
+        
+        // 添加更多明细信息
+        detailResult.put("calculationTime", LocalDateTime.now());
+        detailResult.put("priceBreakdown", buildPriceBreakdown(priceData));
+        detailResult.put("discountDetails", buildDiscountDetails(priceData));
+        
+        return ResponseDTO.ok(detailResult);
+    }
+
+    /**
+     * 构建价格分解明细
+     */
+    private Map<String, Object> buildPriceBreakdown(Map<String, Object> priceData) {
+        Map<String, Object> breakdown = new HashMap<>();
+        breakdown.put("baseAmount", priceData.get("originalPrice"));
+        breakdown.put("memberDiscount", priceData.get("memberDiscount"));
+        breakdown.put("couponDiscount", priceData.get("couponDiscount"));
+        breakdown.put("finalAmount", priceData.get("finalPrice"));
+        return breakdown;
+    }
+
+    /**
+     * 构建折扣详情
+     */
+    private Map<String, Object> buildDiscountDetails(Map<String, Object> priceData) {
+        Map<String, Object> details = new HashMap<>();
+        details.put("totalSaved", priceData.get("discountAmount"));
+        details.put("memberLevelDiscount", priceData.get("memberDiscount"));
+        details.put("appliedCoupon", priceData.get("couponDiscount"));
+        return details;
+    }
 }
