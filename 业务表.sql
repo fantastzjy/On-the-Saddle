@@ -279,6 +279,7 @@ create index idx_record_date
     on m_horse_health_record (record_date);
 
 create table m_member
+
 (
     member_id              bigint auto_increment comment '会员ID'
         primary key,
