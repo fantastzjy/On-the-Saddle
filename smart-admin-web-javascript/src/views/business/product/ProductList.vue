@@ -327,16 +327,31 @@ async function ajaxQuery() {
       createTimeRange: undefined
     };
     
+    console.log('查询参数:', params);
+    
     const response = await productApi.queryProductList(params);
+    
+    console.log('完整响应:', response);
+    
     if (response.ok) {
-      tableData.value = response.data.records || [];
-      total.value = response.data.total || 0;
+      console.log('API返回数据:', response.data);
+      
+      // 兼容不同的数据结构
+      const records = response.data.records || response.data.list || response.data || [];
+      const totalCount = response.data.total || response.data.totalCount || 0;
+      
+      tableData.value = records;
+      total.value = totalCount;
+      
+      console.log('解析后的表格数据:', tableData.value);
+      console.log('总数:', total.value);
     } else {
+      console.error('API返回错误:', response);
       message.error(response.msg || '查询失败');
     }
   } catch (error) {
+    console.error('查询商品列表失败详细错误:', error);
     message.error('查询商品列表失败');
-    console.error('查询商品列表失败:', error);
   } finally {
     tableLoading.value = false;
   }

@@ -293,12 +293,22 @@ watch(() => props.value, (newVal) => {
 watch(() => props.formConfig, (newConfig) => {
   if (newConfig && newConfig.length > 0) {
     initFormData();
+    // 延迟触发验证检查
+    nextTick(() => {
+      setTimeout(() => {
+        checkFormValid();
+      }, 200);
+    });
   }
 }, { immediate: true });
 
 watch(formData, (newVal) => {
   emit('update:value', { ...newVal });
   emit('change', { ...newVal });
+  // 延迟触发验证
+  setTimeout(() => {
+    checkFormValid();
+  }, 100);
 }, { deep: true });
 
 // ======================== 方法 ========================

@@ -55,6 +55,34 @@ public class DynamicFormConfigService {
     }
 
     /**
+     * 根据商品类型和子类型获取详细表单配置
+     * 
+     * @param productType 商品类型 1-课程 2-课时包 3-活动
+     * @param classType 课程分类 1-单人课 2-多人课 (仅课程类型有效)
+     * @return 详细表单配置信息
+     */
+    public ResponseDTO<Map<String, Object>> getDetailedFormConfig(Integer productType, Integer classType) {
+        try {
+            Map<String, Object> formConfig = new HashMap<>();
+            
+            if (productType == 1 && classType != null) {
+                // 课程类型，需要根据classType进一步细分
+                formConfig = getCourseDetailedFormConfig(classType);
+            } else {
+                // 其他类型或未指定classType，返回基础配置
+                return getFormConfig(productType);
+            }
+            
+            log.info("获取商品类型 {} 课程分类 {} 的详细表单配置成功", productType, classType);
+            return ResponseDTO.ok(formConfig);
+            
+        } catch (Exception e) {
+            log.error("获取详细表单配置失败", e);
+            return ResponseDTO.userErrorParam("获取详细表单配置失败");
+        }
+    }
+
+    /**
      * 验证表单数据
      * 
      * @param productType 商品类型
@@ -80,7 +108,7 @@ public class DynamicFormConfigService {
     }
 
     /**
-     * 获取课程表单配置
+     * 获取课程表单配置（基础版，包含课程分类选择）
      */
     private Map<String, Object> getCourseFormConfig() {
         Map<String, Object> config = new HashMap<>();
@@ -89,7 +117,35 @@ public class DynamicFormConfigService {
         
         List<Map<String, Object>> fields = new ArrayList<>();
         
-        // 课程分类
+        // 课程分类（必选项，用于切换详细配置）
+        fields.add(createSelectField("classType", "课程分类", true, 
+            List.of(
+                Map.of("value", 1, "label", "单人课"),
+                Map.of("value", 2, "label", "多人课")
+            )));
+        
+        config.put("fields", fields);
+        config.put("rules", new HashMap<>());
+        config.put("needsDetailedConfig", true); // 标记需要根据classType获取详细配置
+        
+        return config;
+    }
+
+    /**
+     * 根据课程分类获取详细表单配置
+     * 
+     * @param classType 课程分类 1-单人课 2-多人课
+     * @return 详细表单配置
+     */
+    private Map<String, Object> getCourseDetailedFormConfig(Integer classType) {
+        Map<String, Object> config = new HashMap<>();
+        config.put("title", classType == 1 ? "单人课配置" : "多人课配置");
+        config.put("type", "course");
+        config.put("classType", classType);
+        
+        List<Map<String, Object>> fields = new ArrayList<>();
+        
+        // 课程分类（已选定，显示但不可更改）
         fields.add(createSelectField("classType", "课程分类", true, 
             List.of(
                 Map.of("value", 1, "label", "单人课"),
@@ -100,19 +156,26 @@ public class DynamicFormConfigService {
         fields.add(createNumberField("durationMinutes", "时长（分钟）", true, 30, 300, 60));
         fields.add(createNumberField("durationPeriods", "时长（鞍时）", true, 0.5, 5.0, 1.0));
         
-        // 人数配置
-        fields.add(createNumberField("maxStudents", "最大人数", true, 1, 10, 1));
-        
-        // 费用配置
-        fields.add(createNumberField("coachFee", "教练费", true, 0, 9999, 200));
-        fields.add(createNumberField("horseFee", "马匹费用", true, 0, 9999, 100));
-        
-        // 多人课价格配置（条件显示）
-        fields.add(createTextareaField("multiPriceConfig", "多人课价格配置", false, 
-            "当课程分类为多人课时，配置不同人数的价格"));
+        if (classType == 1) {
+            // 单人课配置 - 严格按照数据库字段 m_product_course
+            fields.add(createNumberField("maxStudents", "最大人数", true, 1, 1, 1)); // 固定为1人
+            fields.add(createNumberField("coachFee", "教练费", true, 0, 9999, 200));
+            fields.add(createNumberField("horseFee", "马匹费用", true, 0, 9999, 100));
+            // 注意：base_price是计算字段，由数据库自动计算 = coach_fee + horse_fee，前端不需要输入
+                
+        } else {
+            // 多人课配置 - 严格按照数据库字段 m_product_course
+            fields.add(createNumberField("maxStudents", "最大人数", true, 2, 10, 4));
+            fields.add(createNumberField("coachFee", "教练费", true, 0, 9999, 300));
+            fields.add(createNumberField("horseFee", "马匹费用", true, 0, 9999, 80));
+            
+            // 多人课价格配置 - 严格按照数据库字段 multi_price_config
+            fields.add(createTextareaField("multiPriceConfig", "多人课价格配置", true, 
+                "JSON格式：{\"coaches\":[{\"coach_id\":1,\"prices\":{\"2\":150.00,\"3\":200.00,\"4\":240.00}}]}"));
+        }
         
         config.put("fields", fields);
-        config.put("rules", getCourseValidationRules());
+        config.put("rules", getCourseDetailedValidationRules(classType));
         
         return config;
     }
@@ -271,6 +334,33 @@ public class DynamicFormConfigService {
     }
 
     /**
+     * 创建开关字段
+     */
+    private Map<String, Object> createSwitchField(String key, String label, boolean required, boolean defaultValue) {
+        Map<String, Object> field = new HashMap<>();
+        field.put("key", key);
+        field.put("label", label);
+        field.put("type", "switch");
+        field.put("required", required);
+        field.put("defaultValue", defaultValue);
+        return field;
+    }
+
+    /**
+     * 创建多选框字段
+     */
+    private Map<String, Object> createCheckboxField(String key, String label, boolean required, 
+                                                   List<Map<String, Object>> options) {
+        Map<String, Object> field = new HashMap<>();
+        field.put("key", key);
+        field.put("label", label);
+        field.put("type", "checkbox");
+        field.put("required", required);
+        field.put("options", options);
+        return field;
+    }
+
+    /**
      * 获取课程验证规则
      */
     private Map<String, Object> getCourseValidationRules() {
@@ -280,6 +370,32 @@ public class DynamicFormConfigService {
         rules.put("maxStudents", List.of("required", "number", "min:1", "max:10"));
         rules.put("coachFee", List.of("required", "number", "min:0"));
         rules.put("horseFee", List.of("required", "number", "min:0"));
+        return rules;
+    }
+
+    /**
+     * 获取课程详细验证规则
+     * 严格按照数据库表 m_product_course 字段
+     * 
+     * @param classType 课程分类 1-单人课 2-多人课
+     * @return 验证规则
+     */
+    private Map<String, Object> getCourseDetailedValidationRules(Integer classType) {
+        Map<String, Object> rules = new HashMap<>();
+        
+        // 数据库字段验证规则
+        rules.put("classType", List.of("required", "number"));
+        rules.put("durationMinutes", List.of("required", "number", "min:30", "max:300"));
+        rules.put("durationPeriods", List.of("required", "number", "min:0.5", "max:5"));
+        rules.put("maxStudents", List.of("required", "number", "min:1", "max:10"));
+        rules.put("coachFee", List.of("required", "number", "min:0"));
+        rules.put("horseFee", List.of("required", "number", "min:0"));
+        
+        if (classType == 2) {
+            // 多人课需要价格配置
+            rules.put("multiPriceConfig", List.of("required", "string"));
+        }
+        
         return rules;
     }
 
@@ -313,10 +429,10 @@ public class DynamicFormConfigService {
     }
 
     /**
-     * 验证课程数据
+     * 验证课程数据 - 严格按照数据库表 m_product_course 字段
      */
     private ResponseDTO<String> validateCourseData(Map<String, Object> formData) {
-        // 验证必填字段
+        // 验证必填字段 - 对应数据库字段
         String[] requiredFields = {"classType", "durationMinutes", "durationPeriods", "maxStudents", "coachFee", "horseFee"};
         for (String field : requiredFields) {
             if (!formData.containsKey(field) || formData.get(field) == null) {
@@ -328,6 +444,12 @@ public class DynamicFormConfigService {
         Integer durationMinutes = (Integer) formData.get("durationMinutes");
         if (durationMinutes < 30 || durationMinutes > 300) {
             return ResponseDTO.userErrorParam("时长必须在30-300分钟之间");
+        }
+        
+        // 验证多人课必须有价格配置
+        Integer classType = (Integer) formData.get("classType");
+        if (classType == 2 && (!formData.containsKey("multiPriceConfig") || formData.get("multiPriceConfig") == null)) {
+            return ResponseDTO.userErrorParam("多人课必须配置价格策略");
         }
         
         return ResponseDTO.ok("验证通过");

@@ -107,8 +107,8 @@
             <a-list-item>
               <a-list-item-meta>
                 <template #avatar>
-                  <a-icon 
-                    :component="getIconComponent(item.type)" 
+                  <component 
+                    :is="getIconComponent(item.type)" 
                     :style="{ color: getIconColor(item.type) }" 
                   />
                 </template>
@@ -211,105 +211,117 @@ async function calculatePrice() {
     calculating.value = true;
     errorMessage.value = '';
 
-    // 获取价格预估
-    const estimateResponse = await productApi.getPriceEstimate(
-      props.productData.productId || 0,
-      {
-        productType: props.productData.productType,
-        dynamicConfig: props.dynamicConfig
-      }
-    );
+    // 构建价格计算参数
+    const priceParams = {
+      productType: props.productData.productType,
+      dynamicConfig: props.dynamicConfig,
+      quantity: 1
+    };
 
-    if (estimateResponse.ok) {
-      const estimate = estimateResponse.data;
+    // 调用价格计算API
+    const response = await productApi.calculatePrice(priceParams);
+
+    if (response.ok) {
+      const result = response.data;
       Object.assign(priceData, {
-        basePrice: estimate.basePrice || 0,
-        estimatedPrice: estimate.estimatedPrice || 0,
-        minPrice: estimate.minPrice || 0,
-        maxPrice: estimate.maxPrice || 0,
-        priceUnit: estimate.priceUnit || '元'
+        basePrice: result.basePrice || result.originalPrice || 0,
+        estimatedPrice: result.finalPrice || result.estimatedPrice || 0,
+        minPrice: result.minPrice || result.finalPrice || 0,
+        maxPrice: result.maxPrice || result.finalPrice || 0,
+        priceUnit: '元'
       });
 
       // 构建价格明细
-      buildPriceDetails(estimate);
+      buildPriceDetails(result);
       
       // 获取价格规则
-      priceRules.value = estimate.priceRules || [];
+      priceRules.value = result.priceRules || [];
       
       // 获取价格预警
-      priceWarnings.value = estimate.warnings || [];
+      priceWarnings.value = result.priceWarnings || [];
       
       // 获取价格建议
-      priceSuggestions.value = estimate.suggestions || [];
-
+      priceSuggestions.value = result.priceSuggestions || [];
+      
       // 触发价格变化事件
       emit('price-change', {
-        ...priceData,
-        details: priceDetails.value,
-        rules: priceRules.value,
-        warnings: priceWarnings.value,
-        suggestions: priceSuggestions.value
+        basePrice: priceData.basePrice,
+        finalPrice: priceData.estimatedPrice,
+        priceDetails: priceDetails.value
       });
+
     } else {
-      errorMessage.value = estimateResponse.msg || '价格预估失败';
+      errorMessage.value = response.msg || '价格计算失败';
       emit('error', errorMessage.value);
     }
+
   } catch (error) {
-    errorMessage.value = '价格预估失败，请稍后重试';
-    console.error('价格预估失败:', error);
+    errorMessage.value = '价格计算请求失败';
     emit('error', errorMessage.value);
+    console.error('价格计算失败:', error);
   } finally {
     calculating.value = false;
   }
 }
 
-function buildPriceDetails(estimate) {
+function buildPriceDetails(result) {
   const details = [];
   
-  // 基础价格
-  if (estimate.basePrice) {
-    details.push({
-      key: 'base',
-      label: '基础价格',
-      value: estimate.basePrice,
-      important: false
-    });
-  }
-
-  // 动态调整项
-  if (estimate.adjustments && Array.isArray(estimate.adjustments)) {
-    estimate.adjustments.forEach((adj, index) => {
+  if (result.priceDetails && Array.isArray(result.priceDetails)) {
+    // 使用API返回的明细
+    priceDetails.value = result.priceDetails.map(item => ({
+      key: item.label,
+      label: item.label,
+      value: item.value,
+      important: item.important || false,
+      negative: item.negative || false
+    }));
+  } else {
+    // 根据数据库设计构建明细 - 严格按照 base_price = coach_fee + horse_fee
+    if (props.dynamicConfig.coachFee) {
       details.push({
-        key: `adj_${index}`,
-        label: adj.label || '价格调整',
-        value: Math.abs(adj.amount || 0),
-        negative: adj.amount < 0,
+        key: 'coachFee',
+        label: '教练费',
+        value: props.dynamicConfig.coachFee,
         important: false
       });
-    });
+    }
+    
+    if (props.dynamicConfig.horseFee) {
+      details.push({
+        key: 'horseFee',
+        label: '马匹费',
+        value: props.dynamicConfig.horseFee,
+        important: false
+      });
+    }
+    
+    // 数据库计算字段：base_price = coach_fee + horse_fee
+    if (props.dynamicConfig.coachFee && props.dynamicConfig.horseFee) {
+      const basePrice = Number(props.dynamicConfig.coachFee) + Number(props.dynamicConfig.horseFee);
+      details.push({
+        key: 'basePrice',
+        label: '基础单价',
+        value: basePrice,
+        important: true
+      });
+    }
+    
+    // 多人课显示人数价格
+    if (props.dynamicConfig.classType === 2 && props.dynamicConfig.multiPriceConfig) {
+      details.push({
+        key: 'multiPrice',
+        label: '多人课价格',
+        value: priceData.estimatedPrice,
+        important: true
+      });
+    }
+    
+    priceDetails.value = details;
   }
-
-  // 分隔线
-  if (details.length > 0) {
-    details.push({
-      key: 'divider',
-      label: '——————————',
-      value: '——————',
-      important: false
-    });
-  }
-
-  // 预估总价
-  details.push({
-    key: 'total',
-    label: '预估总价',
-    value: estimate.estimatedPrice || 0,
-    important: true
-  });
-
-  priceDetails.value = details;
 }
 
+// ======================== 辅助方法 ========================
 function getIconComponent(type) {
   const iconMap = {
     suggestion: BulbOutlined,
@@ -325,19 +337,13 @@ function getIconColor(type) {
     warning: '#faad14',
     success: '#52c41a'
   };
-  return colorMap[type] || '#1890ff';
-}
-
-// 手动触发价格计算
-function triggerCalculate() {
-  calculatePrice();
+  return colorMap[type] || '#666';
 }
 
 // ======================== 暴露方法 ========================
 defineExpose({
-  calculate: triggerCalculate,
-  getPriceData: () => ({ ...priceData }),
-  getPriceDetails: () => [...priceDetails.value]
+  calculatePrice,
+  refresh: calculatePrice
 });
 </script>
 
@@ -355,66 +361,17 @@ defineExpose({
 }
 
 :deep(.ant-statistic-title) {
-  font-size: 12px;
   color: #666;
-  margin-bottom: 4px;
+  font-size: 12px;
 }
 
 :deep(.ant-statistic-content) {
+  font-size: 18px;
   font-weight: 600;
 }
 
-:deep(.ant-table-tbody > tr > td) {
-  padding: 4px 8px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.ant-table-tbody > tr:last-child > td) {
-  border-bottom: none;
-}
-
-:deep(.ant-collapse) {
-  background: transparent;
-}
-
-:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header) {
-  padding: 8px 0;
-  background: transparent;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.ant-collapse-content > .ant-collapse-content-box) {
-  padding: 12px 0;
-}
-
-:deep(.ant-descriptions-item-label) {
-  font-weight: 500;
-  background: #fafafa;
-}
-
-:deep(.ant-list-item-meta-title) {
-  margin-bottom: 2px;
+:deep(.ant-collapse-header) {
   font-size: 13px;
-}
-
-:deep(.ant-list-item-meta-description) {
-  font-size: 12px;
-  color: #666;
-}
-
-:deep(.ant-list-item) {
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-:deep(.ant-list-item:last-child) {
-  border-bottom: none;
-}
-
-h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #262626;
+  font-weight: 500;
 }
 </style>

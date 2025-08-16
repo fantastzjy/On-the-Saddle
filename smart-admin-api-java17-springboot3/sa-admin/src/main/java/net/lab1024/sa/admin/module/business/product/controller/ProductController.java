@@ -136,6 +136,12 @@ public class ProductController extends SupportBaseController {
         return dynamicFormConfigService.getFormConfig(productType);
     }
 
+    @Operation(summary = "获取商品详细表单配置")
+    @GetMapping("/form/config/{productType}/{classType}")
+    public ResponseDTO<Map<String, Object>> getDetailedFormConfig(@PathVariable Integer productType, @PathVariable Integer classType) {
+        return dynamicFormConfigService.getDetailedFormConfig(productType, classType);
+    }
+
     @Operation(summary = "验证表单数据")
     @PostMapping("/form/validate")
     public ResponseDTO<String> validateFormData(@RequestBody Map<String, Object> params) {

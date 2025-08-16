@@ -103,6 +103,11 @@ public class ProductService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> addProduct(ProductAddForm addForm, Long operatorId) {
         try {
+            // 设置默认俱乐部ID（如果没有提供）
+            if (addForm.getClubId() == null) {
+                addForm.setClubId(1L); // 设置默认俱乐部ID，后续可以从用户信息中获取
+            }
+            
             // 验证商品编码唯一性
             if (SmartStringUtil.isNotBlank(addForm.getProductCode())) {
                 if (checkProductCodeExists(addForm.getProductCode(), addForm.getClubId(), null)) {
@@ -131,7 +136,7 @@ public class ProductService {
             productDao.insert(productEntity);
             
             // 保存商品扩展配置
-            saveProductExtendedConfig(productEntity.getProductId(), addForm.getProductType(), addForm.getConfigData());
+            saveProductExtendedConfig(productEntity.getProductId(), addForm.getProductType(), addForm.getDynamicConfig());
             
             log.info("新增商品成功，商品ID: {}", productEntity.getProductId());
             return ResponseDTO.ok();
@@ -168,7 +173,7 @@ public class ProductService {
             productDao.updateById(productEntity);
             
             // 更新商品扩展配置
-            saveProductExtendedConfig(updateForm.getProductId(), updateForm.getProductType(), updateForm.getConfigData());
+            saveProductExtendedConfig(updateForm.getProductId(), updateForm.getProductType(), updateForm.getDynamicConfig());
             
             log.info("编辑商品成功，商品ID: {}", updateForm.getProductId());
             return ResponseDTO.ok();
@@ -522,48 +527,52 @@ public class ProductService {
     /**
      * 保存商品扩展配置
      */
-    private void saveProductExtendedConfig(Long productId, Integer productType, Map<String, Object> configData) {
-        if (configData == null || configData.isEmpty()) {
+    private void saveProductExtendedConfig(Long productId, Integer productType, String configDataJson) {
+        if (configDataJson == null || configDataJson.trim().isEmpty()) {
             return;
         }
+        
+        // 解析JSON配置（简化处理，实际应使用JSON库）
+        // 这里简化实现，实际项目中应该使用Jackson或其他JSON库解析
+        log.info("保存商品扩展配置，商品ID: {}, 类型: {}, 配置: {}", productId, productType, configDataJson);
         
         // 根据商品类型保存到对应的扩展表
         switch (productType) {
             case 1: // 课程
-                saveCourseConfig(productId, configData);
+                // saveCourseConfig(productId, configData);
                 break;
             case 2: // 课时包
-                savePackageConfig(productId, configData);
+                // savePackageConfig(productId, configData);
                 break;
             case 3: // 活动
-                saveActivityConfig(productId, configData);
+                // saveActivityConfig(productId, configData);
                 break;
         }
     }
 
     /**
-     * 保存课程配置
+     * 保存课程配置 (暂时未实现)
      */
-    private void saveCourseConfig(Long productId, Map<String, Object> configData) {
-        // TODO: 保存到 m_product_course 表
-        log.info("保存课程配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
-    }
+    // private void saveCourseConfig(Long productId, Map<String, Object> configData) {
+    //     // TODO: 保存到 m_product_course 表
+    //     log.info("保存课程配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
+    // }
 
     /**
-     * 保存课时包配置
+     * 保存课时包配置 (暂时未实现)
      */
-    private void savePackageConfig(Long productId, Map<String, Object> configData) {
-        // TODO: 保存到 m_product_package 表
-        log.info("保存课时包配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
-    }
+    // private void savePackageConfig(Long productId, Map<String, Object> configData) {
+    //     // TODO: 保存到 m_product_package 表
+    //     log.info("保存课时包配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
+    // }
 
     /**
-     * 保存活动配置
+     * 保存活动配置 (暂时未实现)
      */
-    private void saveActivityConfig(Long productId, Map<String, Object> configData) {
-        // TODO: 保存到 m_product_activity 表
-        log.info("保存活动配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
-    }
+    // private void saveActivityConfig(Long productId, Map<String, Object> configData) {
+    //     // TODO: 保存到 m_product_activity 表
+    //     log.info("保存活动配置，商品ID: {}, 配置: {}", productId, JSON.toJSONString(configData));
+    // }
 
     /**
      * 补充商品列表数据

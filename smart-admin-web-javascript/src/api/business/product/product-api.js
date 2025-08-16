@@ -57,6 +57,11 @@ export const productApi = {
     return getRequest(`/api/admin/product/form/config/${productType}`);
   },
 
+  // 根据商品类型和课程分类获取详细表单配置
+  getDetailedFormConfig: (productType, classType) => {
+    return getRequest(`/api/admin/product/form/config/${productType}/${classType}`);
+  },
+
   // 验证表单数据
   validateFormData: (productType, formData) => {
     return postRequest('/api/admin/product/form/validate', { productType, formData });

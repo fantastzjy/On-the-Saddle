@@ -114,6 +114,7 @@
           :form-config="dynamicFormConfig"
           :loading="configLoading"
           @validate="onDynamicFormValidate"
+          @change="onDynamicFormChange"
         />
       </a-card>
 
@@ -153,16 +154,51 @@ const submitLoading = ref(false);
 const configLoading = ref(false);
 const dynamicFormConfig = ref([]);
 const dynamicFormValid = ref(false);
+const needsDetailedConfig = ref(false);
+const baseFormConfig = ref(null);
+const currentClassType = ref(null);
 
 const formData = reactive({
+  // 主表字段 m_product
   productId: null,
   productName: '',
   productCode: '',
   productType: null,
+  subType: '',
   description: '',
   images: [],
+  status: 1,
   sortOrder: 0,
-  dynamicConfig: {}
+  
+  // 动态配置字段 - 严格按照数据库表结构
+  dynamicConfig: {
+    // 课程字段 m_product_course (productType=1)
+    classType: null,
+    durationMinutes: null,
+    durationPeriods: null,
+    maxStudents: null,
+    coachFee: null,
+    horseFee: null,
+    multiPriceConfig: null,
+    
+    // 课时包字段 m_product_package (productType=2)
+    details: '',
+    price: null,
+    totalSessions: null,
+    validityDays: null,
+    stockQuantity: null,
+    
+    // 活动字段 m_product_activity (productType=3)
+    activityName: '',
+    activityDetails: '',
+    startTime: null,
+    endTime: null,
+    activityLocation: '',
+    activityPrice: null,
+    maxParticipants: null,
+    refundRule: '',
+    detailImages: []
+  }
 });
 
 const formRules = { ...PRODUCT_FORM_RULES };
@@ -224,6 +260,20 @@ async function loadFormConfig(productType) {
     if (response.ok) {
       // 从API响应中提取fields数组给DynamicFormRenderer使用
       dynamicFormConfig.value = response.data?.fields || [];
+      
+      // 检查是否需要根据classType获取详细配置
+      if (response.data?.needsDetailedConfig) {
+        needsDetailedConfig.value = true;
+        baseFormConfig.value = response.data;
+        // 如果已经有classType值，立即加载详细配置
+        if (formData.dynamicConfig.classType) {
+          await loadDetailedFormConfig(productType, formData.dynamicConfig.classType);
+        }
+      } else {
+        needsDetailedConfig.value = false;
+        baseFormConfig.value = null;
+      }
+      
       // 重置动态配置
       formData.dynamicConfig = {};
     } else {
@@ -237,6 +287,79 @@ async function loadFormConfig(productType) {
   }
 }
 
+async function loadDetailedFormConfig(productType, classType) {
+  try {
+    configLoading.value = true;
+    const response = await productApi.getDetailedFormConfig(productType, classType);
+    if (response.ok) {
+      // 从API响应中提取fields数组给DynamicFormRenderer使用
+      dynamicFormConfig.value = response.data?.fields || [];
+      currentClassType.value = classType;
+    } else {
+      message.error(response.msg || '加载详细表单配置失败');
+    }
+  } catch (error) {
+    message.error('加载详细表单配置失败');
+    console.error('加载详细表单配置失败:', error);
+  } finally {
+    configLoading.value = false;
+  }
+}
+
+function onDynamicFormChange(newData) {
+  // 检查classType是否发生变化
+  if (needsDetailedConfig.value && 
+      newData.classType && 
+      newData.classType !== currentClassType.value &&
+      formData.productType === 1) { // 只有课程类型才需要处理
+    
+    // classType发生变化，需要重新加载详细配置
+    loadDetailedFormConfig(formData.productType, newData.classType);
+  }
+  
+  // 手动触发验证检查
+  setTimeout(() => {
+    // 如果表单数据有值，认为验证通过
+    const hasRequiredFields = checkRequiredFields(newData);
+    if (hasRequiredFields) {
+      dynamicFormValid.value = true;
+    }
+  }, 100);
+}
+
+function checkRequiredFields(data) {
+  if (!formData.productType) return false;
+  
+  if (formData.productType === 1) {
+    // 课程类型必填字段检查
+    return data.classType && 
+           data.durationMinutes && 
+           data.durationPeriods && 
+           data.maxStudents && 
+           data.coachFee !== null && data.coachFee !== undefined &&
+           data.horseFee !== null && data.horseFee !== undefined;
+  } else if (formData.productType === 2) {
+    // 课时包类型必填字段检查
+    return data.details && 
+           data.price !== null && data.price !== undefined &&
+           data.totalSessions &&
+           data.validityDays &&
+           data.stockQuantity !== null && data.stockQuantity !== undefined;
+  } else if (formData.productType === 3) {
+    // 活动类型必填字段检查
+    return data.activityName &&
+           data.activityDetails &&
+           data.startTime &&
+           data.endTime &&
+           data.activityLocation &&
+           data.activityPrice !== null && data.activityPrice !== undefined &&
+           data.maxParticipants &&
+           data.refundRule;
+  }
+  
+  return false;
+}
+
 function onProductTypeChange(productType) {
   // 切换商品类型时重置动态配置
   formData.dynamicConfig = {};
@@ -245,6 +368,7 @@ function onProductTypeChange(productType) {
 
 function onDynamicFormValidate(valid) {
   dynamicFormValid.value = valid;
+  console.log('动态表单验证状态:', valid);
 }
 
 function onPriceChange(priceData) {
@@ -257,19 +381,66 @@ async function onSubmit() {
     // 验证基础表单
     await formRef.value.validate();
     
+    console.log('基础表单验证通过');
+    console.log('当前商品类型:', formData.productType);
+    console.log('动态配置数据:', formData.dynamicConfig);
+    console.log('动态表单验证状态:', dynamicFormValid.value);
+    
     // 验证动态表单
-    if (formData.productType && !dynamicFormValid.value) {
-      message.error('请完善商品配置信息');
-      return;
+    if (formData.productType) {
+      // 检查必填字段
+      const hasRequiredFields = checkRequiredFields(formData.dynamicConfig);
+      console.log('必填字段检查结果:', hasRequiredFields);
+      
+      if (!hasRequiredFields) {
+        message.error('请完善商品配置信息');
+        return;
+      }
     }
 
     submitLoading.value = true;
 
-    // 构造提交数据
+    // 构造提交数据 - 严格按照数据库字段结构
     const submitData = {
+      // 主表字段
       ...formData,
       images: JSON.stringify(formData.images),
-      dynamicConfig: JSON.stringify(formData.dynamicConfig)
+      
+      // 根据商品类型构造对应的扩展表数据
+      dynamicConfig: JSON.stringify(formData.dynamicConfig),
+      
+      // 课程商品字段 (productType=1)
+      ...(formData.productType === 1 && {
+        classType: formData.dynamicConfig.classType,
+        durationMinutes: formData.dynamicConfig.durationMinutes,
+        durationPeriods: formData.dynamicConfig.durationPeriods,
+        maxStudents: formData.dynamicConfig.maxStudents,
+        coachFee: formData.dynamicConfig.coachFee,
+        horseFee: formData.dynamicConfig.horseFee,
+        multiPriceConfig: formData.dynamicConfig.multiPriceConfig
+      }),
+      
+      // 课时包商品字段 (productType=2)
+      ...(formData.productType === 2 && {
+        details: formData.dynamicConfig.details,
+        price: formData.dynamicConfig.price,
+        totalSessions: formData.dynamicConfig.totalSessions,
+        validityDays: formData.dynamicConfig.validityDays,
+        stockQuantity: formData.dynamicConfig.stockQuantity
+      }),
+      
+      // 活动商品字段 (productType=3)
+      ...(formData.productType === 3 && {
+        activityName: formData.dynamicConfig.activityName,
+        activityDetails: formData.dynamicConfig.activityDetails,
+        startTime: formData.dynamicConfig.startTime,
+        endTime: formData.dynamicConfig.endTime,
+        activityLocation: formData.dynamicConfig.activityLocation,
+        activityPrice: formData.dynamicConfig.activityPrice,
+        maxParticipants: formData.dynamicConfig.maxParticipants,
+        refundRule: formData.dynamicConfig.refundRule,
+        detailImages: JSON.stringify(formData.dynamicConfig.detailImages)
+      })
     };
 
     let response;
@@ -300,17 +471,52 @@ async function onSubmit() {
 function resetForm() {
   formRef.value?.resetFields();
   Object.assign(formData, {
+    // 主表字段 m_product
     productId: null,
     productName: '',
     productCode: '',
     productType: null,
+    subType: '',
     description: '',
     images: [],
+    status: 1,
     sortOrder: 0,
-    dynamicConfig: {}
+    
+    // 动态配置字段 - 严格按照数据库表结构
+    dynamicConfig: {
+      // 课程字段 m_product_course (productType=1)
+      classType: null,
+      durationMinutes: null,
+      durationPeriods: null,
+      maxStudents: null,
+      coachFee: null,
+      horseFee: null,
+      multiPriceConfig: null,
+      
+      // 课时包字段 m_product_package (productType=2)
+      details: '',
+      price: null,
+      totalSessions: null,
+      validityDays: null,
+      stockQuantity: null,
+      
+      // 活动字段 m_product_activity (productType=3)
+      activityName: '',
+      activityDetails: '',
+      startTime: null,
+      endTime: null,
+      activityLocation: '',
+      activityPrice: null,
+      maxParticipants: null,
+      refundRule: '',
+      detailImages: []
+    }
   });
   dynamicFormConfig.value = [];
   dynamicFormValid.value = false;
+  needsDetailedConfig.value = false;
+  baseFormConfig.value = null;
+  currentClassType.value = null;
 }
 
 function goBack() {

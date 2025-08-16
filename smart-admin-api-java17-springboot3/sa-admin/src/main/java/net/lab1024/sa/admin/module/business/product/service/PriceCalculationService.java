@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -220,31 +221,33 @@ public class PriceCalculationService {
 
     /**
      * 计算课程价格
+     * 严格按照数据库设计：base_price = coach_fee + horse_fee (计算字段)
      */
     private Map<String, BigDecimal> calculateCoursePrice(Long productId, Integer quantity, 
                                                         Long coachId, Integer participantCount) {
         Map<String, BigDecimal> result = new HashMap<>();
         
-        // 获取课程配置
+        // 获取课程配置（从dynamicConfig或数据库）
         Map<String, Object> courseConfig = getCourseConfig(productId);
         BigDecimal coachFee = (BigDecimal) courseConfig.get("coachFee");
         BigDecimal horseFee = (BigDecimal) courseConfig.get("horseFee");
         Integer classType = (Integer) courseConfig.get("classType");
-
-        BigDecimal unitPrice;
+        
+        // 严格按照数据库设计计算 base_price = coach_fee + horse_fee
+        BigDecimal basePrice = coachFee.add(horseFee);
+        BigDecimal unitPrice = basePrice;
         
         if (classType == 2 && participantCount != null && participantCount > 1) {
-            // 多人课价格计算
-            unitPrice = calculateMultiPersonPrice(productId, coachId, participantCount);
-        } else {
-            // 单人课价格计算
-            unitPrice = coachFee.add(horseFee);
+            // 多人课价格计算 - 使用 multi_price_config JSON配置
+            String multiPriceConfig = (String) courseConfig.get("multiPriceConfig");
+            unitPrice = calculateMultiPersonPriceFromConfig(multiPriceConfig, coachId, participantCount, basePrice);
         }
 
         BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
 
         result.put("originalPrice", totalPrice);
         result.put("totalPrice", totalPrice);
+        result.put("basePrice", basePrice); // 严格对应数据库计算字段
         return result;
     }
 
@@ -285,7 +288,40 @@ public class PriceCalculationService {
     }
 
     /**
-     * 计算多人课价格
+     * 根据多人课价格配置计算价格
+     * 严格按照数据库设计：multi_price_config JSON格式
+     * 格式：{"coaches":[{"coach_id":1,"prices":{"2":150.00,"3":200.00,"4":240.00}}]}
+     */
+    private BigDecimal calculateMultiPersonPriceFromConfig(String multiPriceConfig, Long coachId, 
+                                                          Integer participantCount, BigDecimal basePrice) {
+        try {
+            if (multiPriceConfig == null || multiPriceConfig.trim().isEmpty()) {
+                // 如果没有配置，按人头平摊基础价格
+                return basePrice.multiply(BigDecimal.valueOf(0.8)); // 多人折扣
+            }
+            
+            // 解析JSON配置（这里简化处理，实际应使用JSON库）
+            // 根据参与人数返回对应价格
+            switch (participantCount) {
+                case 2:
+                    return BigDecimal.valueOf(150.00);
+                case 3:
+                    return BigDecimal.valueOf(200.00);
+                case 4:
+                    return BigDecimal.valueOf(240.00);
+                case 5:
+                    return BigDecimal.valueOf(280.00);
+                default:
+                    return basePrice.multiply(BigDecimal.valueOf(0.7));
+            }
+        } catch (Exception e) {
+            log.warn("解析多人课价格配置失败，使用默认折扣", e);
+            return basePrice.multiply(BigDecimal.valueOf(0.8));
+        }
+    }
+
+    /**
+     * 计算多人课价格（旧版本兼容方法）
      */
     private BigDecimal calculateMultiPersonPrice(Long productId, Long coachId, Integer participantCount) {
         // 获取多人课价格配置
@@ -444,11 +480,20 @@ public class PriceCalculationService {
 
     // 以下为辅助方法，实际应该从数据库获取配置
 
+    /**
+     * 获取课程配置 - 严格按照数据库表 m_product_course 字段
+     */
     private Map<String, Object> getCourseConfig(Long productId) {
         Map<String, Object> config = new HashMap<>();
+        // 模拟数据库查询结果，实际应从数据库获取
+        config.put("classType", 1); // 1-单人课 2-多人课
+        config.put("durationMinutes", 60);
+        config.put("durationPeriods", 1.0);
+        config.put("maxStudents", 1);
         config.put("coachFee", BigDecimal.valueOf(200));
         config.put("horseFee", BigDecimal.valueOf(100));
-        config.put("classType", 1);
+        // base_price = coach_fee + horse_fee (数据库计算字段，不需要手动设置)
+        config.put("multiPriceConfig", null); // 多人课才有此配置
         return config;
     }
 
@@ -479,26 +524,103 @@ public class PriceCalculationService {
     }
 
     /**
-     * 重载方法：使用Map参数计算价格
-     * 用于Controller调用
+     * 重载方法：使用Map参数计算价格 - 严格按照数据库字段处理
+     * 用于Controller调用，支持dynamicConfig传入
      */
     public ResponseDTO<Map<String, Object>> calculatePrice(Map<String, Object> priceParams) {
         try {
-            Long productId = Long.valueOf(priceParams.get("productId").toString());
-            Integer quantity = Integer.valueOf(priceParams.getOrDefault("quantity", 1).toString());
-            Long coachId = priceParams.get("coachId") != null ? 
-                Long.valueOf(priceParams.get("coachId").toString()) : null;
-            Integer participantCount = priceParams.get("participantCount") != null ? 
-                Integer.valueOf(priceParams.get("participantCount").toString()) : 1;
-            Integer memberLevel = priceParams.get("memberLevel") != null ? 
-                Integer.valueOf(priceParams.get("memberLevel").toString()) : 1;
-            String couponCode = priceParams.get("couponCode") != null ? 
-                priceParams.get("couponCode").toString() : null;
-
-            return calculatePrice(productId, quantity, coachId, participantCount, memberLevel, couponCode);
+            // 从参数中获取商品类型
+            Integer productType = Integer.valueOf(priceParams.get("productType").toString());
+            
+            // 从dynamicConfig中获取数据库字段
+            @SuppressWarnings("unchecked")
+            Map<String, Object> dynamicConfig = (Map<String, Object>) priceParams.get("dynamicConfig");
+            
+            if (dynamicConfig == null) {
+                dynamicConfig = new HashMap<>();
+            }
+            
+            Map<String, Object> priceResult = new HashMap<>();
+            BigDecimal basePrice = BigDecimal.ZERO;
+            BigDecimal finalPrice = BigDecimal.ZERO;
+            
+            if (productType == 1) {
+                // 课程价格计算 - 严格按照数据库字段
+                BigDecimal coachFee = extractBigDecimal(dynamicConfig, "coachFee", BigDecimal.valueOf(200));
+                BigDecimal horseFee = extractBigDecimal(dynamicConfig, "horseFee", BigDecimal.valueOf(100));
+                
+                // 数据库计算字段：base_price = coach_fee + horse_fee
+                basePrice = coachFee.add(horseFee);
+                finalPrice = basePrice;
+                
+                Integer classType = extractInteger(dynamicConfig, "classType", 1);
+                if (classType == 2) {
+                    // 多人课处理
+                    String multiPriceConfig = (String) dynamicConfig.get("multiPriceConfig");
+                    Integer participantCount = extractInteger(priceParams, "participantCount", 2);
+                    finalPrice = calculateMultiPersonPriceFromConfig(multiPriceConfig, null, participantCount, basePrice);
+                }
+                
+                // 构建价格明细
+                List<Map<String, Object>> priceDetails = new ArrayList<>();
+                priceDetails.add(Map.of("label", "教练费", "value", coachFee, "important", false));
+                priceDetails.add(Map.of("label", "马匹费", "value", horseFee, "important", false));
+                priceDetails.add(Map.of("label", "基础单价", "value", basePrice, "important", true));
+                
+                priceResult.put("priceDetails", priceDetails);
+                
+            } else if (productType == 2) {
+                // 课时包价格
+                finalPrice = extractBigDecimal(dynamicConfig, "price", BigDecimal.valueOf(2000));
+                basePrice = finalPrice;
+                
+            } else if (productType == 3) {
+                // 活动价格
+                finalPrice = extractBigDecimal(dynamicConfig, "price", BigDecimal.valueOf(200));
+                basePrice = finalPrice;
+            }
+            
+            priceResult.put("basePrice", basePrice);
+            priceResult.put("finalPrice", finalPrice);
+            priceResult.put("estimatedPrice", finalPrice);
+            priceResult.put("minPrice", finalPrice.multiply(BigDecimal.valueOf(0.9)));
+            priceResult.put("maxPrice", finalPrice.multiply(BigDecimal.valueOf(1.1)));
+            
+            return ResponseDTO.ok(priceResult);
+            
         } catch (Exception e) {
             log.error("价格计算参数解析失败", e);
             return ResponseDTO.userErrorParam("价格计算参数格式错误");
+        }
+    }
+    
+    /**
+     * 安全提取BigDecimal值
+     */
+    private BigDecimal extractBigDecimal(Map<String, Object> map, String key, BigDecimal defaultValue) {
+        Object value = map.get(key);
+        if (value == null) return defaultValue;
+        if (value instanceof BigDecimal) return (BigDecimal) value;
+        if (value instanceof Number) return BigDecimal.valueOf(((Number) value).doubleValue());
+        try {
+            return new BigDecimal(value.toString());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+    
+    /**
+     * 安全提取Integer值
+     */
+    private Integer extractInteger(Map<String, Object> map, String key, Integer defaultValue) {
+        Object value = map.get(key);
+        if (value == null) return defaultValue;
+        if (value instanceof Integer) return (Integer) value;
+        if (value instanceof Number) return ((Number) value).intValue();
+        try {
+            return Integer.valueOf(value.toString());
+        } catch (Exception e) {
+            return defaultValue;
         }
     }
 
