@@ -1,6 +1,6 @@
 /*
  * 商品管理相关常量
- * 
+ *
  * @Author: 1024创新实验室
  * @Date: 2024-08-16
  * @Copyright: 1024创新实验室 (https://1024lab.net)
@@ -133,14 +133,14 @@ export const PRODUCT_DEFAULT_CONFIG = {
     MAX_SIZE: 5,            // 最大文件大小(MB)
     ACCEPTED_TYPES: ['jpg', 'jpeg', 'png', 'gif']
   },
-  
+
   // 活动详情图片配置
   ACTIVITY_DETAIL_IMAGE: {
     MAX_COUNT: 9,           // 最大图片数量
     MAX_SIZE: 10,           // 最大文件大小(MB)
     ACCEPTED_TYPES: ['jpg', 'jpeg', 'png', 'gif']
   },
-  
+
   // 课程配置
   COURSE: {
     MIN_DURATION: 30,       // 最小时长(分钟)
@@ -149,7 +149,7 @@ export const PRODUCT_DEFAULT_CONFIG = {
     MAX_PERIODS: 5.0,       // 最大鞍时
     MAX_STUDENTS: 10        // 最大学生数
   },
-  
+
   // 课时包配置
   PACKAGE: {
     MIN_SESSIONS: 1,        // 最小课时数
@@ -157,7 +157,7 @@ export const PRODUCT_DEFAULT_CONFIG = {
     MIN_VALIDITY: 1,        // 最小有效期(天)
     MAX_VALIDITY: 3650      // 最大有效期(天)
   },
-  
+
   // 活动配置
   ACTIVITY: {
     NAME_MAX_LENGTH: 5,     // 活动名称最大长度
@@ -211,7 +211,7 @@ export const PRODUCT_TABLE_COLUMNS = [
   {
     title: '操作',
     dataIndex: 'action',
-    width: 200,
+    width: 180,
     fixed: 'right'
   }
 ];

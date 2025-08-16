@@ -124,7 +124,7 @@
     </a-row>
 
     <a-table
-      :scroll="{ x: 1500 }"
+      :scroll="{ x: 'max-content' }"
       size="small"
       :dataSource="tableData"
       :columns="columns"
@@ -203,14 +203,6 @@
               编辑
             </a-button>
             <a-button 
-              @click="calculatePrice(record)" 
-              v-privilege="'business:product:price'" 
-              size="small" 
-              type="link"
-            >
-              价格计算
-            </a-button>
-            <a-button 
               @click="toggleStatus(record)" 
               v-privilege="'business:product:status'" 
               size="small" 
@@ -250,13 +242,6 @@
     </div>
   </a-card>
 
-  <!-- 价格计算器模态框 -->
-  <PriceCalculatorModal 
-    v-model:visible="priceCalculatorVisible"
-    :product="currentProduct"
-    @ok="onPriceCalculatorOk"
-  />
-
   <!-- 图片预览 -->
   <FilePreviewModal v-model:visible="previewVisible" :url="previewUrl" />
 </template>
@@ -284,7 +269,6 @@ import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 import { defaultTimeRanges } from '/@/lib/default-time-ranges';
 import TableOperator from '/@/components/support/table-operator/index.vue';
-import PriceCalculatorModal from './components/PriceCalculatorModal.vue';
 import FilePreviewModal from '/@/components/support/file-preview-modal/index.vue';
 
 const router = useRouter();
@@ -296,8 +280,6 @@ const tableData = ref([]);
 const total = ref(0);
 const columns = ref([...PRODUCT_TABLE_COLUMNS]);
 const selectedRowKeys = ref([]);
-const currentProduct = ref(null);
-const priceCalculatorVisible = ref(false);
 const previewVisible = ref(false);
 const previewUrl = ref('');
 
@@ -478,15 +460,6 @@ async function batchUpdateStatus(status) {
   }
 }
 
-function calculatePrice(record) {
-  currentProduct.value = record;
-  priceCalculatorVisible.value = true;
-}
-
-function onPriceCalculatorOk() {
-  priceCalculatorVisible.value = false;
-  currentProduct.value = null;
-}
 
 // ======================== 辅助方法 ========================
 function getProductTypeDesc(value) {
