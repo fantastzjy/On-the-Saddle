@@ -74,7 +74,7 @@ public class SmartSchedulingService {
             
         } catch (Exception e) {
             log.error("智能排课失败", e);
-            return ResponseDTO.error("智能排课失败：" + e.getMessage());
+            return ResponseDTO.userErrorParam("智能排课失败：" + e.getMessage());
         }
     }
 
@@ -101,7 +101,7 @@ public class SmartSchedulingService {
             
         } catch (Exception e) {
             log.error("检测时间冲突失败", e);
-            return ResponseDTO.error("检测时间冲突失败");
+            return ResponseDTO.userErrorParam("检测时间冲突失败");
         }
     }
 
@@ -150,7 +150,7 @@ public class SmartSchedulingService {
             
         } catch (Exception e) {
             log.error("推荐时段计算失败", e);
-            return ResponseDTO.error("推荐时段计算失败");
+            return ResponseDTO.userErrorParam("推荐时段计算失败");
         }
     }
 
@@ -173,7 +173,7 @@ public class SmartSchedulingService {
                     ResponseDTO<List<Map<String, Object>>> scheduleResult = 
                         autoGenerateSchedule(orderItem, orderItem.getPreferredTime());
                     
-                    if (scheduleResult.isOk()) {
+                    if (scheduleResult.getOk()) {
                         successCount++;
                     } else {
                         failCount++;
@@ -194,7 +194,7 @@ public class SmartSchedulingService {
             
         } catch (Exception e) {
             log.error("批量排课失败", e);
-            return ResponseDTO.error("批量排课失败");
+            return ResponseDTO.userErrorParam("批量排课失败");
         }
     }
 

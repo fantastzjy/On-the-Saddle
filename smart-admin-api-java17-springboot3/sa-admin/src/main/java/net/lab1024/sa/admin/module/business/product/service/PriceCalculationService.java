@@ -117,7 +117,7 @@ public class PriceCalculationService {
 
         } catch (Exception e) {
             log.error("价格计算失败", e);
-            return ResponseDTO.error("价格计算失败：" + e.getMessage());
+            return ResponseDTO.userErrorParam("价格计算失败：" + e.getMessage());
         }
     }
 
@@ -149,7 +149,7 @@ public class PriceCalculationService {
                 ResponseDTO<Map<String, Object>> itemPrice = calculatePrice(
                     productId, quantity, coachId, participantCount, memberLevel, null); // 单品不应用优惠券
 
-                if (itemPrice.isOk()) {
+                if (itemPrice.getOk()) {
                     Map<String, Object> priceInfo = itemPrice.getData();
                     itemResults.put(productId.toString(), priceInfo);
                     
@@ -178,7 +178,7 @@ public class PriceCalculationService {
 
         } catch (Exception e) {
             log.error("批量价格计算失败", e);
-            return ResponseDTO.error("批量价格计算失败：" + e.getMessage());
+            return ResponseDTO.userErrorParam("批量价格计算失败：" + e.getMessage());
         }
     }
 
@@ -214,7 +214,7 @@ public class PriceCalculationService {
 
         } catch (Exception e) {
             log.error("获取价格预估失败", e);
-            return ResponseDTO.error("获取价格预估失败");
+            return ResponseDTO.userErrorParam("获取价格预估失败");
         }
     }
 

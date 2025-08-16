@@ -76,7 +76,7 @@ public class WechatPaymentService {
             
         } catch (Exception e) {
             log.error("创建支付订单失败", e);
-            return ResponseDTO.error("创建支付订单失败：" + e.getMessage());
+            return ResponseDTO.userErrorParam("创建支付订单失败：" + e.getMessage());
         }
     }
 
@@ -99,12 +99,12 @@ public class WechatPaymentService {
             String resultCode = (String) callbackMap.get("trade_state");
             
             if (StringUtils.isBlank(paymentNo)) {
-                return ResponseDTO.error("支付单号为空");
+                return ResponseDTO.userErrorParam("支付单号为空");
             }
             
             PaymentRecordEntity paymentRecord = paymentRecordDao.selectByPaymentNo(paymentNo);
             if (paymentRecord == null) {
-                return ResponseDTO.error("支付记录不存在");
+                return ResponseDTO.userErrorParam("支付记录不存在");
             }
             
             // 更新支付记录
@@ -127,7 +127,7 @@ public class WechatPaymentService {
             
         } catch (Exception e) {
             log.error("处理支付回调失败", e);
-            return ResponseDTO.error("处理支付回调失败");
+            return ResponseDTO.userErrorParam("处理支付回调失败");
         }
     }
 
@@ -168,12 +168,12 @@ public class WechatPaymentService {
                 log.info("申请退款成功，支付ID：{}, 退款金额：{}", paymentId, refundAmount);
                 return ResponseDTO.ok("退款申请成功");
             } else {
-                return ResponseDTO.error("退款申请失败");
+                return ResponseDTO.userErrorParam("退款申请失败");
             }
             
         } catch (Exception e) {
             log.error("申请退款失败", e);
-            return ResponseDTO.error("申请退款失败：" + e.getMessage());
+            return ResponseDTO.userErrorParam("申请退款失败：" + e.getMessage());
         }
     }
 
@@ -201,7 +201,7 @@ public class WechatPaymentService {
             
         } catch (Exception e) {
             log.error("查询支付状态失败", e);
-            return ResponseDTO.error("查询支付状态失败");
+            return ResponseDTO.userErrorParam("查询支付状态失败");
         }
     }
 

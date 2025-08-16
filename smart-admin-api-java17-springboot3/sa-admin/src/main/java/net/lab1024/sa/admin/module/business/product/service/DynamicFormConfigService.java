@@ -50,7 +50,7 @@ public class DynamicFormConfigService {
             
         } catch (Exception e) {
             log.error("获取表单配置失败", e);
-            return ResponseDTO.error("获取表单配置失败");
+            return ResponseDTO.userErrorParam("获取表单配置失败");
         }
     }
 
@@ -75,7 +75,7 @@ public class DynamicFormConfigService {
             }
         } catch (Exception e) {
             log.error("验证表单数据失败", e);
-            return ResponseDTO.error("验证表单数据失败");
+            return ResponseDTO.userErrorParam("验证表单数据失败");
         }
     }
 
