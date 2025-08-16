@@ -42,6 +42,13 @@ export const TABLE_ID_CONST = {
       HORSE_HEALTH_RECORD: businessClubInitTableId + 5, //马匹健康记录
       MEMBER: businessClubInitTableId + 6, //会员管理
     },
+    PRODUCT: {
+      PRODUCT: businessClubInitTableId + 7, //商品管理
+    },
+    SCHEDULE: {
+      SCHEDULE: businessClubInitTableId + 8, //课表管理
+      BOOKING: businessClubInitTableId + 9, //预约管理
+    },
   },
 
   /**
