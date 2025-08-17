@@ -45,8 +45,6 @@ public class ProductUpdateForm {
     @NotBlank(message = "商品描述不能为空")
     private String description;
 
-    @Schema(description = "商品图片地址列表(JSON格式)")
-    private String images;
 
     @Schema(description = "商品状态: 1-上架 2-下架 3-售罄")
     private Integer status;

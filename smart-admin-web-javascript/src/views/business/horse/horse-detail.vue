@@ -1,45 +1,32 @@
 <template>
-  <div class="sa-token-privilege">
-    <div class="common-container">
-      <div class="sa-page-header">
-        <div class="sa-page-header-left">
-          <!--<a-button @click="goBack">-->
-          <!--  <template #icon>-->
-          <!--    <ArrowLeftOutlined />-->
-          <!--  </template>-->
-          <!--  返回-->
-          <!--</a-button>-->
-          <div class="sa-page-header-title">
-            <h3>{{ horseDetail.horseName || '马匹详情' }}</h3>
-            <div class="sa-page-header-subtitle">
-              编号：{{ horseDetail.horseCode }} | 芯片号：{{ horseDetail.chipNo }}
-            </div>
-          </div>
-        </div>
-        <div class="sa-page-header-right">
-          <a-button v-privilege="'club:horse:update'" type="primary" @click="showEditModal">
-            <template #icon>
-              <EditOutlined />
-            </template>
-            编辑
-          </a-button>
-        </div>
-      </div>
+  <a-page-header
+    :ghost="false"
+    :title="`马匹详情 - ${horseDetail.horseName || ''}`"
+    @back="goBack"
+    @click="() => console.log('page header clicked')"
+  >
+    <template #extra>
+      <a-button v-privilege="'club:horse:update'" type="primary" @click="showEditModal">
+        <template #icon>
+          <EditOutlined />
+        </template>
+        编辑
+      </a-button>
+    </template>
+  </a-page-header>
 
-      <a-card :loading="loading">
-        <a-tabs v-model:activeKey="activeTab">
-          <a-tab-pane key="basic" tab="基本信息">
-            <HorseBasicInfo :horse-detail="horseDetail" />
-          </a-tab-pane>
-          <a-tab-pane key="health-plan" tab="健康计划">
-            <HorseHealthPlan :horse-id="horseId" />
-          </a-tab-pane>
-        </a-tabs>
-      </a-card>
-    </div>
+  <a-card :loading="loading">
+    <a-tabs v-model:activeKey="activeTab">
+      <a-tab-pane key="basic" tab="基本信息">
+        <HorseBasicInfo :horse-detail="horseDetail" />
+      </a-tab-pane>
+      <a-tab-pane key="health-plan" tab="健康计划">
+        <HorseHealthPlan :horse-id="horseId" />
+      </a-tab-pane>
+    </a-tabs>
+  </a-card>
 
-    <HorseFormModal ref="formModalRef" @reloadList="loadHorseDetail" />
-  </div>
+  <HorseFormModal ref="formModalRef" @reloadList="loadHorseDetail" />
 </template>
 
 <script setup>
@@ -100,10 +87,31 @@ function showEditModal() {
 }
 
 function goBack() {
-  router.go(-1);
+  console.log('goBack function called');
+  console.log('router object:', router);
+  console.log('history.length:', window.history.length);
+  
+  try {
+    // 检查是否有历史记录可以返回
+    if (window.history.length > 1) {
+      console.log('Using router.go(-1)');
+      router.go(-1);
+    } else {
+      console.log('No history, redirecting to horse list');
+      router.push('/club/horse/horse-list');
+    }
+    console.log('Navigation executed successfully');
+  } catch (error) {
+    console.error('Error in navigation:', error);
+    // 如果出错，直接跳转到马匹列表页
+    router.push('/club/horse/horse-list');
+  }
 }
 
 onMounted(() => {
+  console.log('Horse detail component mounted');
+  console.log('router available:', !!router);
+  console.log('router methods:', Object.keys(router));
   loadHorseDetail();
 });
 </script>

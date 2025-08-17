@@ -43,8 +43,6 @@ public class ProductListVO {
     @Schema(description = "商品描述")
     private String description;
 
-    @Schema(description = "商品图片地址列表")
-    private String images;
 
     @Schema(description = "商品状态: 1-上架 2-下架 3-售罄")
     private Integer status;

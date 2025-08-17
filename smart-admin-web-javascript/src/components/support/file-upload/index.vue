@@ -92,6 +92,11 @@
       type: String,
       default: 'picture-card',
     },
+    // 删除文件时的回调函数
+    onRemove: {
+      type: Function,
+      default: null,
+    },
   });
 
   // 图片类型的后缀名
@@ -158,8 +163,19 @@
     }
   }
 
-  function handleRemove(file) {
-    console.log(fileList.value);
+  async function handleRemove(file) {
+    // 如果提供了删除回调函数，调用它
+    if (props.onRemove && typeof props.onRemove === 'function') {
+      try {
+        const result = await props.onRemove(file);
+        return result;
+      } catch (error) {
+        console.error('删除文件时发生错误:', error);
+        return false;
+      }
+    }
+    // 默认行为：直接返回true允许删除
+    return true;
   }
 
   function beforeUpload(file, files) {

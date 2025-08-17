@@ -148,27 +148,7 @@
         </template>
 
         <template v-if="column.dataIndex === 'images'">
-          <div v-if="text && text !== '[]'" style="display: flex; gap: 2px;">
-            <template v-if="isJsonArray(text)">
-              <img
-                v-for="(url, index) in JSON.parse(text).slice(0, 3)"
-                :key="index"
-                :src="url"
-                style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                @click="previewImage(JSON.parse(text), index)"
-              />
-              <span v-if="JSON.parse(text).length > 3" style="font-size: 12px; color: #999;">
-                +{{ JSON.parse(text).length - 3 }}
-              </span>
-            </template>
-            <img
-              v-else
-              :src="text"
-              style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-              @click="previewImage([text], 0)"
-            />
-          </div>
-          <span v-else>-</span>
+          <!-- 图片字段已移除 -->
         </template>
 
         <template v-if="column.dataIndex === 'status'">
@@ -243,7 +223,7 @@
   </a-card>
 
   <!-- 图片预览 -->
-  <FilePreviewModal v-model:visible="previewVisible" :url="previewUrl" />
+  <!-- <FilePreviewModal v-model:visible="previewVisible" :url="previewUrl" /> -->
 </template>
 
 <script setup>
@@ -268,7 +248,6 @@ import {
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 import TableOperator from '/@/components/support/table-operator/index.vue';
-import FilePreviewModal from '/@/components/support/file-preview-modal/index.vue';
 import dayjs from 'dayjs';
 
 const router = useRouter();
@@ -289,8 +268,6 @@ const tableData = ref([]);
 const total = ref(0);
 const columns = ref([...PRODUCT_TABLE_COLUMNS]);
 const selectedRowKeys = ref([]);
-const previewVisible = ref(false);
-const previewUrl = ref('');
 
 // ======================== 初始化 ========================
 onMounted(() => {
@@ -490,24 +467,6 @@ function getProductStatusDesc(value) {
 
 function getProductStatusColor(value) {
   return Object.values(PRODUCT_STATUS_ENUM).find(item => item.value === value)?.color || 'default';
-}
-
-function isJsonArray(str) {
-  try {
-    const parsed = JSON.parse(str);
-    return Array.isArray(parsed);
-  } catch {
-    return false;
-  }
-}
-
-function previewImage(images, index) {
-  if (Array.isArray(images) && images[index]) {
-    previewUrl.value = images[index];
-  } else if (typeof images === 'string') {
-    previewUrl.value = images;
-  }
-  previewVisible.value = true;
 }
 </script>
 

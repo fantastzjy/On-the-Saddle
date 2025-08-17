@@ -24,6 +24,7 @@ import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
 import net.lab1024.sa.base.common.util.SmartStringUtil;
 import net.lab1024.sa.base.module.support.file.service.FileService;
+import net.lab1024.sa.base.module.support.file.service.IFileStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +59,9 @@ public class ProductService {
 
     @Autowired
     private FileService fileService;
+    
+    @Autowired
+    private IFileStorageService fileStorageService;
 
     // ========================================
     // 商品基础CRUD操作 (对应PROD_BE_001)
@@ -425,56 +429,7 @@ public class ProductService {
         }
     }
 
-    // ========================================
-    // 图片上传功能 (对应PROD_BE_005)
-    // ========================================
 
-    /**
-     * 上传商品图片
-     */
-    public ResponseDTO<Map<String, Object>> uploadProductImage(org.springframework.web.multipart.MultipartFile file) {
-        try {
-            // 获取当前用户信息
-            net.lab1024.sa.base.common.domain.RequestUser requestUser = net.lab1024.sa.base.common.util.SmartRequestUtil.getRequestUser();
-            
-            // 调用文件服务上传图片
-            ResponseDTO<net.lab1024.sa.base.module.support.file.domain.vo.FileUploadVO> uploadResult = 
-                fileService.fileUpload(file, net.lab1024.sa.base.module.support.file.constant.FileFolderTypeEnum.COMMON.getValue(), requestUser);
-            
-            if (!uploadResult.getOk()) {
-                return ResponseDTO.userErrorParam("图片上传失败：" + uploadResult.getMsg());
-            }
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("url", uploadResult.getData().getFileUrl());
-            result.put("fileName", uploadResult.getData().getFileName());
-            result.put("uploadTime", LocalDateTime.now());
-            
-            log.info("商品图片上传成功，文件名: {}", uploadResult.getData().getFileName());
-            return ResponseDTO.ok(result);
-            
-        } catch (Exception e) {
-            log.error("商品图片上传失败", e);
-            return ResponseDTO.userErrorParam("商品图片上传失败");
-        }
-    }
-
-    /**
-     * 删除商品图片
-     */
-    public ResponseDTO<String> deleteProductImage(String imageUrl) {
-        try {
-            // 调用文件服务删除图片
-            // 这里应该解析URL获取文件key，然后调用删除方法
-            
-            log.info("商品图片删除成功，图片URL: {}", imageUrl);
-            return ResponseDTO.ok();
-            
-        } catch (Exception e) {
-            log.error("商品图片删除失败", e);
-            return ResponseDTO.userErrorParam("商品图片删除失败");
-        }
-    }
 
     // ========================================
     // 私有辅助方法

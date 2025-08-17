@@ -124,6 +124,11 @@ const router = useRouter();
 
 const columns = [
   {
+    title: 'ID',
+    dataIndex: 'horseId',
+    width: 80,
+  },
+  {
     title: '马匹编号',
     dataIndex: 'horseCode',
     width: 120,

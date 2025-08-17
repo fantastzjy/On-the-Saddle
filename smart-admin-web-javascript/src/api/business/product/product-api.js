@@ -123,5 +123,19 @@ export const productApi = {
   // 获取商品销售统计
   getProductSalesStatistics: (param) => {
     return postRequest('/api/admin/product/statistics/sales', param);
+  },
+
+  // ==================== 图片管理 ====================
+
+  // 上传商品图片
+  uploadProductImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return postRequest('/api/admin/product/upload/image', formData);
+  },
+
+  // 删除商品图片
+  deleteProductImage: (productId, imageUrl) => {
+    return postRequest('/api/admin/product/delete/image', { productId, imageUrl });
   }
 };

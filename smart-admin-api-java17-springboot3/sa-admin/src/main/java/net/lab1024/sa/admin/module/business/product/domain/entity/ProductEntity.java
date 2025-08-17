@@ -40,9 +40,6 @@ public class ProductEntity {
     @DataTracerFieldLabel("商品描述")
     private String description;
 
-    @DataTracerFieldLabel("商品图片地址列表")
-    private String images;
-
     @DataTracerFieldLabel("商品状态")
     private Integer status;
 

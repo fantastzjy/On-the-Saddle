@@ -67,39 +67,6 @@
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
-        
-        <a-col :span="12">
-          <div style="text-align: center;">
-            <div style="margin-bottom: 16px;">
-              <h4>课程图片</h4>
-            </div>
-            <a-image
-              v-if="productDetail.imageUrl"
-              :width="300"
-              :height="200"
-              :src="productDetail.imageUrl"
-              placeholder
-              fallback="/images/product-placeholder.png"
-              :preview="true"
-              style="border-radius: 8px; border: 1px solid #f0f0f0;"
-            />
-            <div v-else style="
-              width: 300px; 
-              height: 200px; 
-              border: 2px dashed #d9d9d9; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center;
-              border-radius: 8px;
-              margin: 0 auto;
-            ">
-              <div style="text-align: center; color: #999;">
-                <PictureOutlined style="font-size: 48px; margin-bottom: 8px;" />
-                <div>暂无图片</div>
-              </div>
-            </div>
-          </div>
-        </a-col>
       </a-row>
 
       <!-- 商品描述 -->
@@ -262,8 +229,7 @@ import {
   DeleteOutlined, 
   BookOutlined,
   CreditCardOutlined,
-  CalendarOutlined,
-  PictureOutlined
+  CalendarOutlined
 } from '@ant-design/icons-vue';
 import { productApi } from '/@/api/business/product/product-api';
 import { smartSentry } from '/@/lib/smart-sentry';

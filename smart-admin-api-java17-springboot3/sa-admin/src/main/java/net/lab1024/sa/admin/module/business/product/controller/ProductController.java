@@ -185,21 +185,7 @@ public class ProductController extends SupportBaseController {
         return productService.updateProductStock(productId, quantity, reason, SmartRequestUtil.getRequestUserId());
     }
 
-    // ========================================
-    // 图片上传功能 (对应PROD_BE_005: 商品图片上传处理)
-    // ========================================
 
-    @Operation(summary = "上传商品图片")
-    @PostMapping("/upload/image")
-    public ResponseDTO<Map<String, Object>> uploadProductImage(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
-        return productService.uploadProductImage(file);
-    }
-
-    @Operation(summary = "删除商品图片")
-    @PostMapping("/delete/image")
-    public ResponseDTO<String> deleteProductImage(@RequestParam String imageUrl) {
-        return productService.deleteProductImage(imageUrl);
-    }
 
     // ========================================
     // 扩展API方法 - 与前端API保持一致

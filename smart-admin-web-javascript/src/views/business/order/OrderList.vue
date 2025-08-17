@@ -155,60 +155,6 @@
               </template>
               详情
             </a-button>
-
-            <a-button
-              v-if="record.orderStatus === 1"
-              @click="confirmPayment(record)"
-              size="small"
-              type="link"
-              v-privilege="'business:order:payment'"
-            >
-              <template #icon>
-                <CheckOutlined />
-              </template>
-              确认支付
-            </a-button>
-
-            <a-button
-              v-if="record.orderStatus === 2"
-              @click="confirmOrder(record)"
-              size="small"
-              type="link"
-              v-privilege="'business:order:confirm'"
-            >
-              <template #icon>
-                <CheckCircleOutlined />
-              </template>
-              确认订单
-            </a-button>
-
-            <a-button
-              v-if="record.orderStatus === 3"
-              @click="completeOrder(record)"
-              size="small"
-              type="link"
-              v-privilege="'business:order:complete'"
-            >
-              <template #icon>
-                <CheckSquareOutlined />
-              </template>
-              完成订单
-            </a-button>
-
-            <a-dropdown v-if="record.orderStatus < 4 && record.orderStatus !== 6">
-              <a-button size="small" type="link">
-                更多
-                <DownOutlined />
-              </a-button>
-              <template #overlay>
-                <a-menu>
-                  <a-menu-item @click="cancelOrder(record)" v-privilege="'business:order:cancel'">
-                    <CloseOutlined />
-                    取消订单
-                  </a-menu-item>
-                </a-menu>
-              </template>
-            </a-dropdown>
           </a-space>
         </template>
       </template>
@@ -240,12 +186,7 @@ import {
   SearchOutlined,
   ReloadOutlined,
   PlusOutlined,
-  EyeOutlined,
-  CheckOutlined,
-  CheckCircleOutlined,
-  CheckSquareOutlined,
-  CloseOutlined,
-  DownOutlined
+  EyeOutlined
 } from '@ant-design/icons-vue';
 import { orderApi } from '/@/api/business/order/order-api';
 import { smartSentry } from '/@/lib/smart-sentry';
@@ -320,7 +261,7 @@ const columns = ref([
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
-    width: 180
+    width: 80
   }
 ]);
 
@@ -383,75 +324,6 @@ const createOrder = () => {
 
 const viewDetail = (record) => {
   router.push(`/order/detail/${record.orderId}`);
-};
-
-const confirmPayment = async (record) => {
-  try {
-    const res = await orderApi.confirmPayment(record.orderId);
-    if (res.ok) {
-      message.success('确认支付成功');
-      onSearch();
-    } else {
-      message.error(res.msg || '确认支付失败');
-    }
-  } catch (error) {
-    message.error('确认支付失败');
-    smartSentry.captureError(error);
-  }
-};
-
-const confirmOrder = async (record) => {
-  try {
-    const res = await orderApi.confirmOrder(record.orderId);
-    if (res.ok) {
-      message.success('确认订单成功');
-      onSearch();
-    } else {
-      message.error(res.msg || '确认订单失败');
-    }
-  } catch (error) {
-    message.error('确认订单失败');
-    smartSentry.captureError(error);
-  }
-};
-
-const completeOrder = async (record) => {
-  try {
-    const res = await orderApi.completeOrder(record.orderId);
-    if (res.ok) {
-      message.success('完成订单成功');
-      onSearch();
-    } else {
-      message.error(res.msg || '完成订单失败');
-    }
-  } catch (error) {
-    message.error('完成订单失败');
-    smartSentry.captureError(error);
-  }
-};
-
-const cancelOrder = (record) => {
-  Modal.confirm({
-    title: '确认取消',
-    content: `确定要取消订单"${record.orderNo}"吗？取消后将同时取消所有关联的预约。`,
-    okText: '确认取消',
-    cancelText: '取消',
-    okType: 'danger',
-    onOk: async () => {
-      try {
-        const res = await orderApi.cancelOrder(record.orderId, '手动取消');
-        if (res.ok) {
-          message.success('取消订单成功');
-          onSearch();
-        } else {
-          message.error(res.msg || '取消订单失败');
-        }
-      } catch (error) {
-        message.error('取消订单失败');
-        smartSentry.captureError(error);
-      }
-    }
-  });
 };
 
 // 辅助方法

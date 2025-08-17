@@ -185,12 +185,6 @@ export const PRODUCT_TABLE_COLUMNS = [
     width: 100
   },
   {
-    title: '课程图片',
-    dataIndex: 'images',
-    width: 80,
-    align: 'center'
-  },
-  {
     title: '状态',
     dataIndex: 'status',
     width: 80,

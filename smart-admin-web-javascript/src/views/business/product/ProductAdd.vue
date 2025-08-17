@@ -87,25 +87,6 @@
             show-count
           />
         </a-form-item>
-
-        <a-form-item label="课程图片" name="images">
-          <FileUpload
-            :default-file-list="formData.images"
-            :max-count="PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_COUNT"
-            :max-size="PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_SIZE"
-            :accepted-types="PRODUCT_DEFAULT_CONFIG.IMAGE.ACCEPTED_TYPES"
-            list-type="picture-card"
-            @change="onImageChange"
-          >
-            <div v-if="getImageCount() < PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_COUNT">
-              <PlusOutlined />
-              <div style="margin-top: 8px;">上传图片</div>
-            </div>
-          </FileUpload>
-          <div class="upload-tip">
-            最多上传{{ PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_COUNT }}张图片，每张不超过{{ PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_SIZE }}MB
-          </div>
-        </a-form-item>
       </a-card>
 
       <!-- 动态表单配置 -->
@@ -134,15 +115,14 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { message } from 'ant-design-vue';
-import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons-vue';
+import { message, Modal } from 'ant-design-vue';
+import { ArrowLeftOutlined } from '@ant-design/icons-vue';
 import { productApi } from '/@/api/business/product/product-api';
 import { 
   PRODUCT_TYPE_ENUM, 
   PRODUCT_FORM_RULES, 
   PRODUCT_DEFAULT_CONFIG 
 } from '/@/constants/business/product/product-const';
-import FileUpload from '/@/components/support/file-upload/index.vue';
 import DynamicFormRenderer from './components/DynamicFormRenderer.vue';
 import PricePreview from './components/PricePreview.vue';
 
@@ -167,7 +147,6 @@ const formData = reactive({
   productType: null,
   subType: '',
   description: '',
-  images: [],
   status: 1,
   sortOrder: 0,
   
@@ -240,7 +219,6 @@ async function loadProductDetail() {
         productName: product.productName,
         productCode: product.productCode,
         description: product.description,
-        images: parseImages(product.images),
         sortOrder: product.sortOrder
       });
       
@@ -279,7 +257,7 @@ async function loadProductDetail() {
           price: product.activityDetails.price,
           maxParticipants: product.activityDetails.maxParticipants,
           refundRule: product.activityDetails.refundRule,
-          detailImages: parseImages(product.activityDetails.detailImages)
+          detailImages: product.activityDetails.detailImages || []
         };
       } else {
         // 如果没有详情数据，尝试从旧的dynamicConfig字段获取
@@ -467,13 +445,6 @@ function onPriceChange(priceData) {
   console.log('价格变化:', priceData);
 }
 
-function onImageChange(fileList) {
-  // 更新图片列表
-  formData.images = fileList;
-  console.log('图片列表更新:', fileList);
-  console.log('提取的URL:', extractImageUrls(fileList));
-}
-
 async function onSubmit() {
   try {
     // 验证基础表单
@@ -497,16 +468,11 @@ async function onSubmit() {
     }
 
     submitLoading.value = true;
-
-    console.log('提交前的图片数据:', formData.images);
-    console.log('提取的图片URLs:', extractImageUrls(formData.images));
-
+    
     // 构造提交数据 - 严格按照数据库字段结构
     const submitData = {
       // 主表字段
       ...formData,
-      // 提取图片URL并序列化
-      images: JSON.stringify(extractImageUrls(formData.images)),
       
       // 根据商品类型构造对应的扩展表数据
       dynamicConfig: JSON.stringify(formData.dynamicConfig),
@@ -580,7 +546,6 @@ function resetForm() {
     productType: null,
     subType: '',
     description: '',
-    images: [],
     status: 1,
     sortOrder: 0,
     
@@ -624,73 +589,6 @@ function resetForm() {
 function goBack() {
   router.back();
 }
-
-// ======================== 辅助方法 ========================
-function parseImages(images) {
-  if (!images) return [];
-  
-  try {
-    let parsed = [];
-    
-    // 如果已经是数组，直接处理
-    if (Array.isArray(images)) {
-      parsed = images;
-    } 
-    // 如果是字符串，尝试解析JSON
-    else if (typeof images === 'string') {
-      const temp = JSON.parse(images);
-      parsed = Array.isArray(temp) ? temp : [];
-    }
-    
-    // 确保每个图片对象有FileUpload组件需要的字段
-    return parsed.map((item, index) => {
-      if (typeof item === 'string') {
-        // 如果是字符串URL，转换为对象格式
-        return {
-          uid: `img-${index}`,
-          fileId: index,
-          name: `image-${index}.jpg`,
-          url: item,
-          fileUrl: item,
-          fileName: `image-${index}.jpg`,
-          status: 'done'
-        };
-      } else if (item && typeof item === 'object') {
-        // 确保对象有必要的字段
-        return {
-          uid: item.uid || `img-${index}`,
-          fileId: item.fileId || index,
-          name: item.name || item.fileName || `image-${index}.jpg`,
-          url: item.url || item.fileUrl,
-          fileUrl: item.fileUrl || item.url,
-          fileName: item.fileName || item.name || `image-${index}.jpg`,
-          status: item.status || 'done',
-          ...item
-        };
-      }
-      return null;
-    }).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-function getImageCount() {
-  return Array.isArray(formData.images) ? formData.images.length : 0;
-}
-
-function extractImageUrls(images) {
-  if (!Array.isArray(images)) return [];
-  
-  return images.map(item => {
-    if (typeof item === 'string') {
-      return item;
-    } else if (item && typeof item === 'object') {
-      return item.url || item.fileUrl || item.src;
-    }
-    return null;
-  }).filter(Boolean);
-}
 </script>
 
 <style scoped>
@@ -704,30 +602,5 @@ function extractImageUrls(images) {
 
 .form-section:last-child {
   margin-bottom: 0;
-}
-
-.upload-tip {
-  color: #666;
-  font-size: 12px;
-  margin-top: 8px;
-}
-
-:deep(.ant-card-head-title) {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-:deep(.ant-form-item-label > label) {
-  font-weight: 500;
-}
-
-:deep(.ant-upload-select-picture-card) {
-  width: 100px;
-  height: 100px;
-}
-
-:deep(.ant-upload-list-picture-card .ant-upload-list-item) {
-  width: 100px;
-  height: 100px;
 }
 </style>
