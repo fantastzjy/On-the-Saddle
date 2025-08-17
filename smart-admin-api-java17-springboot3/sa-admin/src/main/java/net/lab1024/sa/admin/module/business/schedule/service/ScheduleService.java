@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.admin.module.business.booking.dao.BookingDao;
 import net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
@@ -12,7 +13,11 @@ import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
+import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
+import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
+import net.lab1024.sa.admin.module.system.employee.dao.EmployeeDao;
+import net.lab1024.sa.admin.module.system.employee.domain.entity.EmployeeEntity;
 import net.lab1024.sa.admin.module.business.schedule.dao.LessonScheduleDao;
 import net.lab1024.sa.admin.module.business.schedule.domain.entity.LessonScheduleEntity;
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ConflictCheckForm;
@@ -20,6 +25,7 @@ import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleQueryFo
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleTimeUpdateForm;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.CoachVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ConflictCheckVO;
+import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleDetailVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleListVO;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -29,6 +35,8 @@ import net.lab1024.sa.base.common.util.SmartPageUtil;
 import net.lab1024.sa.base.common.util.SmartStringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -54,6 +62,9 @@ public class ScheduleService {
     private LessonScheduleDao lessonScheduleDao;
 
     @Autowired
+    private BookingDao bookingDao;
+
+    @Autowired
     private CoachDao coachDao;
 
     @Autowired
@@ -64,6 +75,14 @@ public class ScheduleService {
 
     @Autowired
     private ProductDao productDao;
+
+    @Autowired
+    private ProductCourseDao productCourseDao;
+
+    @Autowired
+    private EmployeeDao employeeDao;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 查询课表列表
@@ -118,18 +137,17 @@ public class ScheduleService {
     /**
      * 获取课表详情
      */
-    public ResponseDTO<ScheduleListVO> getScheduleDetail(Long scheduleId) {
+    public ResponseDTO<ScheduleDetailVO> getScheduleDetail(Long scheduleId) {
         try {
             LessonScheduleEntity schedule = lessonScheduleDao.selectById(scheduleId);
             if (schedule == null) {
                 return ResponseDTO.userErrorParam("课表不存在");
             }
 
-            ScheduleListVO scheduleVO = SmartBeanUtil.copy(schedule, ScheduleListVO.class);
-            
-            // 补充关联数据
-            List<ScheduleListVO> scheduleList = List.of(scheduleVO);
-            enhanceScheduleData(scheduleList);
+            ScheduleDetailVO scheduleVO = SmartBeanUtil.copy(schedule, ScheduleDetailVO.class);
+
+            // 补充详细关联数据
+            enhanceScheduleDetailData(scheduleVO);
 
             log.info("获取课表详情成功，课表ID：{}", scheduleId);
             return ResponseDTO.ok(scheduleVO);
@@ -148,7 +166,7 @@ public class ScheduleService {
     public ResponseDTO<Void> createScheduleFromBooking(BookingEntity booking) {
         try {
             LessonScheduleEntity schedule = new LessonScheduleEntity();
-            
+
             // 生成课单号
             schedule.setScheduleNo(generateScheduleNo());
             schedule.setBookingId(booking.getBookingId());
@@ -156,15 +174,15 @@ public class ScheduleService {
             schedule.setMemberId(booking.getMemberId());
             schedule.setCoachId(booking.getCoachId());
             schedule.setHorseId(booking.getHorseId());
-            
+
             // 时间设置
             schedule.setLessonDate(booking.getStartTime().toLocalDate());
             schedule.setStartTime(booking.getStartTime());
             schedule.setEndTime(booking.getEndTime());
-            
+
             // 状态设置：根据预约状态映射课表状态
             schedule.setLessonStatus(mapBookingStatusToLessonStatus(booking.getBookingStatus()));
-            
+
             schedule.setNotificationSent(0);
             schedule.setReminderSent(0);
             schedule.setCreateBy("system");
@@ -197,7 +215,7 @@ public class ScheduleService {
                 Integer newLessonStatus = mapBookingStatusToLessonStatus(bookingStatus);
                 schedule.setLessonStatus(newLessonStatus);
                 schedule.setUpdateTime(LocalDateTime.now());
-                
+
                 lessonScheduleDao.updateById(schedule);
                 log.info("更新课表状态成功，预约ID：{}，新状态：{}", bookingId, newLessonStatus);
             }
@@ -251,7 +269,7 @@ public class ScheduleService {
                 schedule.setEndTime(form.getEndTime());
                 schedule.setLessonDate(form.getStartTime().toLocalDate());
                 schedule.setUpdateTime(LocalDateTime.now());
-                
+
                 lessonScheduleDao.updateById(schedule);
             }
 
@@ -402,15 +420,39 @@ public class ScheduleService {
         List<Long> memberIds = scheduleList.stream().map(ScheduleListVO::getMemberId).distinct().collect(Collectors.toList());
         List<Long> coachIds = scheduleList.stream().map(ScheduleListVO::getCoachId).distinct().collect(Collectors.toList());
         List<Long> horseIds = scheduleList.stream().map(ScheduleListVO::getHorseId).filter(id -> id != null && id > 0).distinct().collect(Collectors.toList());
+        List<Long> bookingIds = scheduleList.stream().map(ScheduleListVO::getBookingId).filter(id -> id != null && id > 0).distinct().collect(Collectors.toList());
 
         // 批量查询关联数据
         Map<Long, MemberEntity> memberMap = memberDao.selectBatchIds(memberIds).stream()
                 .collect(Collectors.toMap(MemberEntity::getMemberId, m -> m));
         Map<Long, CoachEntity> coachMap = coachDao.selectBatchIds(coachIds).stream()
                 .collect(Collectors.toMap(CoachEntity::getCoachId, c -> c));
-        Map<Long, HorseEntity> horseMap = horseIds.isEmpty() ? Map.of() : 
+        Map<Long, HorseEntity> horseMap = horseIds.isEmpty() ? Map.of() :
                 horseDao.selectBatchIds(horseIds).stream()
                         .collect(Collectors.toMap(HorseEntity::getHorseId, h -> h));
+
+        // 查询预约信息以获取商品ID
+        Map<Long, BookingEntity> bookingMap = bookingIds.isEmpty() ? Map.of() :
+                bookingDao.selectBatchIds(bookingIds).stream()
+                        .collect(Collectors.toMap(BookingEntity::getBookingId, b -> b));
+
+        // 收集商品ID并查询商品信息
+        List<Long> productIds = bookingMap.values().stream()
+                .map(BookingEntity::getProductId)
+                .filter(productId -> productId != null && productId > 0)
+                .distinct().collect(Collectors.toList());
+        Map<Long, ProductEntity> productMap = productIds.isEmpty() ? Map.of() :
+                productDao.selectBatchIds(productIds).stream()
+                        .collect(Collectors.toMap(ProductEntity::getProductId, p -> p));
+
+        // 获取教练关联的员工ID并查询员工信息
+        List<Long> employeeIds = coachMap.values().stream()
+                .map(CoachEntity::getUserId)
+                .filter(userId -> userId != null && userId > 0)
+                .distinct().collect(Collectors.toList());
+        Map<Long, EmployeeEntity> employeeMap = employeeIds.isEmpty() ? Map.of() :
+                employeeDao.selectBatchIds(employeeIds).stream()
+                        .collect(Collectors.toMap(EmployeeEntity::getEmployeeId, e -> e));
 
         // 补充数据
         for (ScheduleListVO schedule : scheduleList) {
@@ -424,7 +466,21 @@ public class ScheduleService {
             // 教练信息
             CoachEntity coach = coachMap.get(schedule.getCoachId());
             if (coach != null) {
-                schedule.setCoachName(coach.getCoachNo()); // 这里需要关联用户表获取真实姓名，暂用编号
+                // 获取教练真实姓名
+                if (coach.getUserId() != null && coach.getUserId() > 0) {
+                    log.debug("列表查询：教练{}的员工信息，userId: {}", coach.getCoachNo(), coach.getUserId());
+                    EmployeeEntity employee = employeeMap.get(coach.getUserId());
+                    if (employee != null && SmartStringUtil.isNotBlank(employee.getActualName())) {
+                        log.debug("列表查询：找到员工信息: {}", employee.getActualName());
+                        schedule.setCoachName(employee.getActualName());
+                    } else {
+                        log.warn("列表查询：教练{}关联的员工不存在或姓名为空，userId: {}", coach.getCoachNo(), coach.getUserId());
+                        schedule.setCoachName("教练" + coach.getCoachNo()); // 如果没有关联员工，使用教练编号
+                    }
+                } else {
+                    log.warn("列表查询：教练{}没有关联员工，userId: {}", coach.getCoachNo(), coach.getUserId());
+                    schedule.setCoachName("教练" + coach.getCoachNo()); // 如果没有关联员工，使用教练编号
+                }
             }
 
             // 马匹信息
@@ -432,6 +488,25 @@ public class ScheduleService {
                 HorseEntity horse = horseMap.get(schedule.getHorseId());
                 if (horse != null) {
                     schedule.setHorseName(horse.getHorseName());
+                }
+            }
+
+            // 商品信息
+            if (schedule.getBookingId() != null && schedule.getBookingId() > 0) {
+                BookingEntity booking = bookingMap.get(schedule.getBookingId());
+                if (booking != null && booking.getProductId() != null && booking.getProductId() > 0) {
+                    ProductEntity product = productMap.get(booking.getProductId());
+                    if (product != null) {
+                        schedule.setProductName(product.getProductName());
+
+                        // 组合类型和子类型信息
+                        String mainType = getProductTypeNameFromEntity(product);
+                        String fullType = mainType;
+                        if (SmartStringUtil.isNotBlank(product.getSubType())) {
+                            fullType = mainType + "-" + product.getSubType();
+                        }
+                        schedule.setProductType(product.getProductType());
+                    }
                 }
             }
 
@@ -461,11 +536,284 @@ public class ScheduleService {
     }
 
     /**
+     * 补充课表详情关联数据
+     */
+    private void enhanceScheduleDetailData(ScheduleDetailVO schedule) {
+        // 会员信息
+        if (schedule.getMemberId() != null) {
+            MemberEntity member = memberDao.selectById(schedule.getMemberId());
+            if (member != null) {
+                schedule.setMemberName(member.getActualName());
+                schedule.setMemberPhone(member.getPhone());
+                schedule.setMemberGender(member.getGender() != null ? (member.getGender() == 1 ? "男" : "女") : null);
+                schedule.setMemberLevel(member.getDefaultCourseLevel());
+
+                // 解析JSON格式的会员扩展信息
+                if (SmartStringUtil.isNotBlank(member.getProfileData())) {
+                    try {
+                        JsonNode profileJson = objectMapper.readTree(member.getProfileData());
+                        schedule.setMemberHeight(profileJson.path("height").asText(null));
+                        schedule.setMemberWeight(profileJson.path("weight").asText(null));
+                        schedule.setRidingExperience(profileJson.path("ridingExperience").asText(null));
+
+                        // 构建可读的备注信息
+                        StringBuilder remarkBuilder = new StringBuilder();
+                        if (profileJson.has("level")) {
+                            remarkBuilder.append("骑行水平: ").append(profileJson.get("level").asText()).append("; ");
+                        }
+                        if (profileJson.has("interests") && profileJson.get("interests").isArray()) {
+                            remarkBuilder.append("兴趣爱好: ");
+                            for (JsonNode interest : profileJson.get("interests")) {
+                                remarkBuilder.append(interest.asText()).append(" ");
+                            }
+                            remarkBuilder.append("; ");
+                        }
+                        schedule.setMemberRemark(remarkBuilder.toString());
+                    } catch (Exception e) {
+                        log.warn("解析会员扩展信息失败: {}", e.getMessage());
+                        schedule.setMemberRemark(member.getProfileData());
+                    }
+                } else {
+                    schedule.setMemberRemark("");
+                }
+            }
+        }
+
+        // 教练信息
+        if (schedule.getCoachId() != null) {
+            CoachEntity coach = coachDao.selectById(schedule.getCoachId());
+            if (coach != null) {
+                schedule.setCoachNo(coach.getCoachNo());
+                schedule.setCoachAvatar(coach.getAvatarUrl());
+                schedule.setCoachLevel(coach.getCoachLevel());
+                schedule.setCoachSpecialties(coach.getSpecialties());
+                schedule.setCoachIntroduction(coach.getIntroduction());
+
+                // 获取教练真实姓名 - 修复映射问题
+                if (coach.getUserId() != null && coach.getUserId() > 0) {
+                    log.debug("查询教练{}的员工信息，userId: {}", coach.getCoachNo(), coach.getUserId());
+                    EmployeeEntity employee = employeeDao.selectById(coach.getUserId());
+                    if (employee != null && SmartStringUtil.isNotBlank(employee.getActualName())) {
+                        log.debug("找到员工信息: {}", employee.getActualName());
+                        schedule.setCoachName(employee.getActualName());
+                        schedule.setCoachPhone(employee.getPhone());
+                    } else {
+                        log.warn("教练{}关联的员工不存在或姓名为空，userId: {}", coach.getCoachNo(), coach.getUserId());
+                        // 如果没有找到员工信息，使用教练编号作为备选
+                        schedule.setCoachName("教练" + coach.getCoachNo());
+                    }
+                } else {
+                    log.warn("教练{}没有关联员工，userId: {}", coach.getCoachNo(), coach.getUserId());
+                    schedule.setCoachName("教练" + coach.getCoachNo());
+                }
+            }
+        }
+
+        // 马匹信息
+        if (schedule.getHorseId() != null && schedule.getHorseId() > 0) {
+            HorseEntity horse = horseDao.selectById(schedule.getHorseId());
+            if (horse != null) {
+                schedule.setHorseName(horse.getHorseName());
+                schedule.setHorseNo(horse.getHorseCode());
+                schedule.setHorseBreed(horse.getBreed());
+                schedule.setHorseGender(horse.getGender() != null ? (horse.getGender() == 1 ? "雄性" : "雌性") : null);
+                schedule.setHorseAge(horse.getBirthDate() != null ?
+                    java.time.Period.between(horse.getBirthDate().toLocalDate(), java.time.LocalDate.now()).getYears() : null);
+                schedule.setHorseColor(horse.getColor());
+                // 修复马匹尺寸显示 - 避免0值显示
+                schedule.setHorseHeight(horse.getHeight() != null && horse.getHeight() > 0 ?
+                    horse.getHeight().toString() + "cm" : "未录入");
+                schedule.setHorseWeight(horse.getWeight() != null && horse.getWeight() > 0 ?
+                    horse.getWeight().toString() + "kg" : "未录入");
+                schedule.setHorseHealthStatus(getHorseHealthStatusName(horse.getHealthStatus()));
+                // 注意：Horse实体中没有character字段，这可能在horseData的JSON中
+            }
+        }
+
+        // 预约和商品信息
+        if (schedule.getBookingId() != null && schedule.getBookingId() > 0) {
+            BookingEntity booking = bookingDao.selectById(schedule.getBookingId());
+            if (booking != null) {
+                schedule.setBookingStatus(booking.getBookingStatus());
+                schedule.setBookingStatusName(getBookingStatusName(booking.getBookingStatus()));
+                schedule.setActualCoachFee(booking.getActualCoachFee());
+                schedule.setActualHorseFee(booking.getActualHorseFee());
+                schedule.setArrivalTime(booking.getArrivalTime());
+                schedule.setCompletionTime(booking.getCompletionTime());
+                schedule.setCancelReason(booking.getCancelReason());
+
+                // 商品信息
+                if (booking.getProductId() != null && booking.getProductId() > 0) {
+                    ProductEntity product = productDao.selectById(booking.getProductId());
+                    if (product != null) {
+                        log.warn("商品信息 - ID: {}, 名称: {}, 原始类型: {}, 子类型: {}",
+                            product.getProductId(), product.getProductName(),
+                            product.getProductType(), product.getSubType());
+
+                        schedule.setProductId(product.getProductId());
+                        schedule.setProductName(product.getProductName());
+
+                        // 获取完整的商品类型信息（包含子类型）
+                        String fullType = getProductTypeNameFromEntity(product);
+                        log.warn("商品类型转换 - 原始: {}, 最终类型: {}",
+                            product.getProductType(), fullType);
+                        schedule.setProductType(fullType);
+
+                        // 注意：Product实体中没有price、lessonType、difficultyLevel字段
+                        // 这些可能需要从产品配置表或扩展表中获取
+                    }
+                }
+            }
+        }
+
+        // 状态名称
+        schedule.setLessonStatusName(getLessonStatusName(schedule.getLessonStatus()));
+
+        // 计算课程时长
+        if (schedule.getStartTime() != null && schedule.getEndTime() != null) {
+            long minutes = java.time.Duration.between(schedule.getStartTime(), schedule.getEndTime()).toMinutes();
+            schedule.setDuration((int) minutes);
+        }
+    }
+
+    /**
+     * 获取预约状态名称
+     */
+    private String getBookingStatusName(Integer bookingStatus) {
+        if (bookingStatus == null) return "未知状态";
+        switch (bookingStatus) {
+            case 1: return "待确认";
+            case 2: return "已确认";
+            case 3: return "进行中";
+            case 4: return "已完成";
+            case 5: return "已取消";
+            default: return "未知状态";
+        }
+    }
+
+    /**
+     * 获取马匹健康状态名称
+     */
+    private String getHorseHealthStatusName(Integer healthStatus) {
+        if (healthStatus == null) return "未知";
+        switch (healthStatus) {
+            case 1: return "健康";
+            case 2: return "轻微不适";
+            case 3: return "需要休息";
+            case 4: return "康复中";
+            case 5: return "停止工作";
+            default: return "未知";
+        }
+    }
+
+    /**
+     * 获取商品类型名称
+     */
+    private String getProductTypeName(Integer productType) {
+        if (productType == null) return "未知类型";
+        switch (productType) {
+            case 1: return "课程";
+            case 2: return "课时包";
+            case 3: return "活动";
+            default: return "未知类型";
+        }
+    }
+
+    /**
+     * 从ProductEntity获取商品类型名称（支持字符串和数字类型）
+     */
+    private String getProductTypeNameFromEntity(ProductEntity product) {
+        if (product.getProductType() == null) {
+            return "未知类型";
+        }
+
+        // 获取主类型名称 - 安全处理类型转换
+        String mainType;
+        Object productTypeObj = product.getProductType();
+
+        if (productTypeObj instanceof Integer) {
+            // 如果是整数类型，使用标准映射
+            mainType = getProductTypeName((Integer) productTypeObj);
+        } else {
+            // 如果是字符串或其他类型，进行字符串标准化
+            String typeStr = String.valueOf(productTypeObj);
+            mainType = normalizeProductTypeName(typeStr);
+        }
+
+        // 如果是课程类型，尝试获取子类型（单人课/多人课）
+        if ("课程".equals(mainType) || mainType.contains("课程")) {
+            String subType = getCourseSubType(product.getProductId());
+            if (SmartStringUtil.isNotBlank(subType)) {
+                return mainType + "-" + subType;
+            }
+        }
+
+        return mainType;
+    }
+
+    /**
+     * 获取课程子类型（单人课/多人课）
+     */
+    private String getCourseSubType(Long productId) {
+        try {
+            LambdaQueryWrapper<ProductCourseEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ProductCourseEntity::getProductId, productId);
+            ProductCourseEntity courseEntity = productCourseDao.selectOne(wrapper);
+
+            if (courseEntity != null && courseEntity.getClassType() != null) {
+                switch (courseEntity.getClassType()) {
+                    case 1:
+                        return "单人课";
+                    case 2:
+                        return "多人课";
+                    default:
+                        return null;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("获取课程子类型失败，productId: {}", productId, e);
+        }
+        return null;
+    }
+
+    /**
+     * 标准化商品类型名称（处理数据库中的遗留字符串数据）
+     */
+    private String normalizeProductTypeName(String typeStr) {
+        if (SmartStringUtil.isBlank(typeStr)) {
+            return "未知类型";
+        }
+
+        String lowerType = typeStr.toLowerCase().trim();
+
+        // 映射遗留的字符串类型到标准类型
+        if (lowerType.contains("体验") || lowerType.contains("私教") || lowerType.contains("单人") || lowerType.contains("课程")) {
+            return "课程";
+        }
+        if (lowerType.contains("课时包") || lowerType.contains("package")) {
+            return "课时包";
+        }
+        if (lowerType.contains("活动") || lowerType.contains("activity")) {
+            return "活动";
+        }
+        if (lowerType.contains("多人") || lowerType.contains("团体")) {
+            return "课程";
+        }
+
+        // 如果已经是标准名称，直接返回
+        if (lowerType.equals("课程") || lowerType.equals("课时包") || lowerType.equals("活动")) {
+            return typeStr;
+        }
+
+        return typeStr; // 保持原值
+    }
+
+    /**
      * 检查教练时间冲突
      */
     private List<ConflictCheckVO.ConflictDetailVO> checkCoachConflict(ConflictCheckForm form) {
         List<ConflictCheckVO.ConflictDetailVO> conflicts = new ArrayList<>();
-        
+
         LambdaQueryWrapper<LessonScheduleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(LessonScheduleEntity::getCoachId, form.getCoachId())
                    .in(LessonScheduleEntity::getLessonStatus, 1, 2) // 待上课、进行中状态
@@ -473,14 +821,14 @@ public class ScheduleService {
                        .le(LessonScheduleEntity::getStartTime, form.getEndTime())
                        .ge(LessonScheduleEntity::getEndTime, form.getStartTime())
                    );
-        
+
         // 如果是更新操作，排除当前课表
         if (form.getScheduleId() != null) {
             queryWrapper.ne(LessonScheduleEntity::getScheduleId, form.getScheduleId());
         }
 
         List<LessonScheduleEntity> conflictSchedules = lessonScheduleDao.selectList(queryWrapper);
-        
+
         for (LessonScheduleEntity schedule : conflictSchedules) {
             ConflictCheckVO.ConflictDetailVO conflict = new ConflictCheckVO.ConflictDetailVO();
             conflict.setConflictScheduleId(schedule.getScheduleId());
@@ -489,7 +837,7 @@ public class ScheduleService {
             conflict.setResourceName("教练时间冲突");
             conflict.setConflictTimeRange(formatTimeRange(schedule.getStartTime(), schedule.getEndTime()));
             conflict.setDescription("教练在该时间段已有其他课程安排");
-            
+
             // 获取会员信息
             if (schedule.getMemberId() != null) {
                 MemberEntity member = memberDao.selectById(schedule.getMemberId());
@@ -497,10 +845,10 @@ public class ScheduleService {
                     conflict.setMemberName(member.getActualName());
                 }
             }
-            
+
             conflicts.add(conflict);
         }
-        
+
         return conflicts;
     }
 
@@ -509,7 +857,7 @@ public class ScheduleService {
      */
     private List<ConflictCheckVO.ConflictDetailVO> checkHorseConflict(ConflictCheckForm form) {
         List<ConflictCheckVO.ConflictDetailVO> conflicts = new ArrayList<>();
-        
+
         LambdaQueryWrapper<LessonScheduleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(LessonScheduleEntity::getHorseId, form.getHorseId())
                    .in(LessonScheduleEntity::getLessonStatus, 1, 2) // 待上课、进行中状态
@@ -517,14 +865,14 @@ public class ScheduleService {
                        .le(LessonScheduleEntity::getStartTime, form.getEndTime())
                        .ge(LessonScheduleEntity::getEndTime, form.getStartTime())
                    );
-        
+
         // 如果是更新操作，排除当前课表
         if (form.getScheduleId() != null) {
             queryWrapper.ne(LessonScheduleEntity::getScheduleId, form.getScheduleId());
         }
 
         List<LessonScheduleEntity> conflictSchedules = lessonScheduleDao.selectList(queryWrapper);
-        
+
         for (LessonScheduleEntity schedule : conflictSchedules) {
             ConflictCheckVO.ConflictDetailVO conflict = new ConflictCheckVO.ConflictDetailVO();
             conflict.setConflictScheduleId(schedule.getScheduleId());
@@ -533,7 +881,7 @@ public class ScheduleService {
             conflict.setResourceName("马匹时间冲突");
             conflict.setConflictTimeRange(formatTimeRange(schedule.getStartTime(), schedule.getEndTime()));
             conflict.setDescription("马匹在该时间段已被其他课程占用");
-            
+
             // 获取会员信息
             if (schedule.getMemberId() != null) {
                 MemberEntity member = memberDao.selectById(schedule.getMemberId());
@@ -541,10 +889,10 @@ public class ScheduleService {
                     conflict.setMemberName(member.getActualName());
                 }
             }
-            
+
             conflicts.add(conflict);
         }
-        
+
         return conflicts;
     }
 
@@ -553,7 +901,7 @@ public class ScheduleService {
      */
     private List<ConflictCheckVO.ConflictDetailVO> checkMemberConflict(ConflictCheckForm form) {
         List<ConflictCheckVO.ConflictDetailVO> conflicts = new ArrayList<>();
-        
+
         LambdaQueryWrapper<LessonScheduleEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(LessonScheduleEntity::getMemberId, form.getMemberId())
                    .in(LessonScheduleEntity::getLessonStatus, 1, 2) // 待上课、进行中状态
@@ -561,14 +909,14 @@ public class ScheduleService {
                        .le(LessonScheduleEntity::getStartTime, form.getEndTime())
                        .ge(LessonScheduleEntity::getEndTime, form.getStartTime())
                    );
-        
+
         // 如果是更新操作，排除当前课表
         if (form.getScheduleId() != null) {
             queryWrapper.ne(LessonScheduleEntity::getScheduleId, form.getScheduleId());
         }
 
         List<LessonScheduleEntity> conflictSchedules = lessonScheduleDao.selectList(queryWrapper);
-        
+
         for (LessonScheduleEntity schedule : conflictSchedules) {
             ConflictCheckVO.ConflictDetailVO conflict = new ConflictCheckVO.ConflictDetailVO();
             conflict.setConflictScheduleId(schedule.getScheduleId());
@@ -577,7 +925,7 @@ public class ScheduleService {
             conflict.setResourceName("会员时间冲突");
             conflict.setConflictTimeRange(formatTimeRange(schedule.getStartTime(), schedule.getEndTime()));
             conflict.setDescription("会员在该时间段已有其他课程安排");
-            
+
             // 获取会员信息
             if (schedule.getMemberId() != null) {
                 MemberEntity member = memberDao.selectById(schedule.getMemberId());
@@ -585,10 +933,10 @@ public class ScheduleService {
                     conflict.setMemberName(member.getActualName());
                 }
             }
-            
+
             conflicts.add(conflict);
         }
-        
+
         return conflicts;
     }
 

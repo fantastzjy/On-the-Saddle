@@ -24,7 +24,7 @@
           allowClear
         >
           <a-select-option value="1">课程订单</a-select-option>
-          <a-select-option value="2">套餐订单</a-select-option>
+          <a-select-option value="2">课时包订单</a-select-option>
           <a-select-option value="3">活动订单</a-select-option>
         </a-select>
       </a-form-item>
@@ -41,6 +41,7 @@
           <a-select-option value="3">已确认</a-select-option>
           <a-select-option value="4">已完成</a-select-option>
           <a-select-option value="5">已取消</a-select-option>
+          <a-select-option value="6">已退款</a-select-option>
         </a-select>
       </a-form-item>
 
@@ -197,7 +198,7 @@
               完成订单
             </a-button>
 
-            <a-dropdown v-if="record.orderStatus < 4">
+            <a-dropdown v-if="record.orderStatus < 4 && record.orderStatus !== 6">
               <a-button size="small" type="link">
                 更多
                 <DownOutlined />
@@ -461,7 +462,7 @@ const cancelOrder = (record) => {
 const getOrderTypeColor = (orderType) => {
   const colors = {
     1: 'blue',    // 课程订单
-    2: 'green',   // 套餐订单
+    2: 'green',   // 课时包订单
     3: 'orange'   // 活动订单
   };
   return colors[orderType] || 'default';
@@ -473,7 +474,8 @@ const getOrderStatusColor = (orderStatus) => {
     2: 'processing', // 已支付
     3: 'warning',    // 已确认
     4: 'success',    // 已完成
-    5: 'error'       // 已取消
+    5: 'error',      // 已取消
+    6: 'volcano'     // 已退款
   };
   return colors[orderStatus] || 'default';
 };

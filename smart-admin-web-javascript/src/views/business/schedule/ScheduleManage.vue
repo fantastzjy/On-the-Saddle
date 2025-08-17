@@ -7,7 +7,9 @@
 -->
 <template>
   <div class="schedule-manage">
-    <!-- 查询表单 -->
+    <!-- 全局加载指示器 -->
+    <a-spin :spinning="isLoading" tip="处理中...">
+      <!-- 查询表单 -->
     <a-form class="smart-query-form" v-privilege="'business:schedule:query'">
       <a-row class="smart-query-form-row">
         <a-form-item label="关键字" class="smart-query-form-item">
@@ -42,6 +44,7 @@
             placeholder="请选择教练"
             allowClear
             showSearch
+            :loading="loadingStates.coachList"
             :filterOption="filterOption"
           >
             <a-select-option 
@@ -66,13 +69,13 @@
 
         <a-form-item class="smart-query-form-item smart-margin-left10">
           <a-button-group>
-            <a-button type="primary" @click="onSearch">
+            <a-button type="primary" @click="onSearch" :loading="loadingStates.query">
               <template #icon>
                 <SearchOutlined />
               </template>
               查询
             </a-button>
-            <a-button @click="resetQuery">
+            <a-button @click="resetQuery" :disabled="loadingStates.query">
               <template #icon>
                 <ReloadOutlined />
               </template>
@@ -273,11 +276,12 @@
       :schedule="currentSchedule"
       @ok="onConflictDetectorOk"
     />
+    </a-spin>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, computed } from 'vue';
 import { message, Modal } from 'ant-design-vue';
 import { 
   SearchOutlined, 
@@ -323,6 +327,12 @@ const columns = ref([...SCHEDULE_TABLE_COLUMNS]);
 const selectedRowKeys = ref([]);
 const coachList = ref([]);
 
+// 缓存相关
+const dataCache = ref(new Map()); // 数据缓存
+const cacheExpiry = ref(new Map()); // 缓存过期时间
+const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+const coachListLoading = ref(false);
+
 // 视图相关
 const viewType = ref('table'); // table | calendar
 const calendarViewType = ref(SCHEDULE_VIEW_TYPE_ENUM.WEEK.value);
@@ -332,26 +342,75 @@ const dragScheduleVisible = ref(false);
 const conflictDetectorVisible = ref(false);
 const currentSchedule = ref(null);
 
+// 加载状态优化
+const loadingStates = reactive({
+  query: false,
+  coachList: false,
+  delete: false,
+  cancel: false,
+  drag: false
+});
+
+// 计算属性 - 是否有任何加载状态
+const isLoading = computed(() => {
+  return Object.values(loadingStates).some(loading => loading);
+});
+
 // ======================== 初始化 ========================
 onMounted(() => {
   loadCoachList();
   ajaxQuery();
 });
 
+// ======================== 缓存工具函数 ========================
+function getCacheKey(params) {
+  return JSON.stringify(params);
+}
+
+function isCacheValid(key) {
+  const expiry = cacheExpiry.value.get(key);
+  return expiry && Date.now() < expiry;
+}
+
+function setCache(key, data) {
+  dataCache.value.set(key, data);
+  cacheExpiry.value.set(key, Date.now() + CACHE_DURATION);
+}
+
+function getCache(key) {
+  if (isCacheValid(key)) {
+    return dataCache.value.get(key);
+  }
+  // 清理过期缓存
+  dataCache.value.delete(key);
+  cacheExpiry.value.delete(key);
+  return null;
+}
+
+function clearCache() {
+  dataCache.value.clear();
+  cacheExpiry.value.clear();
+}
+
 // ======================== 查询相关 ========================
 function onSearch() {
   queryForm.pageNum = 1;
+  // 搜索时清除缓存，确保获取最新数据
+  clearCache();
   ajaxQuery();
 }
 
 function resetQuery() {
   Object.assign(queryForm, { ...SCHEDULE_SEARCH_FORM, pageNum: 1, pageSize: queryForm.pageSize });
+  clearCache();
   ajaxQuery();
 }
 
-async function ajaxQuery() {
+async function ajaxQuery(useCache = true) {
   try {
+    loadingStates.query = true;
     tableLoading.value = true;
+    
     const params = {
       ...queryForm,
       startDate: queryForm.dateRange?.[0],
@@ -359,10 +418,27 @@ async function ajaxQuery() {
       dateRange: undefined
     };
     
+    // 尝试从缓存获取数据
+    const cacheKey = getCacheKey(params);
+    if (useCache) {
+      const cachedData = getCache(cacheKey);
+      if (cachedData) {
+        tableData.value = cachedData.list || [];
+        total.value = cachedData.total || 0;
+        loadingStates.query = false;
+        tableLoading.value = false;
+        return;
+      }
+    }
+    
     const response = await scheduleApi.queryScheduleList(params);
     if (response.ok) {
-      tableData.value = response.data.list || [];
-      total.value = response.data.total || 0;
+      const data = response.data;
+      tableData.value = data.list || [];
+      total.value = data.total || 0;
+      
+      // 缓存数据
+      setCache(cacheKey, data);
     } else {
       message.error(response.msg || '查询失败');
     }
@@ -370,18 +446,38 @@ async function ajaxQuery() {
     message.error('查询课表列表失败');
     console.error('查询课表列表失败:', error);
   } finally {
+    loadingStates.query = false;
     tableLoading.value = false;
   }
 }
 
 async function loadCoachList() {
   try {
+    loadingStates.coachList = true;
+    coachListLoading.value = true;
+    
+    // 检查教练列表缓存
+    const cacheKey = 'coachList';
+    const cachedCoaches = getCache(cacheKey);
+    if (cachedCoaches) {
+      coachList.value = cachedCoaches;
+      loadingStates.coachList = false;
+      coachListLoading.value = false;
+      return;
+    }
+    
     const response = await scheduleApi.getCoachList();
     if (response.ok) {
       coachList.value = response.data || [];
+      // 缓存教练列表
+      setCache(cacheKey, response.data || []);
     }
   } catch (error) {
     console.error('加载教练列表失败:', error);
+    message.error('加载教练列表失败');
+  } finally {
+    loadingStates.coachList = false;
+    coachListLoading.value = false;
   }
 }
 
@@ -435,16 +531,21 @@ async function remove(scheduleId) {
     cancelText: '取消',
     async onOk() {
       try {
+        loadingStates.delete = true;
         const response = await scheduleApi.deleteSchedule(scheduleId);
         if (response.ok) {
           message.success('删除成功');
-          ajaxQuery();
+          // 清除缓存并重新查询
+          clearCache();
+          ajaxQuery(false);
         } else {
           message.error(response.msg || '删除失败');
         }
       } catch (error) {
         message.error('删除课单失败');
         console.error('删除课单失败:', error);
+      } finally {
+        loadingStates.delete = false;
       }
     }
   });
@@ -458,16 +559,21 @@ async function cancelLesson(record) {
     cancelText: '取消',
     async onOk() {
       try {
+        loadingStates.cancel = true;
         const response = await scheduleApi.cancelLesson(record.scheduleId);
         if (response.ok) {
           message.success('取消成功');
-          ajaxQuery();
+          // 清除缓存并重新查询
+          clearCache();
+          ajaxQuery(false);
         } else {
           message.error(response.msg || '取消失败');
         }
       } catch (error) {
         message.error('取消课程失败');
         console.error('取消课程失败:', error);
+      } finally {
+        loadingStates.cancel = false;
       }
     }
   });
@@ -480,7 +586,9 @@ function showDragSchedule() {
 
 function onDragScheduleOk() {
   dragScheduleVisible.value = false;
-  ajaxQuery();
+  // 清除缓存并重新查询
+  clearCache();
+  ajaxQuery(false);
 }
 
 function onScheduleDrag(dragData) {
@@ -490,6 +598,7 @@ function onScheduleDrag(dragData) {
 
 async function handleScheduleDrag(dragData) {
   try {
+    loadingStates.drag = true;
     const response = await scheduleApi.updateScheduleTime({
       scheduleId: dragData.scheduleId,
       startTime: dragData.newStartTime,
@@ -498,13 +607,17 @@ async function handleScheduleDrag(dragData) {
     
     if (response.ok) {
       message.success('课程时间更新成功');
-      ajaxQuery();
+      // 清除缓存并重新查询
+      clearCache();
+      ajaxQuery(false);
     } else {
       message.error(response.msg || '更新失败');
     }
   } catch (error) {
     message.error('更新课程时间失败');
     console.error('更新课程时间失败:', error);
+  } finally {
+    loadingStates.drag = false;
   }
 }
 

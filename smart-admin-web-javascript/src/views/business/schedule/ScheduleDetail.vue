@@ -42,11 +42,11 @@
         <a-col :span="12">
           <a-descriptions title="课程信息" :column="1" bordered>
             <a-descriptions-item label="课单号">
-              {{ scheduleDetail.lessonNo }}
+              {{ scheduleDetail.scheduleNo }}
             </a-descriptions-item>
-            <a-descriptions-item label="课程类型">
-              <a-tag :color="getLessonTypeColor(scheduleDetail.lessonType)">
-                {{ scheduleDetail.lessonTypeName }}
+            <a-descriptions-item label="商品类型">
+              <a-tag :color="getLessonTypeColor(scheduleDetail.productType)">
+                {{ scheduleDetail.productType }}
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="课程状态">
@@ -54,13 +54,15 @@
                 {{ scheduleDetail.lessonStatusName }}
               </a-tag>
             </a-descriptions-item>
-            <a-descriptions-item label="课程费用">
+            <a-descriptions-item label="教练费用">
               <span style="font-size: 18px; font-weight: bold; color: #ff4d4f;">
-                ¥{{ scheduleDetail.lessonFee }}
+                ¥{{ scheduleDetail.actualCoachFee || 0 }}
               </span>
             </a-descriptions-item>
-            <a-descriptions-item label="付费方式">
-              {{ getPaymentMethodName(scheduleDetail.paymentMethod) }}
+            <a-descriptions-item label="马匹费用">
+              <span style="font-size: 16px; color: #666;">
+                ¥{{ scheduleDetail.actualHorseFee || 0 }}
+              </span>
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
@@ -92,17 +94,17 @@
         <a-col :span="8">
           <a-descriptions title="教练信息" :column="1" bordered>
             <a-descriptions-item label="教练姓名">
-              <a-avatar size="small" :src="scheduleDetail.coachInfo?.avatar" style="margin-right: 8px;" />
-              {{ scheduleDetail.coachInfo?.name }}
+              <a-avatar size="small" :src="scheduleDetail.coachAvatar" style="margin-right: 8px;" />
+              {{ scheduleDetail.coachName }}
             </a-descriptions-item>
             <a-descriptions-item label="联系电话">
-              {{ scheduleDetail.coachInfo?.phone }}
+              {{ scheduleDetail.coachPhone || '未提供' }}
             </a-descriptions-item>
             <a-descriptions-item label="专业特长">
-              {{ scheduleDetail.coachInfo?.specialties }}
+              {{ scheduleDetail.coachSpecialties }}
             </a-descriptions-item>
             <a-descriptions-item label="等级">
-              {{ scheduleDetail.coachInfo?.level }}
+              {{ scheduleDetail.coachLevel }}
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
@@ -110,19 +112,18 @@
         <a-col :span="8">
           <a-descriptions title="会员信息" :column="1" bordered>
             <a-descriptions-item label="会员姓名">
-              <a-avatar size="small" :src="scheduleDetail.memberInfo?.avatar" style="margin-right: 8px;" />
-              {{ scheduleDetail.memberInfo?.name }}
+              {{ scheduleDetail.memberName }}
             </a-descriptions-item>
             <a-descriptions-item label="联系电话">
-              {{ scheduleDetail.memberInfo?.phone }}
+              {{ scheduleDetail.memberPhone }}
             </a-descriptions-item>
             <a-descriptions-item label="会员等级">
-              <a-tag :color="getMemberLevelColor(scheduleDetail.memberInfo?.memberLevel)">
-                {{ scheduleDetail.memberInfo?.memberLevelName }}
+              <a-tag :color="getMemberLevelColor(scheduleDetail.memberLevel)">
+                {{ scheduleDetail.memberLevel }}
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="骑乘经验">
-              {{ scheduleDetail.memberInfo?.ridingExperience }}
+              {{ scheduleDetail.ridingExperience || '未录入' }}
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
@@ -130,73 +131,82 @@
         <a-col :span="8">
           <a-descriptions title="马匹信息" :column="1" bordered>
             <a-descriptions-item label="马匹名称">
-              {{ scheduleDetail.horseInfo?.name }}
+              {{ scheduleDetail.horseName }}
             </a-descriptions-item>
             <a-descriptions-item label="品种">
-              {{ scheduleDetail.horseInfo?.breed }}
+              {{ scheduleDetail.horseBreed }}
             </a-descriptions-item>
             <a-descriptions-item label="年龄">
-              {{ scheduleDetail.horseInfo?.age }} 岁
+              {{ scheduleDetail.horseAge }} 岁
             </a-descriptions-item>
-            <a-descriptions-item label="性格特点">
-              {{ scheduleDetail.horseInfo?.temperament }}
+            <a-descriptions-item label="健康状态">
+              <a-tag :color="getHealthStatusColor(scheduleDetail.horseHealthStatus)">
+                {{ scheduleDetail.horseHealthStatus }}
+              </a-tag>
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
       </a-row>
 
-      <!-- 课程内容 -->
+      <!-- 商品信息 -->
       <a-divider />
       <div>
         <h4 style="margin-bottom: 16px;">
           <BookOutlined style="margin-right: 8px;" />
-          课程内容
+          商品信息
         </h4>
-        <div style="
-          background: #fafafa; 
-          padding: 16px; 
-          border-radius: 6px;
-          min-height: 100px;
-          white-space: pre-wrap;
-        ">
-          {{ scheduleDetail.lessonContent || '暂无课程内容' }}
-        </div>
+        <a-descriptions :column="2" bordered>
+          <a-descriptions-item label="商品名称">
+            {{ scheduleDetail.productName }}
+          </a-descriptions-item>
+          <a-descriptions-item label="商品类型">
+            {{ scheduleDetail.productType }}
+          </a-descriptions-item>
+          <a-descriptions-item label="预约状态">
+            <a-tag :color="getBookingStatusColor(scheduleDetail.bookingStatus)">
+              {{ scheduleDetail.bookingStatusName }}
+            </a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="课程时长">
+            {{ scheduleDetail.duration }} 分钟
+          </a-descriptions-item>
+        </a-descriptions>
       </div>
 
-      <!-- 课程目标 -->
+      <!-- 会员备注 -->
       <a-divider />
-      <div>
+      <div v-if="scheduleDetail.memberRemark">
         <h4 style="margin-bottom: 16px;">
           <AimOutlined style="margin-right: 8px;" />
-          课程目标
+          会员信息备注
         </h4>
         <div style="
           background: #fafafa; 
           padding: 16px; 
           border-radius: 6px;
-          min-height: 100px;
+          min-height: 60px;
           white-space: pre-wrap;
         ">
-          {{ scheduleDetail.lessonGoal || '暂无课程目标' }}
+          {{ scheduleDetail.memberRemark || '暂无备注信息' }}
         </div>
       </div>
 
-      <!-- 注意事项 -->
-      <div v-if="scheduleDetail.notes">
+      <!-- 教练介绍 -->
+      <div v-if="scheduleDetail.coachIntroduction">
         <a-divider />
         <div>
           <h4 style="margin-bottom: 16px;">
             <ExclamationCircleOutlined style="margin-right: 8px;" />
-            注意事项
+            教练介绍
           </h4>
           <div style="
-            background: #fff7e6; 
+            background: #f6ffed; 
             padding: 16px; 
             border-radius: 6px;
-            border-left: 4px solid #faad14;
+            border-left: 4px solid #52c41a;
             white-space: pre-wrap;
           ">
-            {{ scheduleDetail.notes }}
+            {{ scheduleDetail.coachIntroduction }}
           </div>
         </div>
       </div>
@@ -364,7 +374,7 @@ const editSchedule = () => {
 const deleteSchedule = () => {
   Modal.confirm({
     title: '确认删除',
-    content: `确定要删除课程"${scheduleDetail.value.lessonNo}"吗？删除后不可恢复。`,
+    content: `确定要删除课程"${scheduleDetail.value.scheduleNo}"吗？删除后不可恢复。`,
     okText: '确认删除',
     cancelText: '取消',
     okType: 'danger',
@@ -449,18 +459,19 @@ const addLessonRecord = () => {
   message.info('添加记录功能待实现');
 };
 
-const getLessonTypeColor = (type) => {
-  const colors = {
-    1: 'blue',    // 私教课
-    2: 'green',   // 小组课
-    3: 'orange'   // 体验课
-  };
-  return colors[type] || 'default';
-};
-
 const getStatusColor = (status) => {
   const colors = {
-    1: 'default',  // 待确认
+    1: 'default',  // 待上课
+    2: 'processing', // 进行中
+    3: 'success',    // 已完成
+    4: 'error'       // 已取消
+  };
+  return colors[status] || 'default';
+};
+
+const getBookingStatusColor = (status) => {
+  const colors = {
+    1: 'default',   // 待确认
     2: 'processing', // 已确认
     3: 'warning',    // 进行中
     4: 'success',    // 已完成
@@ -469,23 +480,31 @@ const getStatusColor = (status) => {
   return colors[status] || 'default';
 };
 
-const getMemberLevelColor = (level) => {
-  const colors = {
-    1: '#cd7f32',  // 铜牌
-    2: '#c0c0c0',  // 银牌
-    3: '#ffd700',  // 金牌
-    4: '#b9f2ff'   // 钻石
-  };
-  return colors[level] || 'default';
+const getHealthStatusColor = (status) => {
+  if (status === '健康') return 'success';
+  if (status === '轻微不适') return 'warning';
+  if (status === '需要休息') return 'orange';
+  if (status === '康复中') return 'blue';
+  if (status === '停止工作') return 'error';
+  return 'default';
 };
 
-const getPaymentMethodName = (method) => {
-  const methods = {
-    1: '现金支付',
-    2: '会员卡扣费',
-    3: '课时包扣费'
-  };
-  return methods[method] || '未知';
+const getMemberLevelColor = (level) => {
+  if (!level) return 'default';
+  if (level.toLowerCase().includes('beginner')) return 'blue';
+  if (level.toLowerCase().includes('intermediate')) return 'orange';
+  if (level.toLowerCase().includes('advanced')) return 'red';
+  return 'default';
+};
+
+const getLessonTypeColor = (type) => {
+  if (!type) return 'default';
+  if (type.includes('课程')) return 'blue';
+  if (type.includes('课时包')) return 'green';
+  if (type.includes('活动')) return 'orange';
+  if (type.includes('单人课')) return 'purple';
+  if (type.includes('多人课')) return 'cyan';
+  return 'default';
 };
 
 const formatDate = (date) => {

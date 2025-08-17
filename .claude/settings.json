@@ -1,0 +1,14 @@
+
+{
+  "env": {
+    "ANTHROPIC_API_KEY": "sk-H6HPPKQRK2rHenBFO4WgXvDLS7AnRJT2jxRMscPrpwZtoDIA",
+    "ANTHROPIC_BASE_URL": "https://code.ppchat.vip"
+  },
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "apiKeyHelper": "echo 'sk-H6HPPKQRK2rHenBFO4WgXvDLS7AnRJT2jxRMscPrpwZtoDIA'"
+}
+
+

@@ -8,6 +8,7 @@ import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleQueryFo
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleTimeUpdateForm;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.CoachVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ConflictCheckVO;
+import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleDetailVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleListVO;
 import net.lab1024.sa.admin.module.business.schedule.service.ScheduleService;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -47,7 +48,7 @@ public class ScheduleController {
 
     @Operation(summary = "课表详情")
     @GetMapping("/detail/{scheduleId}")
-    public ResponseDTO<ScheduleListVO> getScheduleDetail(@PathVariable Long scheduleId) {
+    public ResponseDTO<ScheduleDetailVO> getScheduleDetail(@PathVariable Long scheduleId) {
         return scheduleService.getScheduleDetail(scheduleId);
     }
 

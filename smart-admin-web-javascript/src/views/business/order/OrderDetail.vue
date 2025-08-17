@@ -463,7 +463,8 @@ const getOrderStatusColor = (status) => {
     2: 'processing', // 已支付
     3: 'warning',    // 已确认
     4: 'success',    // 已完成
-    5: 'error'       // 已取消
+    5: 'error',      // 已取消
+    6: 'volcano'     // 已退款
   };
   return colors[status] || 'default';
 };
@@ -471,7 +472,7 @@ const getOrderStatusColor = (status) => {
 const getOrderTypeColor = (type) => {
   const colors = {
     1: 'blue',    // 课程订单
-    2: 'green',   // 套餐订单
+    2: 'green',   // 课时包订单
     3: 'orange'   // 活动订单
   };
   return colors[type] || 'default';
@@ -480,7 +481,7 @@ const getOrderTypeColor = (type) => {
 const getProductTypeColor = (type) => {
   const colors = {
     1: 'blue',    // 课程
-    2: 'green',   // 套餐
+    2: 'green',   // 课时包
     3: 'orange'   // 活动
   };
   return colors[type] || 'default';

@@ -29,7 +29,7 @@ public class OrderAddForm {
     @NotNull(message = "会员ID不能为空")
     private Long memberId;
 
-    @Schema(description = "订单类型：1-课程订单 2-套餐订单 3-活动订单")
+    @Schema(description = "订单类型：1-课程订单 2-课时包订单 3-活动订单")
     @NotNull(message = "订单类型不能为空")
     private Integer orderType;
 

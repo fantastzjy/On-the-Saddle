@@ -457,7 +457,7 @@ public class OrderService {
     private String getOrderTypeName(Integer orderType) {
         switch (orderType) {
             case 1: return "课程订单";
-            case 2: return "套餐订单";
+            case 2: return "课时包订单";
             case 3: return "活动订单";
             default: return "未知类型";
         }
@@ -470,6 +470,7 @@ public class OrderService {
             case 3: return "已确认";
             case 4: return "已完成";
             case 5: return "已取消";
+            case 6: return "已退款";
             default: return "未知状态";
         }
     }
@@ -477,7 +478,7 @@ public class OrderService {
     private String getProductTypeName(Integer productType) {
         switch (productType) {
             case 1: return "课程";
-            case 2: return "套餐";
+            case 2: return "课时包";
             case 3: return "活动";
             default: return "未知类型";
         }
