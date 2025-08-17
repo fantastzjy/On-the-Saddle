@@ -12,7 +12,7 @@
       <a-row class="smart-query-form-row">
         <a-form-item label="关键字" class="smart-query-form-item">
           <a-input 
-            style="width: 300px" 
+            style="width: 200px" 
             v-model:value="queryForm.keywords" 
             placeholder="课单号/会员姓名/教练姓名" 
           />
@@ -297,13 +297,22 @@ import {
 } from '/@/constants/business/schedule/schedule-const';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
-import { defaultTimeRanges } from '/@/lib/default-time-ranges';
 import TableOperator from '/@/components/support/table-operator/index.vue';
 import CalendarView from './components/CalendarView.vue';
 import DragScheduleModal from './components/DragScheduleModal.vue';
 import ConflictDetectorModal from './components/ConflictDetectorModal.vue';
+import dayjs from 'dayjs';
 
 const router = useRouter();
+
+// ======================== 时间范围配置 ========================
+const defaultTimeRanges = {
+  今天: [dayjs().startOf('day'), dayjs().endOf('day')],
+  昨天: [dayjs().subtract(1, 'day').startOf('day'), dayjs().subtract(1, 'day').endOf('day')],
+  本周: [dayjs().startOf('week'), dayjs().endOf('week')],
+  本月: [dayjs().startOf('month'), dayjs().endOf('month')],
+  上月: [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')]
+};
 
 // ======================== 响应式数据 ========================
 const queryForm = reactive({ ...SCHEDULE_SEARCH_FORM, pageNum: 1, pageSize: 10 });
