@@ -154,6 +154,13 @@ export const postRequest = (url, data) => {
   });
 };
 
+/**
+ * delete请求
+ */
+export const deleteRequest = (url, params) => {
+  return request({ url, method: 'delete', params });
+};
+
 // ================================= 加密 =================================
 
 /**

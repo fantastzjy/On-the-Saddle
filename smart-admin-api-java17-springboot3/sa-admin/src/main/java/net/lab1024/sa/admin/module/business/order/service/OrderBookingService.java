@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.booking.dao.BookingDao;
 import net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity;
 import net.lab1024.sa.admin.module.business.order.domain.entity.OrderItemEntity;
+import net.lab1024.sa.admin.module.business.schedule.service.ScheduleService;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,9 @@ public class OrderBookingService {
 
     @Autowired
     private BookingDao bookingDao;
+
+    @Autowired
+    private ScheduleService scheduleService;
 
     /**
      * 根据订单明细创建预约
@@ -98,6 +102,9 @@ public class OrderBookingService {
                     booking.setBookingStatus(2); // 已确认
                     booking.setUpdateTime(LocalDateTime.now());
                     bookingDao.updateById(booking);
+                    
+                    // 预约确认时自动创建课表
+                    scheduleService.createScheduleFromBooking(booking);
                 }
             }
 
@@ -127,6 +134,9 @@ public class OrderBookingService {
                     booking.setCompletionTime(LocalDateTime.now());
                     booking.setUpdateTime(LocalDateTime.now());
                     bookingDao.updateById(booking);
+                    
+                    // 同步更新课表状态
+                    scheduleService.updateScheduleStatusByBooking(booking.getBookingId(), 4);
                 }
             }
 
@@ -156,6 +166,9 @@ public class OrderBookingService {
                     booking.setCancelReason(cancelReason);
                     booking.setUpdateTime(LocalDateTime.now());
                     bookingDao.updateById(booking);
+                    
+                    // 同步更新课表状态或删除课表
+                    scheduleService.updateScheduleStatusByBooking(booking.getBookingId(), 5);
                 }
             }
 

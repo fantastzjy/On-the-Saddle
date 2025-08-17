@@ -361,7 +361,7 @@ async function ajaxQuery() {
     
     const response = await scheduleApi.queryScheduleList(params);
     if (response.ok) {
-      tableData.value = response.data.records || [];
+      tableData.value = response.data.list || [];
       total.value = response.data.total || 0;
     } else {
       message.error(response.msg || '查询失败');

@@ -167,7 +167,7 @@
       <a-divider />
       <div>
         <h4 style="margin-bottom: 16px;">
-          <TargetOutlined style="margin-right: 8px;" />
+          <AimOutlined style="margin-right: 8px;" />
           课程目标
         </h4>
         <div style="
@@ -309,7 +309,7 @@ import {
   EditOutlined, 
   DeleteOutlined,
   BookOutlined,
-  TargetOutlined,
+  AimOutlined,
   ExclamationCircleOutlined,
   FileTextOutlined,
   PlayCircleOutlined,

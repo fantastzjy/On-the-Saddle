@@ -78,77 +78,79 @@
       </div>
 
       <!-- 拖拽区域 -->
-      <div class="drag-area" v-loading="loading">
-        <div class="time-grid-container">
-          <!-- 时间轴 -->
-          <div class="time-axis">
-            <div class="time-header">时间</div>
-            <div 
-              v-for="timeSlot in timeSlots" 
-              :key="timeSlot.key"
-              class="time-slot-label"
-            >
-              {{ timeSlot.time }}
-            </div>
-          </div>
-
-          <!-- 日期列 -->
-          <div 
-            v-for="day in dateRange" 
-            :key="day.key"
-            class="day-column"
-          >
-            <!-- 日期头 -->
-            <div class="day-header" :class="{ 'today': day.isToday }">
-              <div class="day-name">{{ day.dayName }}</div>
-              <div class="day-date">{{ day.date }}</div>
-            </div>
-
-            <!-- 时间槽 -->
-            <div 
-              v-for="timeSlot in timeSlots" 
-              :key="`${day.key}-${timeSlot.key}`"
-              class="time-slot"
-              :class="getTimeSlotClass(day, timeSlot)"
-              @dragover="onDragOver"
-              @drop="onDrop($event, day, timeSlot)"
-              @click="onTimeSlotClick(day, timeSlot)"
-            >
-              <!-- 课程卡片 -->
+      <a-spin :spinning="loading">
+        <div class="drag-area">
+          <div class="time-grid-container">
+            <!-- 时间轴 -->
+            <div class="time-axis">
+              <div class="time-header">时间</div>
               <div 
-                v-for="schedule in getSchedulesInSlot(day.date, timeSlot)"
-                :key="schedule.scheduleId"
-                class="schedule-card"
-                :class="getScheduleCardClass(schedule)"
-                :draggable="true"
-                @dragstart="onDragStart($event, schedule)"
-                @dragend="onDragEnd"
+                v-for="timeSlot in timeSlots" 
+                :key="timeSlot.key"
+                class="time-slot-label"
               >
-                <div class="schedule-content">
-                  <div class="schedule-title">{{ schedule.memberName }}</div>
-                  <div class="schedule-info">
-                    <div>{{ schedule.coachName }}</div>
-                    <div>{{ schedule.duration }}分钟</div>
-                  </div>
-                  <div class="schedule-time">
-                    {{ formatTime(schedule.startTime) }}
-                  </div>
-                </div>
-                
-                <!-- 冲突指示器 -->
-                <div v-if="schedule.hasConflict" class="conflict-indicator">
-                  <ExclamationCircleOutlined />
-                </div>
+                {{ timeSlot.time }}
+              </div>
+            </div>
+
+            <!-- 日期列 -->
+            <div 
+              v-for="day in dateRange" 
+              :key="day.key"
+              class="day-column"
+            >
+              <!-- 日期头 -->
+              <div class="day-header" :class="{ 'today': day.isToday }">
+                <div class="day-name">{{ day.dayName }}</div>
+                <div class="day-date">{{ day.date }}</div>
               </div>
 
-              <!-- 时间槽提示 -->
-              <div v-if="!getSchedulesInSlot(day.date, timeSlot).length" class="slot-hint">
-                点击添加课程
+              <!-- 时间槽 -->
+              <div 
+                v-for="timeSlot in timeSlots" 
+                :key="`${day.key}-${timeSlot.key}`"
+                class="time-slot"
+                :class="getTimeSlotClass(day, timeSlot)"
+                @dragover="onDragOver"
+                @drop="onDrop($event, day, timeSlot)"
+                @click="onTimeSlotClick(day, timeSlot)"
+              >
+                <!-- 课程卡片 -->
+                <div 
+                  v-for="schedule in getSchedulesInSlot(day.date, timeSlot)"
+                  :key="schedule.scheduleId"
+                  class="schedule-card"
+                  :class="getScheduleCardClass(schedule)"
+                  :draggable="true"
+                  @dragstart="onDragStart($event, schedule)"
+                  @dragend="onDragEnd"
+                >
+                  <div class="schedule-content">
+                    <div class="schedule-title">{{ schedule.memberName }}</div>
+                    <div class="schedule-info">
+                      <div>{{ schedule.coachName }}</div>
+                      <div>{{ schedule.duration }}分钟</div>
+                    </div>
+                    <div class="schedule-time">
+                      {{ formatTime(schedule.startTime) }}
+                    </div>
+                  </div>
+                  
+                  <!-- 冲突指示器 -->
+                  <div v-if="schedule.hasConflict" class="conflict-indicator">
+                    <ExclamationCircleOutlined />
+                  </div>
+                </div>
+
+                <!-- 时间槽提示 -->
+                <div v-if="!getSchedulesInSlot(day.date, timeSlot).length" class="slot-hint">
+                  点击添加课程
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </a-spin>
 
       <!-- 变更记录 -->
       <div v-if="pendingChanges.length > 0" class="changes-panel">

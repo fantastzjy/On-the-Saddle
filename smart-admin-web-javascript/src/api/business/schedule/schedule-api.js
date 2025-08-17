@@ -5,7 +5,7 @@
  * @Date: 2024-08-16
  * @Copyright: 1024创新实验室 (https://1024lab.net)
  */
-import { postRequest, getRequest } from '/@/lib/axios';
+import { postRequest, getRequest, deleteRequest } from '/@/lib/axios';
 
 export const scheduleApi = {
   // ==================== 智能排课 ====================
@@ -28,6 +28,11 @@ export const scheduleApi = {
   // ==================== 冲突检测 ====================
 
   // 检测时间冲突
+  checkConflict: (param) => {
+    return postRequest('/api/admin/schedule/checkConflict', param);
+  },
+
+  // 检测时间冲突（旧方法保持兼容）
   checkTimeConflict: (param) => {
     return postRequest('/api/admin/schedule/conflict/check', param);
   },
@@ -42,6 +47,16 @@ export const scheduleApi = {
   // 分页查询课表
   queryScheduleList: (param) => {
     return postRequest('/api/admin/schedule/query', param);
+  },
+
+  // 获取课表详情
+  getScheduleDetail: (scheduleId) => {
+    return getRequest(`/api/admin/schedule/detail/${scheduleId}`);
+  },
+
+  // 获取教练列表
+  getCoachList: () => {
+    return getRequest('/api/admin/schedule/coaches');
   },
 
   // 根据日期范围查询课表
@@ -76,9 +91,19 @@ export const scheduleApi = {
     return postRequest('/api/admin/schedule/update', param);
   },
 
+  // 批量更新课表时间
+  batchUpdateScheduleTime: (param) => {
+    return postRequest('/api/admin/schedule/batchUpdateTime', param);
+  },
+
+  // 更新课表时间
+  updateScheduleTime: (param) => {
+    return postRequest('/api/admin/schedule/updateTime', param);
+  },
+
   // 删除课表
   deleteSchedule: (scheduleId) => {
-    return getRequest(`/api/admin/schedule/delete/${scheduleId}`);
+    return deleteRequest(`/api/admin/schedule/${scheduleId}`);
   },
 
   // 批量删除课表
@@ -93,12 +118,27 @@ export const scheduleApi = {
 
   // ==================== 课表状态管理 ====================
 
+  // 开始上课
+  startLesson: (scheduleId) => {
+    return postRequest(`/api/admin/schedule/start/${scheduleId}`, {});
+  },
+
+  // 结束上课
+  finishLesson: (scheduleId) => {
+    return postRequest(`/api/admin/schedule/finish/${scheduleId}`, {});
+  },
+
+  // 取消课程
+  cancelLesson: (scheduleId, reason) => {
+    return postRequest(`/api/admin/schedule/cancel/${scheduleId}`, { reason });
+  },
+
   // 确认课表
   confirmSchedule: (scheduleId) => {
     return postRequest('/api/admin/schedule/confirm', { scheduleId });
   },
 
-  // 取消课表
+  // 取消课表（旧方法保持兼容）
   cancelSchedule: (scheduleId, reason) => {
     return postRequest('/api/admin/schedule/cancel', { scheduleId, reason });
   },
