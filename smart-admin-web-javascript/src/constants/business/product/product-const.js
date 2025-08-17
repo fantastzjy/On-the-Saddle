@@ -1,12 +1,12 @@
 /*
- * 商品管理相关常量
+ * 课程管理相关常量
  *
  * @Author: 1024创新实验室
  * @Date: 2024-08-16
  * @Copyright: 1024创新实验室 (https://1024lab.net)
  */
 
-// ==================== 商品类型 ====================
+// ==================== 课程类型 ====================
 export const PRODUCT_TYPE_ENUM = {
   COURSE: {
     value: 1,
@@ -22,7 +22,7 @@ export const PRODUCT_TYPE_ENUM = {
   }
 };
 
-// ==================== 商品状态 ====================
+// ==================== 课程状态 ====================
 export const PRODUCT_STATUS_ENUM = {
   ONLINE: {
     value: 1,
@@ -127,7 +127,7 @@ export const MEMBER_LEVEL_ENUM = {
 
 // ==================== 默认配置 ====================
 export const PRODUCT_DEFAULT_CONFIG = {
-  // 商品图片配置
+  // 课程图片配置
   IMAGE: {
     MAX_COUNT: 5,           // 最大图片数量
     MAX_SIZE: 5,            // 最大文件大小(MB)
@@ -168,24 +168,24 @@ export const PRODUCT_DEFAULT_CONFIG = {
 // ==================== 表格列配置 ====================
 export const PRODUCT_TABLE_COLUMNS = [
   {
-    title: '商品编码',
+    title: '课程编码',
     dataIndex: 'productCode',
     width: 120,
     ellipsis: true
   },
   {
-    title: '商品名称',
+    title: '课程名称',
     dataIndex: 'productName',
     width: 200,
     ellipsis: true
   },
   {
-    title: '商品类型',
+    title: '课程类型',
     dataIndex: 'productType',
     width: 100
   },
   {
-    title: '商品图片',
+    title: '课程图片',
     dataIndex: 'images',
     width: 80,
     align: 'center'
@@ -219,18 +219,18 @@ export const PRODUCT_TABLE_COLUMNS = [
 // ==================== 表单验证规则 ====================
 export const PRODUCT_FORM_RULES = {
   productName: [
-    { required: true, message: '请输入商品名称', trigger: 'blur' },
-    { max: 100, message: '商品名称不能超过100个字符', trigger: 'blur' }
+    { required: true, message: '请输入课程名称', trigger: 'blur' },
+    { max: 100, message: '课程名称不能超过100个字符', trigger: 'blur' }
   ],
   productCode: [
-    { max: 50, message: '商品编码不能超过50个字符', trigger: 'blur' }
+    { max: 50, message: '课程编码不能超过50个字符', trigger: 'blur' }
   ],
   productType: [
-    { required: true, message: '请选择商品类型', trigger: 'change' }
+    { required: true, message: '请选择课程类型', trigger: 'change' }
   ],
   description: [
-    { required: true, message: '请输入商品描述', trigger: 'blur' },
-    { max: 1000, message: '商品描述不能超过1000个字符', trigger: 'blur' }
+    { required: true, message: '请输入课程描述', trigger: 'blur' },
+    { max: 1000, message: '课程描述不能超过1000个字符', trigger: 'blur' }
   ],
   sortOrder: [
     { type: 'number', min: 0, max: 9999, message: '排序值应在0-9999之间', trigger: 'blur' }

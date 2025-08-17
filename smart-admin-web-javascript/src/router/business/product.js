@@ -1,5 +1,5 @@
 /*
- * 商品管理路由
+ * 课程管理路由
  *
  * @Author: 1024创新实验室
  * @Date: 2024-08-16
@@ -7,7 +7,7 @@
  */
 
 export const productRouters = [
-  // 商品管理
+  // 课程管理
   {
     path: '/product',
     name: 'Product',
@@ -19,7 +19,7 @@ export const productRouters = [
         name: 'ProductList',
         component: () => import('/@/views/business/product/ProductList.vue'),
         meta: {
-          title: '商品列表',
+          title: '课程列表',
           requireAuth: true,
           privilege: 'business:product:query'
         }
@@ -29,7 +29,7 @@ export const productRouters = [
         name: 'ProductAdd',
         component: () => import('/@/views/business/product/ProductAdd.vue'),
         meta: {
-          title: '新增商品',
+          title: '新增课程',
           requireAuth: true,
           privilege: 'business:product:add'
         }
@@ -39,7 +39,7 @@ export const productRouters = [
         name: 'ProductEdit',
         component: () => import('/@/views/business/product/ProductAdd.vue'),
         meta: {
-          title: '编辑商品',
+          title: '编辑课程',
           requireAuth: true,
           privilege: 'business:product:update'
         }
@@ -49,7 +49,7 @@ export const productRouters = [
         name: 'ProductDetail',
         component: () => import('/@/views/business/product/ProductDetail.vue'),
         meta: {
-          title: '商品详情',
+          title: '课程详情',
           requireAuth: true,
           privilege: 'business:product:detail'
         }
