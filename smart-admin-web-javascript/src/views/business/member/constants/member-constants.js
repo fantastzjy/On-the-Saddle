@@ -118,8 +118,7 @@ export const TABLE_COLUMNS = [
   {
     title: 'ID',
     dataIndex: 'memberId',
-    width: 80,
-    fixed: 'left'
+    width: 80
   },
   {
     title: '会员编号',

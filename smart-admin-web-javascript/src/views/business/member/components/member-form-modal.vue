@@ -65,7 +65,7 @@
             <a-input
               v-model:value="form.phone"
               placeholder="请输入手机号"
-              :disabled="isEdit && form.registrationStatus === REGISTRATION_STATUS.ACTIVATED"
+              :disabled="!!(isEdit && form.registrationStatus === REGISTRATION_STATUS.ACTIVATED)"
             />
           </a-form-item>
         </a-col>
@@ -126,7 +126,7 @@
               v-model:value="form.defaultCourseLevel"
               :dict-code="COURSE_LEVEL_DICT_CODE"
               placeholder="请选择课程级别"
-              allow-clear
+              :allow-clear="true"
             />
           </a-form-item>
         </a-col>
@@ -156,7 +156,7 @@
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="注册类型" name="registrationStatus">
-            <a-radio-group v-model:value="form.registrationStatus" :disabled="isEdit">
+            <a-radio-group v-model:value="form.registrationStatus" :disabled="!!isEdit">
               <a-radio :value="REGISTRATION_STATUS.ACTIVATED">已注册</a-radio>
               <a-radio :value="REGISTRATION_STATUS.UNACTIVATED">未激活</a-radio>
             </a-radio-group>
@@ -217,9 +217,7 @@ import {
   MEMBERSHIP_STATUS,
   GENDER_OPTIONS,
   CREATED_BY,
-  COURSE_LEVEL_DICT_CODE,
-  COURSE_LEVEL_CONVERT_MAP,
-  COURSE_LEVEL_REVERSE_MAP
+  COURSE_LEVEL_DICT_CODE
 } from '../constants/member-constants'
 
 // ----------------------- 事件 -----------------------
@@ -367,33 +365,6 @@ async function loadCoachList() {
 function calculateAge(birthDate) {
   if (!birthDate) return 0
   return dayjs().diff(dayjs(birthDate), 'year')
-}
-
-// 课程级别智能转换函数（兼容中文和枚举编码）
-function normalizeCourseLevelForEdit(courseLevel) {
-  if (!courseLevel) return ''
-  
-  // 如果是对象，尝试提取值
-  let levelValue = courseLevel
-  if (typeof courseLevel === 'object' && courseLevel !== null) {
-    levelValue = courseLevel.value || courseLevel.code || courseLevel.key || courseLevel.label || courseLevel.name || String(courseLevel)
-  }
-  
-  // 确保是字符串
-  levelValue = String(levelValue || '')
-  
-  // 如果已经是枚举编码，直接返回
-  if (COURSE_LEVEL_REVERSE_MAP[levelValue]) {
-    return levelValue
-  }
-  
-  // 如果是中文，转换为枚举编码
-  if (COURSE_LEVEL_CONVERT_MAP[levelValue]) {
-    return COURSE_LEVEL_CONVERT_MAP[levelValue]
-  }
-  
-  // 其他情况直接返回原值
-  return levelValue
 }
 
 function disabledBirthDate(current) {

@@ -23,7 +23,7 @@
       </div>
     </div>
 
-    <a-form :model="formState.form" :rules="formRules" ref="formRef" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }" style="margin-top: 20px;">
+    <a-form :model="formState.form" :rules="formRules" ref="formRef" :label-col="{ span: 4 }" :wrapper-col="{ span: 20 }" style="margin-top: 20px;">
       <a-form-item label="执行人" name="executorId">
         <a-select v-model:value="formState.form.executorId" placeholder="请选择执行人" showSearch allowClear>
           <a-select-option v-for="executor in executorList" :key="executor.employeeId" :value="executor.employeeId">
@@ -125,7 +125,6 @@ const planInfo = reactive({
 });
 
 const formRules = {
-  content: [{ required: true, message: '请输入执行内容' }],
   executorId: [{ required: true, message: '请选择执行人' }],
 };
 
@@ -326,11 +325,11 @@ defineExpose({
 }
 
 :deep(.ant-form-item-label) {
-  text-align: left !important;
+  text-align: right !important;
 }
 
 :deep(.ant-form-item-label > label) {
-  text-align: left;
+  text-align: right;
 }
 
 .upload-container {

@@ -285,7 +285,7 @@ const planColumns = [
   {
     title: '计划类型',
     dataIndex: 'planType',
-    width: 120,
+    width: 90,
   },
   {
     title: '周期',

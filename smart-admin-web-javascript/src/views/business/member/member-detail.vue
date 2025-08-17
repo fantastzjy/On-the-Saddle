@@ -39,6 +39,7 @@
             </a-col>
             <a-col :span="20">
               <a-descriptions :column="3" size="middle">
+                <a-descriptions-item label="会员ID">{{ memberInfo.memberId || '-' }}</a-descriptions-item>
                 <a-descriptions-item label="Union ID">{{ memberInfo.unionId || '-' }}</a-descriptions-item>
                 <a-descriptions-item label="Open ID">{{ memberInfo.openId || '-' }}</a-descriptions-item>
                 <a-descriptions-item label="姓名">{{ memberInfo.actualName }}</a-descriptions-item>
@@ -54,6 +55,35 @@
                 <a-descriptions-item label="邮箱">{{ memberInfo.email || '-' }}</a-descriptions-item>
                 <a-descriptions-item label="身份证号">{{ maskIdCard(memberInfo.idCardNo) }}</a-descriptions-item>
                 <a-descriptions-item label="骑手证号">{{ memberInfo.riderCertNo || '-' }}</a-descriptions-item>
+                
+                <a-descriptions-item label="默认教练">{{ memberInfo.defaultCoachName || '-' }}</a-descriptions-item>
+                <a-descriptions-item label="课程级别">
+                  <span v-if="memberInfo.defaultCourseLevel">
+                    {{ getCourseLevelText(memberInfo.defaultCourseLevel) }}
+                  </span>
+                  <span v-else style="color: #ccc;">未设置</span>
+                </a-descriptions-item>
+                <a-descriptions-item label="家庭组">{{ memberInfo.familyName || '-' }}</a-descriptions-item>
+                
+                <a-descriptions-item label="会籍状态">
+                  <a-tag :color="memberInfo.isMembership ? 'gold' : 'default'">
+                    {{ memberInfo.isMembership ? '会籍会员' : '普通会员' }}
+                  </a-tag>
+                </a-descriptions-item>
+                <a-descriptions-item label="会籍到期时间" v-if="memberInfo.isMembership">
+                  <span :style="getMembershipExpireStyle(memberInfo.membershipExpireDate)">
+                    {{ memberInfo.membershipExpireDate ? dayjs(memberInfo.membershipExpireDate).format('YYYY-MM-DD') : '-' }}
+                  </span>
+                </a-descriptions-item>
+                <a-descriptions-item label="状态">
+                  <a-tag :color="memberInfo.disabledFlag ? 'error' : 'success'">
+                    {{ memberInfo.disabledFlag ? '禁用' : '启用' }}
+                  </a-tag>
+                </a-descriptions-item>
+                
+                <a-descriptions-item label="创建时间">
+                  {{ memberInfo.createTime ? dayjs(memberInfo.createTime).format('YYYY-MM-DD HH:mm:ss') : '-' }}
+                </a-descriptions-item>
               </a-descriptions>
             </a-col>
           </a-row>
@@ -226,7 +256,8 @@ import {
   CREATED_BY_TEXT,
   CREATED_BY_COLOR,
   DISABLED_FLAG_TEXT,
-  DISABLED_FLAG_COLOR
+  DISABLED_FLAG_COLOR,
+  COURSE_LEVEL_REVERSE_MAP
 } from './constants/member-constants'
 
 // ----------------------- 路由 -----------------------
@@ -462,6 +493,11 @@ function getCreatedByText(createdByGuardian) {
 
 function getCreatedByColor(createdByGuardian) {
   return CREATED_BY_COLOR[createdByGuardian] || 'default'
+}
+
+function getCourseLevelText(level) {
+  if (!level) return ''
+  return COURSE_LEVEL_REVERSE_MAP[level] || level
 }
 
 function getDisabledFlagText(disabledFlag) {
