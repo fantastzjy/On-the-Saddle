@@ -9,10 +9,10 @@
   <a-form class="smart-query-form" v-privilege="'business:order:query'">
     <a-row class="smart-query-form-row">
       <a-form-item label="关键字" class="smart-query-form-item">
-        <a-input 
-          style="width: 300px" 
-          v-model:value="queryForm.keywords" 
-          placeholder="订单号/会员姓名/联系电话" 
+        <a-input
+          style="width: 200px"
+          v-model:value="queryForm.keywords"
+          placeholder="订单号/会员姓名/联系电话"
         />
       </a-form-item>
 
@@ -44,24 +44,11 @@
         </a-select>
       </a-form-item>
 
-      <a-form-item label="支付方式" class="smart-query-form-item">
-        <a-select
-          style="width: 120px"
-          v-model:value="queryForm.paymentMethod"
-          placeholder="请选择"
-          allowClear
-        >
-          <a-select-option value="现金支付">现金支付</a-select-option>
-          <a-select-option value="银行转账">银行转账</a-select-option>
-          <a-select-option value="在线支付">在线支付</a-select-option>
-          <a-select-option value="会员卡扣费">会员卡扣费</a-select-option>
-        </a-select>
-      </a-form-item>
 
       <a-form-item label="创建时间" class="smart-query-form-item">
-        <a-range-picker 
-          style="width: 240px" 
-          v-model:value="queryForm.createTimeRange" 
+        <a-range-picker
+          style="width: 240px"
+          v-model:value="queryForm.createTimeRange"
           :ranges="defaultTimeRanges"
         />
       </a-form-item>
@@ -170,11 +157,11 @@
               </template>
               详情
             </a-button>
-            
-            <a-button 
-              v-if="record.orderStatus === 1" 
-              @click="confirmPayment(record)" 
-              size="small" 
+
+            <a-button
+              v-if="record.orderStatus === 1"
+              @click="confirmPayment(record)"
+              size="small"
               type="link"
               v-privilege="'business:order:payment'"
             >
@@ -183,11 +170,11 @@
               </template>
               确认支付
             </a-button>
-            
-            <a-button 
-              v-if="record.orderStatus === 2" 
-              @click="confirmOrder(record)" 
-              size="small" 
+
+            <a-button
+              v-if="record.orderStatus === 2"
+              @click="confirmOrder(record)"
+              size="small"
               type="link"
               v-privilege="'business:order:confirm'"
             >
@@ -196,11 +183,11 @@
               </template>
               确认订单
             </a-button>
-            
-            <a-button 
-              v-if="record.orderStatus === 3" 
-              @click="completeOrder(record)" 
-              size="small" 
+
+            <a-button
+              v-if="record.orderStatus === 3"
+              @click="completeOrder(record)"
+              size="small"
               type="link"
               v-privilege="'business:order:complete'"
             >
@@ -209,7 +196,7 @@
               </template>
               完成订单
             </a-button>
-            
+
             <a-dropdown v-if="record.orderStatus < 4">
               <a-button size="small" type="link">
                 更多
@@ -251,9 +238,9 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { message, Modal } from 'ant-design-vue';
-import { 
-  SearchOutlined, 
-  ReloadOutlined, 
+import {
+  SearchOutlined,
+  ReloadOutlined,
   PlusOutlined,
   EyeOutlined,
   CheckOutlined,
@@ -275,7 +262,6 @@ const queryForm = reactive({
   keywords: '',
   orderType: undefined,
   orderStatus: undefined,
-  paymentMethod: '',
   createTimeRange: [],
   pageNum: 1,
   pageSize: 10
@@ -324,11 +310,6 @@ const columns = ref([
     width: 120
   },
   {
-    title: '支付方式',
-    dataIndex: 'paymentMethod',
-    width: 100
-  },
-  {
     title: '预约信息',
     dataIndex: 'bookingInfo',
     width: 120
@@ -356,7 +337,7 @@ const onSearch = async () => {
   try {
     tableLoading.value = true;
     let params = { ...queryForm };
-    
+
     // 处理时间范围
     if (queryForm.createTimeRange && queryForm.createTimeRange.length === 2) {
       params.createTimeStart = queryForm.createTimeRange[0].format('YYYY-MM-DD HH:mm:ss');
@@ -384,7 +365,6 @@ const resetQuery = () => {
     keywords: '',
     orderType: undefined,
     orderStatus: undefined,
-    paymentMethod: '',
     createTimeRange: [],
     pageNum: 1,
     pageSize: 10

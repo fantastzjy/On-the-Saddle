@@ -11,7 +11,7 @@
   <a-form class="smart-query-form" v-privilege="'club:club:query'">
     <a-row class="smart-query-form-row">
       <a-form-item label="关键字" class="smart-query-form-item">
-        <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="俱乐部名称/联系人/电话" />
+        <a-input style="width: 200px" v-model:value="queryForm.keywords" placeholder="俱乐部名称/联系人/电话" />
       </a-form-item>
 
       <a-form-item class="smart-query-form-item smart-margin-left10">
@@ -76,11 +76,11 @@
         <template v-if="column.dataIndex === 'carouselImages'">
           <div v-if="text" style="display: flex; gap: 2px;">
             <template v-if="isJsonArray(text)">
-              <img 
-                v-for="(url, index) in JSON.parse(text).slice(0, 3)" 
-                :key="index" 
-                :src="url" 
-                style="width: 20px; height: 20px; object-fit: cover; border-radius: 2px;" 
+              <img
+                v-for="(url, index) in JSON.parse(text).slice(0, 3)"
+                :key="index"
+                :src="url"
+                style="width: 20px; height: 20px; object-fit: cover; border-radius: 2px;"
               />
               <span v-if="JSON.parse(text).length > 3" style="font-size: 12px; color: #999;">+{{ JSON.parse(text).length - 3 }}</span>
             </template>

@@ -9,10 +9,10 @@
   <a-form class="smart-query-form" v-privilege="'business:product:query'">
     <a-row class="smart-query-form-row">
       <a-form-item label="关键字" class="smart-query-form-item">
-        <a-input 
-          style="width: 300px" 
-          v-model:value="queryForm.keywords" 
-          placeholder="商品名称/商品编码/描述" 
+        <a-input
+          style="width: 200px"
+          v-model:value="queryForm.keywords"
+          placeholder="商品名称/商品编码/描述"
         />
       </a-form-item>
 
@@ -23,9 +23,9 @@
           placeholder="请选择"
           allowClear
         >
-          <a-select-option 
-            v-for="item in Object.values(PRODUCT_TYPE_ENUM)" 
-            :key="item.value" 
+          <a-select-option
+            v-for="item in Object.values(PRODUCT_TYPE_ENUM)"
+            :key="item.value"
             :value="item.value"
           >
             {{ item.desc }}
@@ -40,9 +40,9 @@
           placeholder="请选择"
           allowClear
         >
-          <a-select-option 
-            v-for="item in Object.values(PRODUCT_STATUS_ENUM)" 
-            :key="item.value" 
+          <a-select-option
+            v-for="item in Object.values(PRODUCT_STATUS_ENUM)"
+            :key="item.value"
             :value="item.value"
           >
             {{ item.desc }}
@@ -51,9 +51,9 @@
       </a-form-item>
 
       <a-form-item label="创建时间" class="smart-query-form-item">
-        <a-range-picker 
-          style="width: 240px" 
-          v-model:value="queryForm.createTimeRange" 
+        <a-range-picker
+          style="width: 240px"
+          v-model:value="queryForm.createTimeRange"
           :ranges="defaultTimeRanges"
         />
       </a-form-item>
@@ -86,8 +86,8 @@
           </template>
           新增商品
         </a-button>
-        <a-button 
-          @click="batchDelete()" 
+        <a-button
+          @click="batchDelete()"
           v-privilege="'business:product:delete'"
           :disabled="selectedRowKeys.length === 0"
           danger
@@ -97,8 +97,8 @@
           </template>
           批量删除
         </a-button>
-        <a-button 
-          @click="batchUpdateStatus(PRODUCT_STATUS_ENUM.ONLINE.value)" 
+        <a-button
+          @click="batchUpdateStatus(PRODUCT_STATUS_ENUM.ONLINE.value)"
           v-privilege="'business:product:status'"
           :disabled="selectedRowKeys.length === 0"
         >
@@ -107,8 +107,8 @@
           </template>
           批量上架
         </a-button>
-        <a-button 
-          @click="batchUpdateStatus(PRODUCT_STATUS_ENUM.OFFLINE.value)" 
+        <a-button
+          @click="batchUpdateStatus(PRODUCT_STATUS_ENUM.OFFLINE.value)"
           v-privilege="'business:product:status'"
           :disabled="selectedRowKeys.length === 0"
         >
@@ -150,21 +150,21 @@
         <template v-if="column.dataIndex === 'images'">
           <div v-if="text && text !== '[]'" style="display: flex; gap: 2px;">
             <template v-if="isJsonArray(text)">
-              <img 
-                v-for="(url, index) in JSON.parse(text).slice(0, 3)" 
+              <img
+                v-for="(url, index) in JSON.parse(text).slice(0, 3)"
                 :key="index"
-                :src="url" 
-                style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px; cursor: pointer;" 
+                :src="url"
+                style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px; cursor: pointer;"
                 @click="previewImage(JSON.parse(text), index)"
               />
               <span v-if="JSON.parse(text).length > 3" style="font-size: 12px; color: #999;">
                 +{{ JSON.parse(text).length - 3 }}
               </span>
             </template>
-            <img 
+            <img
               v-else
-              :src="text" 
-              style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px; cursor: pointer;" 
+              :src="text"
+              style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px; cursor: pointer;"
               @click="previewImage([text], 0)"
             />
           </div>
@@ -186,36 +186,36 @@
 
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
-            <a-button 
-              @click="detail(record.productId)" 
-              v-privilege="'business:product:detail'" 
-              size="small" 
+            <a-button
+              @click="detail(record.productId)"
+              v-privilege="'business:product:detail'"
+              size="small"
               type="link"
             >
               详情
             </a-button>
-            <a-button 
-              @click="edit(record)" 
-              v-privilege="'business:product:update'" 
-              size="small" 
+            <a-button
+              @click="edit(record)"
+              v-privilege="'business:product:update'"
+              size="small"
               type="link"
             >
               编辑
             </a-button>
-            <a-button 
-              @click="toggleStatus(record)" 
-              v-privilege="'business:product:status'" 
-              size="small" 
+            <a-button
+              @click="toggleStatus(record)"
+              v-privilege="'business:product:status'"
+              size="small"
               type="link"
               :style="{ color: record.status === PRODUCT_STATUS_ENUM.ONLINE.value ? '#ff4d4f' : '#52c41a' }"
             >
               {{ record.status === PRODUCT_STATUS_ENUM.ONLINE.value ? '下架' : '上架' }}
             </a-button>
-            <a-button 
-              @click="remove(record.productId)" 
-              v-privilege="'business:product:delete'" 
-              size="small" 
-              type="link" 
+            <a-button
+              @click="remove(record.productId)"
+              v-privilege="'business:product:delete'"
+              size="small"
+              type="link"
               danger
             >
               删除
@@ -249,29 +249,38 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue';
 import { message, Modal } from 'ant-design-vue';
-import { 
-  SearchOutlined, 
-  ReloadOutlined, 
-  PlusOutlined, 
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  PlusOutlined,
   DeleteOutlined,
   CheckOutlined,
   StopOutlined
 } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { productApi } from '/@/api/business/product/product-api';
-import { 
-  PRODUCT_TYPE_ENUM, 
-  PRODUCT_STATUS_ENUM, 
-  PRODUCT_TABLE_COLUMNS, 
-  PRODUCT_SEARCH_FORM 
+import {
+  PRODUCT_TYPE_ENUM,
+  PRODUCT_STATUS_ENUM,
+  PRODUCT_TABLE_COLUMNS,
+  PRODUCT_SEARCH_FORM
 } from '/@/constants/business/product/product-const';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
-import { defaultTimeRanges } from '/@/lib/default-time-ranges';
 import TableOperator from '/@/components/support/table-operator/index.vue';
 import FilePreviewModal from '/@/components/support/file-preview-modal/index.vue';
+import dayjs from 'dayjs';
 
 const router = useRouter();
+
+// ======================== 时间范围配置 ========================
+const defaultTimeRanges = {
+  今天: [dayjs().startOf('day'), dayjs().endOf('day')],
+  昨天: [dayjs().subtract(1, 'day').startOf('day'), dayjs().subtract(1, 'day').endOf('day')],
+  本周: [dayjs().startOf('week'), dayjs().endOf('week')],
+  本月: [dayjs().startOf('month'), dayjs().endOf('month')],
+  上月: [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')]
+};
 
 // ======================== 响应式数据 ========================
 const queryForm = reactive({ ...PRODUCT_SEARCH_FORM, pageNum: 1, pageSize: 10 });
@@ -308,23 +317,23 @@ async function ajaxQuery() {
       createEndTime: queryForm.createTimeRange?.[1]?.format('YYYY-MM-DD HH:mm:ss'),
       createTimeRange: undefined
     };
-    
+
     console.log('查询参数:', params);
-    
+
     const response = await productApi.queryProductList(params);
-    
+
     console.log('完整响应:', response);
-    
+
     if (response.ok) {
       console.log('API返回数据:', response.data);
-      
+
       // 兼容不同的数据结构
       const records = response.data.records || response.data.list || response.data || [];
       const totalCount = response.data.total || response.data.totalCount || 0;
-      
+
       tableData.value = records;
       total.value = totalCount;
-      
+
       console.log('解析后的表格数据:', tableData.value);
       console.log('表格数据长度:', tableData.value.length);
       if (tableData.value.length > 0) {
@@ -417,12 +426,12 @@ async function batchDelete() {
 }
 
 async function toggleStatus(record) {
-  const newStatus = record.status === PRODUCT_STATUS_ENUM.ONLINE.value 
-    ? PRODUCT_STATUS_ENUM.OFFLINE.value 
+  const newStatus = record.status === PRODUCT_STATUS_ENUM.ONLINE.value
+    ? PRODUCT_STATUS_ENUM.OFFLINE.value
     : PRODUCT_STATUS_ENUM.ONLINE.value;
-  
+
   const statusText = newStatus === PRODUCT_STATUS_ENUM.ONLINE.value ? '上架' : '下架';
-  
+
   try {
     const response = await productApi.updateProductStatus(record.productId, newStatus);
     if (response.ok) {
@@ -444,7 +453,7 @@ async function batchUpdateStatus(status) {
   }
 
   const statusText = status === PRODUCT_STATUS_ENUM.ONLINE.value ? '上架' : '下架';
-  
+
   try {
     const response = await productApi.batchUpdateProductStatus(selectedRowKeys.value, status);
     if (response.ok) {

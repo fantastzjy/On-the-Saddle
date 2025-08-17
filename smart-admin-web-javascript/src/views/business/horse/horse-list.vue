@@ -23,17 +23,7 @@
             </a-select>
           </a-form-item>
 
-          <a-form-item label="品种" class="smart-query-form-item">
-            <a-input style="width: 120px" v-model:value="queryForm.breed" placeholder="品种" />
-          </a-form-item>
 
-          <a-form-item label="性别" class="smart-query-form-item">
-            <a-select style="width: 100px" v-model:value="queryForm.gender" placeholder="性别" allowClear>
-              <a-select-option :value="1">公马</a-select-option>
-              <a-select-option :value="2">母马</a-select-option>
-              <a-select-option :value="3">骟马</a-select-option>
-            </a-select>
-          </a-form-item>
 
           <a-form-item class="smart-query-form-item smart-margin-left10">
             <a-button-group>
@@ -195,8 +185,6 @@ const queryForm = reactive({
   keywords: '',
   clubId: undefined,
   horseType: undefined,
-  breed: '',
-  gender: undefined,
   pageNum: 1,
   pageSize: 10,
 });
@@ -229,8 +217,6 @@ function resetQuery() {
     keywords: '',
     clubId: undefined,
     horseType: undefined,
-    breed: '',
-    gender: undefined,
     pageNum: 1,
     pageSize: 10,
   });
