@@ -95,7 +95,15 @@
           <a-descriptions title="教练信息" :column="1" bordered>
             <a-descriptions-item label="教练姓名">
               <a-avatar size="small" :src="scheduleDetail.coachAvatar" style="margin-right: 8px;" />
-              {{ scheduleDetail.coachName }}
+              <a 
+                @click="navigateToCoachDetail" 
+                style="color: #1890ff; cursor: pointer; text-decoration: none;"
+                @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+                @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+              >
+                {{ scheduleDetail.coachName }}
+                <LinkOutlined style="margin-left: 4px; font-size: 12px;" />
+              </a>
             </a-descriptions-item>
             <a-descriptions-item label="联系电话">
               {{ scheduleDetail.coachPhone || '未提供' }}
@@ -112,7 +120,15 @@
         <a-col :span="8">
           <a-descriptions title="会员信息" :column="1" bordered>
             <a-descriptions-item label="会员姓名">
-              {{ scheduleDetail.memberName }}
+              <a 
+                @click="navigateToMemberDetail" 
+                style="color: #1890ff; cursor: pointer; text-decoration: none;"
+                @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+                @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+              >
+                {{ scheduleDetail.memberName }}
+                <LinkOutlined style="margin-left: 4px; font-size: 12px;" />
+              </a>
             </a-descriptions-item>
             <a-descriptions-item label="联系电话">
               {{ scheduleDetail.memberPhone }}
@@ -326,7 +342,8 @@ import {
   CloseCircleOutlined,
   SwapOutlined,
   CheckCircleOutlined,
-  FileAddOutlined
+  FileAddOutlined,
+  LinkOutlined
 } from '@ant-design/icons-vue';
 import { scheduleApi } from '/@/api/business/schedule/schedule-api';
 import { smartSentry } from '/@/lib/smart-sentry';
@@ -457,6 +474,35 @@ const rescheduleLesson = () => {
 const addLessonRecord = () => {
   // 跳转到添加记录页面或弹出记录模态框
   message.info('添加记录功能待实现');
+};
+
+// 导航到教练详情页面
+const navigateToCoachDetail = () => {
+  if (!scheduleDetail.value.coachId) {
+    message.warning('教练信息不完整，无法跳转');
+    return;
+  }
+  
+  // 在新标签页打开教练详情页
+  const routeData = router.resolve({
+    path: '/business/coach/coach-detail',
+    query: { coachId: scheduleDetail.value.coachId }
+  });
+  window.open(routeData.href, '_blank');
+};
+
+// 导航到会员详情页面  
+const navigateToMemberDetail = () => {
+  if (!scheduleDetail.value.memberId) {
+    message.warning('会员信息不完整，无法跳转');
+    return;
+  }
+  
+  // 在新标签页打开会员详情页
+  const routeData = router.resolve({
+    path: `/business/member/member-detail/${scheduleDetail.value.memberId}`
+  });
+  window.open(routeData.href, '_blank');
 };
 
 const getStatusColor = (status) => {
