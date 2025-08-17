@@ -41,9 +41,6 @@ public class ProductUpdateForm {
     @Schema(description = "商品子类型")
     private String subType;
 
-    @Schema(description = "商品描述")
-    @NotBlank(message = "商品描述不能为空")
-    private String description;
 
 
     @Schema(description = "商品状态: 1-上架 2-下架 3-售罄")

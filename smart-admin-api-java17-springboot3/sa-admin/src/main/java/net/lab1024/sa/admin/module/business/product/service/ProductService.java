@@ -465,8 +465,7 @@ public class ProductService {
         
         if (SmartStringUtil.isNotBlank(queryForm.getKeyword())) {
             wrapper.and(w -> w.like(ProductEntity::getProductName, queryForm.getKeyword())
-                .or().like(ProductEntity::getProductCode, queryForm.getKeyword())
-                .or().like(ProductEntity::getDescription, queryForm.getKeyword()));
+                .or().like(ProductEntity::getProductCode, queryForm.getKeyword()));
         }
         
         wrapper.orderByDesc(ProductEntity::getCreateTime);

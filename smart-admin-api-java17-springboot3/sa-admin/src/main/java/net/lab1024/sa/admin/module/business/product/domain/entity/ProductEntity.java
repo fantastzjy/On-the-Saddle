@@ -37,8 +37,6 @@ public class ProductEntity {
     @DataTracerFieldLabel("商品子类型")
     private String subType;
 
-    @DataTracerFieldLabel("商品描述")
-    private String description;
 
     @DataTracerFieldLabel("商品状态")
     private Integer status;

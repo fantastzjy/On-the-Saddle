@@ -12,7 +12,7 @@
         <a-input
           style="width: 200px"
           v-model:value="queryForm.keywords"
-          placeholder="课程名称/课程编码/描述"
+          placeholder="课程名称/课程编码"
         />
       </a-form-item>
 

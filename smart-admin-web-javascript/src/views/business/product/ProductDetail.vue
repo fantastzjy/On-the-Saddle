@@ -69,20 +69,6 @@
         </a-col>
       </a-row>
 
-      <!-- 商品描述 -->
-      <a-divider />
-      <div>
-        <h4 style="margin-bottom: 16px;">课程描述</h4>
-        <div style="
-          background: #fafafa; 
-          padding: 16px; 
-          border-radius: 6px;
-          min-height: 100px;
-          white-space: pre-wrap;
-        ">
-          {{ productDetail.description || '暂无描述' }}
-        </div>
-      </div>
 
       <!-- 类型特定信息 -->
       <a-divider />

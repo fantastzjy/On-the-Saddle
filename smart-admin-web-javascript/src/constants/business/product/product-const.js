@@ -222,10 +222,6 @@ export const PRODUCT_FORM_RULES = {
   productType: [
     { required: true, message: '请选择课程类型', trigger: 'change' }
   ],
-  description: [
-    { required: true, message: '请输入课程描述', trigger: 'blur' },
-    { max: 1000, message: '课程描述不能超过1000个字符', trigger: 'blur' }
-  ],
   sortOrder: [
     { type: 'number', min: 0, max: 9999, message: '排序值应在0-9999之间', trigger: 'blur' }
   ]

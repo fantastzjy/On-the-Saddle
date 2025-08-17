@@ -78,15 +78,6 @@
           </a-col>
         </a-row>
 
-        <a-form-item label="课程描述" name="description">
-          <a-textarea 
-            v-model:value="formData.description" 
-            placeholder="请输入课程描述"
-            :rows="3"
-            :maxlength="1000"
-            show-count
-          />
-        </a-form-item>
       </a-card>
 
       <!-- 动态表单配置 -->
@@ -146,7 +137,6 @@ const formData = reactive({
   productCode: '',
   productType: null,
   subType: '',
-  description: '',
   status: 1,
   sortOrder: 0,
   
@@ -218,7 +208,6 @@ async function loadProductDetail() {
         productId: product.productId,
         productName: product.productName,
         productCode: product.productCode,
-        description: product.description,
         sortOrder: product.sortOrder
       });
       
@@ -545,7 +534,6 @@ function resetForm() {
     productCode: '',
     productType: null,
     subType: '',
-    description: '',
     status: 1,
     sortOrder: 0,
     
