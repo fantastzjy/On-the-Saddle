@@ -44,7 +44,7 @@
             <a-descriptions-item label="课单号">
               {{ scheduleDetail.scheduleNo }}
             </a-descriptions-item>
-            <a-descriptions-item label="商品类型">
+            <a-descriptions-item label="课程类型">
               <a-tag :color="getLessonTypeColor(scheduleDetail.productType)">
                 {{ scheduleDetail.productType }}
               </a-tag>
@@ -133,13 +133,11 @@
             <a-descriptions-item label="联系电话">
               {{ scheduleDetail.memberPhone }}
             </a-descriptions-item>
-            <a-descriptions-item label="会员等级">
-              <a-tag :color="getMemberLevelColor(scheduleDetail.memberLevel)">
-                {{ scheduleDetail.memberLevel }}
-              </a-tag>
+            <a-descriptions-item label="默认教练">
+              {{ scheduleDetail.defaultCoachName || '未设置' }}
             </a-descriptions-item>
-            <a-descriptions-item label="骑乘经验">
-              {{ scheduleDetail.ridingExperience || '未录入' }}
+            <a-descriptions-item label="课程级别">
+              {{ getCourseLevelText(scheduleDetail.memberLevel) || '未设置' }}
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
@@ -147,7 +145,15 @@
         <a-col :span="8">
           <a-descriptions title="马匹信息" :column="1" bordered>
             <a-descriptions-item label="马匹名称">
-              {{ scheduleDetail.horseName }}
+              <a 
+                @click="navigateToHorseDetail" 
+                style="color: #1890ff; cursor: pointer; text-decoration: none;"
+                @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+                @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+              >
+                {{ scheduleDetail.horseName }}
+                <LinkOutlined style="margin-left: 4px; font-size: 12px;" />
+              </a>
             </a-descriptions-item>
             <a-descriptions-item label="品种">
               {{ scheduleDetail.horseBreed }}
@@ -164,18 +170,18 @@
         </a-col>
       </a-row>
 
-      <!-- 商品信息 -->
+      <!-- 课程信息 -->
       <a-divider />
       <div>
         <h4 style="margin-bottom: 16px;">
           <BookOutlined style="margin-right: 8px;" />
-          商品信息
+          课程信息
         </h4>
         <a-descriptions :column="2" bordered>
-          <a-descriptions-item label="商品名称">
+          <a-descriptions-item label="课程名称">
             {{ scheduleDetail.productName }}
           </a-descriptions-item>
-          <a-descriptions-item label="商品类型">
+          <a-descriptions-item label="课程类型">
             {{ scheduleDetail.productType }}
           </a-descriptions-item>
           <a-descriptions-item label="预约状态">
@@ -347,6 +353,7 @@ import {
 } from '@ant-design/icons-vue';
 import { scheduleApi } from '/@/api/business/schedule/schedule-api';
 import { smartSentry } from '/@/lib/smart-sentry';
+import { COURSE_LEVEL_REVERSE_MAP } from '/@/views/business/member/constants/member-constants';
 import dayjs from 'dayjs';
 
 const route = useRoute();
@@ -483,9 +490,9 @@ const navigateToCoachDetail = () => {
     return;
   }
   
-  // 在新标签页打开教练详情页
+  // 在新标签页打开教练详情页 - 使用正确的路由路径
   const routeData = router.resolve({
-    path: '/business/coach/coach-detail',
+    path: '/club/coach/coach-detail',
     query: { coachId: scheduleDetail.value.coachId }
   });
   window.open(routeData.href, '_blank');
@@ -498,9 +505,24 @@ const navigateToMemberDetail = () => {
     return;
   }
   
-  // 在新标签页打开会员详情页
+  // 在新标签页打开会员详情页 - 使用正确的路由路径
   const routeData = router.resolve({
-    path: `/business/member/member-detail/${scheduleDetail.value.memberId}`
+    path: `/member/detail/${scheduleDetail.value.memberId}`
+  });
+  window.open(routeData.href, '_blank');
+};
+
+// 导航到马匹详情页面  
+const navigateToHorseDetail = () => {
+  if (!scheduleDetail.value.horseId) {
+    message.warning('马匹信息不完整，无法跳转');
+    return;
+  }
+  
+  // 在新标签页打开马匹详情页
+  const routeData = router.resolve({
+    path: '/club/horse/horse-detail',
+    query: { horseId: scheduleDetail.value.horseId }
   });
   window.open(routeData.href, '_blank');
 };
@@ -551,6 +573,12 @@ const getLessonTypeColor = (type) => {
   if (type.includes('单人课')) return 'purple';
   if (type.includes('多人课')) return 'cyan';
   return 'default';
+};
+
+// 课程级别转换函数
+const getCourseLevelText = (level) => {
+  if (!level) return '';
+  return COURSE_LEVEL_REVERSE_MAP[level] || level;
 };
 
 const formatDate = (date) => {

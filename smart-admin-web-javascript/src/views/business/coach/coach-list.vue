@@ -106,9 +106,13 @@
             {{ record.userName }}
           </a-button>
         </template>
-        <template v-if="column.dataIndex === 'avatarUrl'">
-          <img v-if="text" :src="text" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;" />
-          <span v-else>-</span>
+        <template v-if="column.dataIndex === 'entryDate'">
+          <span>{{ text ? text.substring(0, 10) : '-' }}</span>
+        </template>
+        <template v-if="column.dataIndex === 'specialties'">
+          <a-tooltip :title="text" placement="topLeft">
+            <span>{{ text || '-' }}</span>
+          </a-tooltip>
         </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
@@ -228,10 +232,9 @@ async function loadClubList() {
 
 const columns = ref([
   {
-    title: '用户姓名',
-    dataIndex: 'userName',
-    width: 120,
-    fixed: 'left',
+    title: '教练ID',
+    dataIndex: 'coachId',
+    width: 100,
   },
   {
     title: '教练编号',
@@ -239,20 +242,16 @@ const columns = ref([
     width: 120,
   },
   {
-    title: '头像',
-    dataIndex: 'avatarUrl',
-    width: 80,
+    title: '用户姓名',
+    dataIndex: 'userName',
+    width: 120,
+    fixed: 'left',
   },
   {
     title: '所属俱乐部',
     dataIndex: 'clubName',
     width: 150,
     ellipsis: true,
-  },
-  {
-    title: '入行时间',
-    dataIndex: 'entryDate',
-    width: 150,
   },
   {
     title: '专长领域',
@@ -289,6 +288,11 @@ const columns = ref([
     title: '教练等级',
     dataIndex: 'coachLevel',
     width: 100,
+  },
+  {
+    title: '从业时间',
+    dataIndex: 'entryDate',
+    width: 150,
   },
   {
     title: '排序',

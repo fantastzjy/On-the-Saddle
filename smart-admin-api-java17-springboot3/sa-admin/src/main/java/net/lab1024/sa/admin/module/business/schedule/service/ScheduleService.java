@@ -548,6 +548,19 @@ public class ScheduleService {
                 schedule.setMemberGender(member.getGender() != null ? (member.getGender() == 1 ? "男" : "女") : null);
                 schedule.setMemberLevel(member.getDefaultCourseLevel());
 
+                // 获取默认教练姓名
+                if (member.getDefaultCoachId() != null && member.getDefaultCoachId() > 0) {
+                    CoachEntity defaultCoach = coachDao.selectById(member.getDefaultCoachId());
+                    if (defaultCoach != null && defaultCoach.getUserId() != null && defaultCoach.getUserId() > 0) {
+                        EmployeeEntity defaultCoachEmployee = employeeDao.selectById(defaultCoach.getUserId());
+                        if (defaultCoachEmployee != null && SmartStringUtil.isNotBlank(defaultCoachEmployee.getActualName())) {
+                            schedule.setDefaultCoachName(defaultCoachEmployee.getActualName());
+                        } else {
+                            schedule.setDefaultCoachName("教练" + defaultCoach.getCoachNo());
+                        }
+                    }
+                }
+
                 // 解析JSON格式的会员扩展信息
                 if (SmartStringUtil.isNotBlank(member.getProfileData())) {
                     try {

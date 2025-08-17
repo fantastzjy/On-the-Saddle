@@ -140,11 +140,9 @@
 
         <!-- 课程级别 -->
         <template #defaultCourseLevel="{ record }">
-          <dict-label 
-            v-if="record.defaultCourseLevel" 
-            :dict-code="COURSE_LEVEL_DICT_CODE" 
-            :value="record.defaultCourseLevel" 
-          />
+          <span v-if="record.defaultCourseLevel">
+            {{ getCourseLevelText(record.defaultCourseLevel) }}
+          </span>
           <span v-else style="color: #ccc;">未设置</span>
         </template>
 
@@ -266,7 +264,8 @@ import {
   CREATED_BY_COLOR,
   DISABLED_FLAG_TEXT,
   DISABLED_FLAG_COLOR,
-  COURSE_LEVEL_DICT_CODE
+  COURSE_LEVEL_DICT_CODE,
+  COURSE_LEVEL_REVERSE_MAP
 } from './constants/member-constants'
 
 // ----------------------- 组件引用 -----------------------
@@ -490,6 +489,12 @@ function getMembershipExpireStyle(expireDate) {
     return { color: '#fa8c16' } // 30天内到期 - 橙色
   }
   return {}
+}
+
+// 课程级别转换函数
+function getCourseLevelText(level) {
+  if (!level) return ''
+  return COURSE_LEVEL_REVERSE_MAP[level] || level
 }
 </script>
 

@@ -26,9 +26,9 @@
   <a-card :loading="loading">
     <a-row :gutter="24">
       <!-- 基本信息 -->
-      <a-col :span="12">
+      <a-col :span="24">
         <a-card title="基本信息" size="small">
-          <a-descriptions :column="1" bordered size="small">
+          <a-descriptions :column="1" bordered size="small" :labelStyle="{ width: '160px' }">
             <a-descriptions-item label="用户姓名">
               {{ coach.userName || '-' }}
             </a-descriptions-item>
@@ -38,8 +38,8 @@
             <a-descriptions-item label="所属俱乐部">
               {{ coach.clubName || '-' }}
             </a-descriptions-item>
-            <a-descriptions-item label="入行时间">
-              {{ coach.entryDate || '-' }}
+            <a-descriptions-item label="从业时间">
+              {{ coach.entryDate ? coach.entryDate.substring(0, 10) : '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="排序">
               {{ coach.sortOrder || 0 }}
@@ -53,26 +53,13 @@
         </a-card>
       </a-col>
 
-      <!-- 头像 -->
-      <a-col :span="12">
-        <a-card title="头像" size="small">
-          <div style="text-align: center;">
-            <img 
-              v-if="coach.avatarUrl" 
-              :src="coach.avatarUrl" 
-              style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;" 
-            />
-            <a-empty v-else description="暂无头像" :image="Empty.PRESENTED_IMAGE_SIMPLE" />
-          </div>
-        </a-card>
-      </a-col>
     </a-row>
 
     <a-row :gutter="24" style="margin-top: 16px;">
       <!-- 骑手等级信息 -->
       <a-col :span="12">
         <a-card title="骑手等级信息" size="small">
-          <a-descriptions :column="1" bordered size="small">
+          <a-descriptions :column="1" bordered size="small" :labelStyle="{ width: '160px' }">
             <a-descriptions-item label="骑手证号码">
               {{ coach.riderCertNo || '-' }}
             </a-descriptions-item>
@@ -92,7 +79,7 @@
       <!-- 教练等级信息 -->
       <a-col :span="12">
         <a-card title="教练等级信息" size="small">
-          <a-descriptions :column="1" bordered size="small">
+          <a-descriptions :column="1" bordered size="small" :labelStyle="{ width: '160px' }">
             <a-descriptions-item label="星级教练证号码">
               {{ coach.coachCertNo || '-' }}
             </a-descriptions-item>

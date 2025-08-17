@@ -45,25 +45,14 @@
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="入行时间" name="entryDate">
-            <a-date-picker v-model:value="form.entryDate" placeholder="请选择入行时间" style="width: 100%" show-time />
+          <a-form-item label="从业时间" name="entryDate">
+            <a-date-picker v-model:value="form.entryDate" placeholder="请选择从业时间" style="width: 100%" show-time />
           </a-form-item>
         </a-col>
       </a-row>
 
       <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item label="头像照片" name="avatarUrl">
-            <Upload
-              accept=".jpg,.jpeg,.png,.gif"
-              :maxUploadSize="1"
-              buttonText="点击上传头像"
-              :default-file-list="avatarFileList"
-              @change="avatarChange"
-            />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
+        <a-col :span="24">
           <a-form-item label="排序" name="sortOrder">
             <a-input-number v-model:value="form.sortOrder" placeholder="请输入排序" :min="0" style="width: 100%" />
           </a-form-item>
@@ -201,7 +190,6 @@ const clubList = ref([]);
 const userList = ref([]);
 
 // 文件列表
-const avatarFileList = ref([]);
 const riderCertFileList = ref([]);
 const coachCertFileList = ref([]);
 
@@ -216,7 +204,6 @@ const formState = {
   clubId: null,
   userId: null,
   coachNo: '',
-  avatarUrl: '',
   entryDate: null,
   specialties: '',
   introduction: '',
@@ -258,7 +245,6 @@ function onClose() {
 
 function resetForm() {
   Object.assign(form, formState);
-  avatarFileList.value = [];
   riderCertFileList.value = [];
   coachCertFileList.value = [];
   nextTick(() => {
@@ -297,10 +283,6 @@ async function loadCoachDetail(coachId) {
     }
 
     // 处理图片字段
-    if (form.avatarUrl) {
-      avatarFileList.value = [{ fileUrl: form.avatarUrl, fileName: '头像.jpg' }];
-    }
-
     if (form.riderCertImgUrl) {
       try {
         const riderImages = JSON.parse(form.riderCertImgUrl);
@@ -332,10 +314,6 @@ async function loadCoachDetail(coachId) {
 }
 
 // ----------------------- 文件上传处理 -----------------------
-
-function avatarChange(fileList) {
-  form.avatarUrl = fileList.length > 0 ? fileList[0].fileUrl : '';
-}
 
 function riderCertChange(fileList) {
   if (fileList.length === 0) {

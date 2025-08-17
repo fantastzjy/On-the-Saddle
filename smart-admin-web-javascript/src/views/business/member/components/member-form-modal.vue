@@ -373,18 +373,27 @@ function calculateAge(birthDate) {
 function normalizeCourseLevelForEdit(courseLevel) {
   if (!courseLevel) return ''
   
+  // 如果是对象，尝试提取值
+  let levelValue = courseLevel
+  if (typeof courseLevel === 'object' && courseLevel !== null) {
+    levelValue = courseLevel.value || courseLevel.code || courseLevel.key || courseLevel.label || courseLevel.name || String(courseLevel)
+  }
+  
+  // 确保是字符串
+  levelValue = String(levelValue || '')
+  
   // 如果已经是枚举编码，直接返回
-  if (COURSE_LEVEL_REVERSE_MAP[courseLevel]) {
-    return courseLevel
+  if (COURSE_LEVEL_REVERSE_MAP[levelValue]) {
+    return levelValue
   }
   
   // 如果是中文，转换为枚举编码
-  if (COURSE_LEVEL_CONVERT_MAP[courseLevel]) {
-    return COURSE_LEVEL_CONVERT_MAP[courseLevel]
+  if (COURSE_LEVEL_CONVERT_MAP[levelValue]) {
+    return COURSE_LEVEL_CONVERT_MAP[levelValue]
   }
   
   // 其他情况直接返回原值
-  return courseLevel
+  return levelValue
 }
 
 function disabledBirthDate(current) {
@@ -438,7 +447,7 @@ async function showModal(record) {
       idCardNo: record.idCardNo,
       riderCertNo: record.riderCertNo,
       defaultCoachId: record.defaultCoachId,
-      defaultCourseLevel: normalizeCourseLevelForEdit(record.defaultCourseLevel || ''),
+      defaultCourseLevel: record.defaultCourseLevel || '',
       isMembership: record.isMembership,
       membershipExpireDate: record.membershipExpireDate ? dayjs(record.membershipExpireDate) : undefined,
       registrationStatus: record.registrationStatus,

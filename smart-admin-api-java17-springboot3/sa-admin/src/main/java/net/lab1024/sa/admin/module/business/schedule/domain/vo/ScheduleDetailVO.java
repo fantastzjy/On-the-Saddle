@@ -64,6 +64,9 @@ public class ScheduleDetailVO {
     @Schema(description = "会员级别")
     private String memberLevel;
 
+    @Schema(description = "默认教练姓名")
+    private String defaultCoachName;
+
     @Schema(description = "会员身高")
     private String memberHeight;
 

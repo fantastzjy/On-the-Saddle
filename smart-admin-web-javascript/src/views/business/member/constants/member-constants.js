@@ -116,6 +116,17 @@ export const COURSE_LEVEL_REVERSE_MAP = {
 // 表格列配置
 export const TABLE_COLUMNS = [
   {
+    title: 'ID',
+    dataIndex: 'memberId',
+    width: 80,
+    fixed: 'left'
+  },
+  {
+    title: '会员编号',
+    dataIndex: 'memberNo',
+    width: 120
+  },
+  {
     title: 'Union ID',
     dataIndex: 'unionId',
     width: 150
@@ -128,11 +139,6 @@ export const TABLE_COLUMNS = [
   {
     title: '会员姓名',
     dataIndex: 'actualName',
-    width: 120
-  },
-  {
-    title: '会员编号',
-    dataIndex: 'memberNo',
     width: 120
   },
   {

@@ -23,9 +23,9 @@
           placeholder="请选择"
           allowClear
         >
-          <a-select-option value="1">课程订单</a-select-option>
-          <a-select-option value="2">课时包订单</a-select-option>
-          <a-select-option value="3">活动订单</a-select-option>
+          <a-select-option value="1">课程</a-select-option>
+          <a-select-option value="2">课时包</a-select-option>
+          <a-select-option value="3">活动</a-select-option>
         </a-select>
       </a-form-item>
 
@@ -76,12 +76,6 @@
   <a-card size="small" :bordered="false" :hoverable="true">
     <a-row class="smart-table-btn-block">
       <div class="smart-table-operate-block">
-        <a-button @click="createOrder()" v-privilege="'business:order:add'" type="primary">
-          <template #icon>
-            <PlusOutlined />
-          </template>
-          创建订单
-        </a-button>
         <a-button @click="refreshData()">
           <template #icon>
             <ReloadOutlined />
@@ -112,15 +106,18 @@
         </template>
 
         <template v-if="column.dataIndex === 'memberInfo'">
-          <div>
+          <div v-if="record.memberName">
             <div style="font-weight: 500;">{{ record.memberName }}</div>
             <div style="font-size: 12px; color: #666;">{{ record.memberPhone }}</div>
+          </div>
+          <div v-else style="color: #999; font-style: italic;">
+            无会员信息
           </div>
         </template>
 
         <template v-if="column.dataIndex === 'orderType'">
           <a-tag :color="getOrderTypeColor(record.orderType)">
-            {{ record.orderTypeName }}
+            {{ record.orderTypeName ? record.orderTypeName.replace('订单', '') : '' }}
           </a-tag>
         </template>
 
@@ -287,8 +284,7 @@ const columns = ref([
   {
     title: '订单号',
     dataIndex: 'orderNo',
-    width: 180,
-    fixed: 'left'
+    width: 180
   },
   {
     title: '会员信息',
