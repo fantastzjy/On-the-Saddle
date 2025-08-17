@@ -33,22 +33,6 @@
         </a-select>
       </a-form-item>
 
-      <a-form-item label="状态" class="smart-query-form-item">
-        <a-select
-          style="width: 120px"
-          v-model:value="queryForm.status"
-          placeholder="请选择"
-          allowClear
-        >
-          <a-select-option
-            v-for="item in Object.values(PRODUCT_STATUS_ENUM)"
-            :key="item.value"
-            :value="item.value"
-          >
-            {{ item.desc }}
-          </a-select-option>
-        </a-select>
-      </a-form-item>
 
       <a-form-item label="创建时间" class="smart-query-form-item">
         <a-range-picker
@@ -86,37 +70,6 @@
           </template>
           新增课程
         </a-button>
-        <a-button
-          @click="batchDelete()"
-          v-privilege="'business:product:delete'"
-          :disabled="selectedRowKeys.length === 0"
-          danger
-        >
-          <template #icon>
-            <DeleteOutlined />
-          </template>
-          批量删除
-        </a-button>
-        <a-button
-          @click="batchUpdateStatus(PRODUCT_STATUS_ENUM.ONLINE.value)"
-          v-privilege="'business:product:status'"
-          :disabled="selectedRowKeys.length === 0"
-        >
-          <template #icon>
-            <CheckOutlined />
-          </template>
-          批量上架
-        </a-button>
-        <a-button
-          @click="batchUpdateStatus(PRODUCT_STATUS_ENUM.OFFLINE.value)"
-          v-privilege="'business:product:status'"
-          :disabled="selectedRowKeys.length === 0"
-        >
-          <template #icon>
-            <StopOutlined />
-          </template>
-          批量下架
-        </a-button>
       </div>
       <div class="smart-table-setting-block">
         <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.PRODUCT.PRODUCT" :refresh="ajaxQuery" />
@@ -131,7 +84,6 @@
       rowKey="productId"
       :pagination="false"
       :loading="tableLoading"
-      :row-selection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }"
       bordered
     >
       <template #bodyCell="{ column, record, text }">
@@ -151,11 +103,6 @@
           <!-- 图片字段已移除 -->
         </template>
 
-        <template v-if="column.dataIndex === 'status'">
-          <a-tag :color="getProductStatusColor(text)">
-            {{ getProductStatusDesc(text) }}
-          </a-tag>
-        </template>
 
         <template v-if="column.dataIndex === 'basePrice'">
           <span v-if="text !== null && text !== undefined">
@@ -181,15 +128,6 @@
               type="link"
             >
               编辑
-            </a-button>
-            <a-button
-              @click="toggleStatus(record)"
-              v-privilege="'business:product:status'"
-              size="small"
-              type="link"
-              :style="{ color: record.status === PRODUCT_STATUS_ENUM.ONLINE.value ? '#ff4d4f' : '#52c41a' }"
-            >
-              {{ record.status === PRODUCT_STATUS_ENUM.ONLINE.value ? '下架' : '上架' }}
             </a-button>
             <a-button
               @click="remove(record.productId)"
@@ -232,16 +170,12 @@ import { message, Modal } from 'ant-design-vue';
 import {
   SearchOutlined,
   ReloadOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  CheckOutlined,
-  StopOutlined
+  PlusOutlined
 } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { productApi } from '/@/api/business/product/product-api';
 import {
   PRODUCT_TYPE_ENUM,
-  PRODUCT_STATUS_ENUM,
   PRODUCT_TABLE_COLUMNS,
   PRODUCT_SEARCH_FORM
 } from '/@/constants/business/product/product-const';
@@ -267,7 +201,6 @@ const tableLoading = ref(false);
 const tableData = ref([]);
 const total = ref(0);
 const columns = ref([...PRODUCT_TABLE_COLUMNS]);
-const selectedRowKeys = ref([]);
 
 // ======================== 初始化 ========================
 onMounted(() => {
@@ -332,11 +265,6 @@ async function ajaxQuery() {
   }
 }
 
-// ======================== 表格操作 ========================
-function onSelectChange(newSelectedRowKeys) {
-  selectedRowKeys.value = newSelectedRowKeys;
-}
-
 // ======================== 页面操作 ========================
 function add() {
   router.push('/product/add');
@@ -373,78 +301,6 @@ async function remove(productId) {
   });
 }
 
-async function batchDelete() {
-  if (selectedRowKeys.value.length === 0) {
-    message.warning('请先选择要删除的课程');
-    return;
-  }
-
-  Modal.confirm({
-    title: '确认批量删除',
-    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个课程吗？删除后不可恢复。`,
-    okText: '确定',
-    cancelText: '取消',
-    async onOk() {
-      try {
-        const response = await productApi.batchDeleteProduct(selectedRowKeys.value);
-        if (response.ok) {
-          message.success('批量删除成功');
-          selectedRowKeys.value = [];
-          ajaxQuery();
-        } else {
-          message.error(response.msg || '批量删除失败');
-        }
-      } catch (error) {
-        message.error('批量删除课程失败');
-        console.error('批量删除课程失败:', error);
-      }
-    }
-  });
-}
-
-async function toggleStatus(record) {
-  const newStatus = record.status === PRODUCT_STATUS_ENUM.ONLINE.value
-    ? PRODUCT_STATUS_ENUM.OFFLINE.value
-    : PRODUCT_STATUS_ENUM.ONLINE.value;
-
-  const statusText = newStatus === PRODUCT_STATUS_ENUM.ONLINE.value ? '上架' : '下架';
-
-  try {
-    const response = await productApi.updateProductStatus(record.productId, newStatus);
-    if (response.ok) {
-      message.success(`${statusText}成功`);
-      ajaxQuery();
-    } else {
-      message.error(response.msg || `${statusText}失败`);
-    }
-  } catch (error) {
-    message.error(`${statusText}课程失败`);
-    console.error(`${statusText}课程失败:`, error);
-  }
-}
-
-async function batchUpdateStatus(status) {
-  if (selectedRowKeys.value.length === 0) {
-    message.warning('请先选择要操作的课程');
-    return;
-  }
-
-  const statusText = status === PRODUCT_STATUS_ENUM.ONLINE.value ? '上架' : '下架';
-
-  try {
-    const response = await productApi.batchUpdateProductStatus(selectedRowKeys.value, status);
-    if (response.ok) {
-      message.success(`批量${statusText}成功`);
-      selectedRowKeys.value = [];
-      ajaxQuery();
-    } else {
-      message.error(response.msg || `批量${statusText}失败`);
-    }
-  } catch (error) {
-    message.error(`批量${statusText}课程失败`);
-    console.error(`批量${statusText}课程失败:`, error);
-  }
-}
 
 
 // ======================== 辅助方法 ========================
@@ -461,13 +317,6 @@ function getProductTypeColor(value) {
   return colorMap[value] || 'default';
 }
 
-function getProductStatusDesc(value) {
-  return Object.values(PRODUCT_STATUS_ENUM).find(item => item.value === value)?.desc || '-';
-}
-
-function getProductStatusColor(value) {
-  return Object.values(PRODUCT_STATUS_ENUM).find(item => item.value === value)?.color || 'default';
-}
 </script>
 
 <style scoped>
