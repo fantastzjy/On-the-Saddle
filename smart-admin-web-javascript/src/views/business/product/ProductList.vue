@@ -1,5 +1,5 @@
 <!--
-  * 商品列表页面
+  * 课程列表页面
   *
   * @Author: 1024创新实验室
   * @Date: 2024-08-16
@@ -12,11 +12,11 @@
         <a-input
           style="width: 200px"
           v-model:value="queryForm.keywords"
-          placeholder="商品名称/商品编码/描述"
+          placeholder="课程名称/课程编码/描述"
         />
       </a-form-item>
 
-      <a-form-item label="商品类型" class="smart-query-form-item">
+      <a-form-item label="课程类型" class="smart-query-form-item">
         <a-select
           style="width: 150px"
           v-model:value="queryForm.productType"
@@ -84,7 +84,7 @@
           <template #icon>
             <PlusOutlined />
           </template>
-          新增商品
+          新增课程
         </a-button>
         <a-button
           @click="batchDelete()"
@@ -340,7 +340,7 @@ async function ajaxQuery() {
         console.log('第一条数据:', tableData.value[0]);
         console.log('第一条数据的字段:', Object.keys(tableData.value[0]));
         console.log('rowKey字段值:', tableData.value[0].productId);
-        console.log('商品名称字段值:', tableData.value[0].productName);
+        console.log('课程名称字段值:', tableData.value[0].productName);
       }
       console.log('总数:', total.value);
     } else {
@@ -348,8 +348,8 @@ async function ajaxQuery() {
       message.error(response.msg || '查询失败');
     }
   } catch (error) {
-    console.error('查询商品列表失败详细错误:', error);
-    message.error('查询商品列表失败');
+    console.error('查询课程列表失败详细错误:', error);
+    message.error('查询课程列表失败');
   } finally {
     tableLoading.value = false;
   }
@@ -376,7 +376,7 @@ function detail(productId) {
 async function remove(productId) {
   Modal.confirm({
     title: '确认删除',
-    content: '确定要删除这个商品吗？删除后不可恢复。',
+    content: '确定要删除这个课程吗？删除后不可恢复。',
     okText: '确定',
     cancelText: '取消',
     async onOk() {
@@ -389,8 +389,8 @@ async function remove(productId) {
           message.error(response.msg || '删除失败');
         }
       } catch (error) {
-        message.error('删除商品失败');
-        console.error('删除商品失败:', error);
+        message.error('删除课程失败');
+        console.error('删除课程失败:', error);
       }
     }
   });
@@ -398,13 +398,13 @@ async function remove(productId) {
 
 async function batchDelete() {
   if (selectedRowKeys.value.length === 0) {
-    message.warning('请先选择要删除的商品');
+    message.warning('请先选择要删除的课程');
     return;
   }
 
   Modal.confirm({
     title: '确认批量删除',
-    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个商品吗？删除后不可恢复。`,
+    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个课程吗？删除后不可恢复。`,
     okText: '确定',
     cancelText: '取消',
     async onOk() {
@@ -418,8 +418,8 @@ async function batchDelete() {
           message.error(response.msg || '批量删除失败');
         }
       } catch (error) {
-        message.error('批量删除商品失败');
-        console.error('批量删除商品失败:', error);
+        message.error('批量删除课程失败');
+        console.error('批量删除课程失败:', error);
       }
     }
   });
@@ -441,14 +441,14 @@ async function toggleStatus(record) {
       message.error(response.msg || `${statusText}失败`);
     }
   } catch (error) {
-    message.error(`${statusText}商品失败`);
-    console.error(`${statusText}商品失败:`, error);
+    message.error(`${statusText}课程失败`);
+    console.error(`${statusText}课程失败:`, error);
   }
 }
 
 async function batchUpdateStatus(status) {
   if (selectedRowKeys.value.length === 0) {
-    message.warning('请先选择要操作的商品');
+    message.warning('请先选择要操作的课程');
     return;
   }
 
@@ -464,8 +464,8 @@ async function batchUpdateStatus(status) {
       message.error(response.msg || `批量${statusText}失败`);
     }
   } catch (error) {
-    message.error(`批量${statusText}商品失败`);
-    console.error(`批量${statusText}商品失败:`, error);
+    message.error(`批量${statusText}课程失败`);
+    console.error(`批量${statusText}课程失败:`, error);
   }
 }
 

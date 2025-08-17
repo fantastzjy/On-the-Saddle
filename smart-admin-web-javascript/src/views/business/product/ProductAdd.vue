@@ -1,5 +1,5 @@
 <!--
-  * 商品新增/编辑页面
+  * 课程新增/编辑页面
   *
   * @Author: 1024创新实验室
   * @Date: 2024-08-16
@@ -10,7 +10,7 @@
     <template #title>
       <a-space>
         <ArrowLeftOutlined @click="goBack" style="cursor: pointer;" />
-        {{ isEdit ? '编辑商品' : '新增商品' }}
+        {{ isEdit ? '编辑课程' : '新增课程' }}
       </a-space>
     </template>
 
@@ -36,12 +36,12 @@
       <a-card size="small" title="基础信息" class="form-section">
         <a-row :gutter="24">
           <a-col :span="12">
-            <a-form-item label="商品名称" name="productName">
-              <a-input v-model:value="formData.productName" placeholder="请输入商品名称" />
+            <a-form-item label="课程名称" name="productName">
+              <a-input v-model:value="formData.productName" placeholder="请输入课程名称" />
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="商品编码" name="productCode">
+            <a-form-item label="课程编码" name="productCode">
               <a-input v-model:value="formData.productCode" placeholder="留空自动生成" />
             </a-form-item>
           </a-col>
@@ -49,10 +49,10 @@
 
         <a-row :gutter="24">
           <a-col :span="12">
-            <a-form-item label="商品类型" name="productType">
+            <a-form-item label="课程类型" name="productType">
               <a-select 
                 v-model:value="formData.productType" 
-                placeholder="请选择商品类型"
+                placeholder="请选择课程类型"
                 @change="onProductTypeChange"
               >
                 <a-select-option 
@@ -78,17 +78,17 @@
           </a-col>
         </a-row>
 
-        <a-form-item label="商品描述" name="description">
+        <a-form-item label="课程描述" name="description">
           <a-textarea 
             v-model:value="formData.description" 
-            placeholder="请输入商品描述"
+            placeholder="请输入课程描述"
             :rows="3"
             :maxlength="1000"
             show-count
           />
         </a-form-item>
 
-        <a-form-item label="商品图片" name="images">
+        <a-form-item label="课程图片" name="images">
           <FileUpload
             :default-file-list="formData.images"
             :max-count="PRODUCT_DEFAULT_CONFIG.IMAGE.MAX_COUNT"

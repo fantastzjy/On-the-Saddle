@@ -1,5 +1,5 @@
 <!--
-  * 商品详情页面
+  * 课程详情页面
   *
   * @Author: 1024创新实验室
   * @Date: 2024-08-16
@@ -12,7 +12,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div>
             <ArrowLeftOutlined @click="goBack" style="margin-right: 8px; cursor: pointer;" />
-            商品详情
+            课程详情
           </div>
           <div>
             <a-button 
@@ -41,13 +41,13 @@
       <a-row :gutter="24">
         <a-col :span="12">
           <a-descriptions title="基础信息" :column="1" bordered>
-            <a-descriptions-item label="商品名称">
+            <a-descriptions-item label="课程名称">
               {{ productDetail.productName }}
             </a-descriptions-item>
-            <a-descriptions-item label="商品编码">
+            <a-descriptions-item label="课程编码">
               {{ productDetail.productCode }}
             </a-descriptions-item>
-            <a-descriptions-item label="商品类型">
+            <a-descriptions-item label="课程类型">
               <a-tag :color="getProductTypeColor(productDetail.productType)">
                 {{ productDetail.productTypeName }}
               </a-tag>
@@ -71,7 +71,7 @@
         <a-col :span="12">
           <div style="text-align: center;">
             <div style="margin-bottom: 16px;">
-              <h4>商品图片</h4>
+              <h4>课程图片</h4>
             </div>
             <a-image
               v-if="productDetail.imageUrl"
@@ -105,7 +105,7 @@
       <!-- 商品描述 -->
       <a-divider />
       <div>
-        <h4 style="margin-bottom: 16px;">商品描述</h4>
+        <h4 style="margin-bottom: 16px;">课程描述</h4>
         <div style="
           background: #fafafa; 
           padding: 16px; 
@@ -290,10 +290,10 @@ const loadProductDetail = async () => {
     if (res.ok) {
       productDetail.value = res.data;
     } else {
-      message.error(res.msg || '获取商品详情失败');
+      message.error(res.msg || '获取课程详情失败');
     }
   } catch (error) {
-    message.error('获取商品详情失败');
+    message.error('获取课程详情失败');
     smartSentry.captureError(error);
   } finally {
     loading.value = false;
@@ -311,7 +311,7 @@ const editProduct = () => {
 const deleteProduct = () => {
   Modal.confirm({
     title: '确认删除',
-    content: `确定要删除商品"${productDetail.value.productName}"吗？删除后不可恢复。`,
+    content: `确定要删除课程"${productDetail.value.productName}"吗？删除后不可恢复。`,
     okText: '确认删除',
     cancelText: '取消',
     okType: 'danger',
