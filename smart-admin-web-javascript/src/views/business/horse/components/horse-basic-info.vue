@@ -58,7 +58,10 @@
       <a-col :span="12">
         <a-descriptions title="健康信息" :column="1" bordered>
           <a-descriptions-item label="健康状况">
-            <div style="white-space: pre-wrap;">{{ horseDetail.healthStatus || '-' }}</div>
+            <a-tag v-if="horseDetail.healthStatus === 1" color="green">健康</a-tag>
+            <a-tag v-else-if="horseDetail.healthStatus === 2" color="orange">观察</a-tag>
+            <a-tag v-else-if="horseDetail.healthStatus === 3" color="red">治疗</a-tag>
+            <span v-else>-</span>
           </a-descriptions-item>
           <a-descriptions-item label="备注">
             <div style="white-space: pre-wrap;">{{ horseDetail.remark || '-' }}</div>

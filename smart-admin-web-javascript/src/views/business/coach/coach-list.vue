@@ -11,7 +11,7 @@
   <a-form class="smart-query-form" v-privilege="'club:coach:query'">
     <a-row class="smart-query-form-row">
       <a-form-item label="关键字" class="smart-query-form-item">
-        <a-input style="width: 300px" v-model:value="queryForm.keywords" placeholder="教练编号" />
+        <a-input style="width: 200px" v-model:value="queryForm.keywords" placeholder="教练编号" />
       </a-form-item>
 
       <a-form-item label="所属俱乐部" class="smart-query-form-item">
@@ -20,35 +20,6 @@
             {{ club.clubName }}
           </a-select-option>
         </a-select>
-      </a-form-item>
-
-      <a-form-item label="教练等级" class="smart-query-form-item">
-        <a-select style="width: 120px" v-model:value="queryForm.coachLevel" placeholder="教练等级" allowClear>
-          <a-select-option v-for="level in coachLevels" :key="level" :value="level">
-            {{ level }}
-          </a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item label="场地障碍" class="smart-query-form-item">
-        <a-select style="width: 120px" v-model:value="queryForm.riderLevelShowJumping" placeholder="场地障碍等级" allowClear>
-          <a-select-option v-for="level in riderLevels" :key="level" :value="level">
-            {{ level }}
-          </a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item label="有效状态" class="smart-query-form-item">
-        <a-select style="width: 120px" v-model:value="queryForm.isValid" placeholder="状态" allowClear>
-          <a-select-option :value="1">有效</a-select-option>
-          <a-select-option :value="0">无效</a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item label="创建时间" class="smart-query-form-item">
-        <a-space direction="vertical" :size="12">
-          <a-range-picker v-model:value="searchDate" :presets="defaultTimeRanges" @change="dateChange" />
-        </a-space>
       </a-form-item>
 
       <a-form-item class="smart-query-form-item smart-margin-left10">
@@ -96,11 +67,6 @@
       bordered
     >
       <template #bodyCell="{ column, record, text }">
-        <template v-if="column.dataIndex === 'isValid'">
-          <a-tag :color="text === 1 ? 'green' : 'red'">
-            {{ text === 1 ? '有效' : '无效' }}
-          </a-tag>
-        </template>
         <template v-if="column.dataIndex === 'userName'">
           <a-button type="link" @click="detail(record.coachId)" :disabled="!$privilege('club:coach:detail')">
             {{ record.userName }}
@@ -154,7 +120,6 @@ import { clubApi } from '/@/api/business/club/club-api';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 import { smartSentry } from '/@/lib/smart-sentry';
-import { defaultTimeRanges } from '/@/lib/default-time-ranges';
 import TableOperator from '/@/components/support/table-operator/index.vue';
 import CoachFormModal from './components/coach-form-modal.vue';
 
@@ -164,43 +129,25 @@ const queryFormState = {
   keywords: null,
   clubId: null,
   userId: null,
-  coachLevel: null,
-  riderLevelShowJumping: null,
-  riderLevelDressage: null,
-  riderLevelEventing: null,
-  startDate: null,
-  endDate: null,
   pageNum: 1,
   pageSize: 10,
   isDelete: 0,
-  isValid: null,
 };
 
 const queryForm = reactive({ ...queryFormState });
 const tableLoading = ref(false);
 const tableData = ref([]);
 const total = ref(0);
-const searchDate = ref();
 const clubList = ref([]);
-
-// 等级选项
-const riderLevels = ['初三', '初二', '初一', '中三', '中二', '中一', '国三', '国二', '国一', '健将级'];
-const coachLevels = ['一星', '二星', '三星', '四星', '五星'];
 
 function resetQuery() {
   Object.assign(queryForm, queryFormState);
-  searchDate.value = [];
   ajaxQuery();
 }
 
 function onSearch() {
   queryForm.pageNum = 1;
   ajaxQuery();
-}
-
-function dateChange(dates, dateStrings) {
-  queryForm.startDate = dateStrings[0];
-  queryForm.endDate = dateStrings[1];
 }
 
 async function ajaxQuery() {
@@ -298,16 +245,6 @@ const columns = ref([
     title: '排序',
     dataIndex: 'sortOrder',
     width: 80,
-  },
-  {
-    title: '有效状态',
-    dataIndex: 'isValid',
-    width: 100,
-  },
-  {
-    title: '创建时间',
-    dataIndex: 'createTime',
-    width: 150,
   },
   {
     title: '操作',
