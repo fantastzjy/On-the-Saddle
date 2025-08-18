@@ -96,7 +96,6 @@
       :loading="tableLoading"
       :pagination="false"
       :scroll="{ x: 1500 }"
-      :row-selection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }"
     >
       <template #bodyCell="{ text, record, index, column }">
         <template v-if="column.dataIndex === 'orderNo'">
@@ -209,7 +208,6 @@ const queryForm = reactive({
 const tableLoading = ref(false);
 const tableData = ref([]);
 const total = ref(0);
-const selectedRowKeys = ref([]);
 
 // 时间范围选择器配置
 const defaultTimeRanges = {
@@ -312,10 +310,6 @@ const resetQuery = () => {
 
 const refreshData = () => {
   onSearch();
-};
-
-const onSelectChange = (keys) => {
-  selectedRowKeys.value = keys;
 };
 
 const createOrder = () => {

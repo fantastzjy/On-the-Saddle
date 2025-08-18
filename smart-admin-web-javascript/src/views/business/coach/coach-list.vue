@@ -231,11 +231,11 @@ async function loadClubList() {
 // ----------------------- 表格 -----------------------
 
 const columns = ref([
-  {
-    title: '教练ID',
-    dataIndex: 'coachId',
-    width: 100,
-  },
+  // {
+  //   title: '教练ID',
+  //   dataIndex: 'coachId',
+  //   width: 100,
+  // },
   {
     title: '教练编号',
     dataIndex: 'coachNo',

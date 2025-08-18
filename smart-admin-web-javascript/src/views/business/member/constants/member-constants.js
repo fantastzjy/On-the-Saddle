@@ -115,11 +115,11 @@ export const COURSE_LEVEL_REVERSE_MAP = {
 
 // 表格列配置
 export const TABLE_COLUMNS = [
-  {
-    title: 'ID',
-    dataIndex: 'memberId',
-    width: 80
-  },
+  // {
+  //   title: 'ID',
+  //   dataIndex: 'memberId',
+  //   width: 80
+  // },
   {
     title: '会员编号',
     dataIndex: 'memberNo',

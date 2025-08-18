@@ -27,7 +27,7 @@
 
     <a-row :gutter="24" v-if="clubData">
       <a-col :span="24">
-        <a-descriptions :column="2" bordered>
+        <a-descriptions :column="2" bordered :label-style="{ width: '140px' }">
           <a-descriptions-item label="俱乐部名称" :span="1">
             {{ clubData.clubName || '-' }}
           </a-descriptions-item>
@@ -122,7 +122,7 @@
             <span v-else>-</span>
           </a-descriptions-item>
 
-          <a-descriptions-item label="创建人" :span="1">
+          <!-- <a-descriptions-item label="创建人" :span="1">
             {{ clubData.createBy || '-' }}
           </a-descriptions-item>
           <a-descriptions-item label="创建时间" :span="1">
@@ -134,7 +134,7 @@
           </a-descriptions-item>
           <a-descriptions-item label="更新时间" :span="1">
             {{ clubData.updateTime || '-' }}
-          </a-descriptions-item>
+          </a-descriptions-item> -->
         </a-descriptions>
       </a-col>
     </a-row>

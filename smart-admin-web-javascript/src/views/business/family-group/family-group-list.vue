@@ -118,21 +118,21 @@
           <a-button 
             type="primary" 
             danger
-            :disabled="selectedRowKeys.length === 0"
-            @click="onBatchDelete"
+            disabled
+            style="opacity: 0.5; cursor: not-allowed;"
           >
             <template #icon><DeleteOutlined /></template>
-            批量删除 ({{ selectedRowKeys.length }})
+            批量删除 (0)
           </a-button>
           
           <a-button 
             v-if="searchForm.status === 1"
             type="default"
-            :disabled="selectedRowKeys.length === 0"
-            @click="onBatchRestore"
+            disabled
+            style="opacity: 0.5; cursor: not-allowed;"
           >
             <template #icon><RedoOutlined /></template>
-            批量恢复 ({{ selectedRowKeys.length }})
+            批量恢复 (0)
           </a-button>
           
           <a-button @click="onExport" :loading="exportLoading">
@@ -151,7 +151,6 @@
           :data-source="tableData"
           :loading="tableLoading"
           :pagination="pagination"
-          :row-selection="rowSelection"
           :scroll="{ x: 1200 }"
           row-key="familyGroupId"
           @change="onTableChange"
@@ -282,7 +281,6 @@ const editFamilyGroupModalRef = ref()
 const createFamilyGroupModalRef = ref()
 const clubList = ref([])
 const tableData = ref([])
-const selectedRowKeys = ref([])
 
 const searchForm = reactive({
   clubId: null,
@@ -308,12 +306,12 @@ const pagination = reactive({
 
 // ----------------------- 表格配置 -----------------------
 const tableColumns = [
-  {
-    title: '家庭组ID',
-    dataIndex: 'familyGroupId',
-    width: 100,
-    fixed: 'left'
-  },
+  // {
+  //   title: '家庭组ID',
+  //   dataIndex: 'familyGroupId',
+  //   width: 100,
+  //   fixed: 'left'
+  // },
   {
     title: '家庭名称',
     dataIndex: 'familyName',
@@ -367,16 +365,6 @@ const tableColumns = [
   }
 ]
 
-const rowSelection = computed(() => ({
-  selectedRowKeys: selectedRowKeys.value,
-  onChange: (keys) => {
-    selectedRowKeys.value = keys
-  },
-  getCheckboxProps: (record) => ({
-    disabled: false
-  })
-}))
-
 // ----------------------- 生命周期 -----------------------
 onMounted(() => {
   loadClubList()
@@ -397,7 +385,6 @@ async function loadClubList() {
 
 async function onSearch() {
   tableLoading.value = true
-  selectedRowKeys.value = []
   
   try {
     const params = {
@@ -498,57 +485,11 @@ async function onRestore(record) {
 }
 
 function onBatchDelete() {
-  if (selectedRowKeys.value.length === 0) {
-    message.warning('请选择要删除的家庭组')
-    return
-  }
-  
-  Modal.confirm({
-    title: '批量删除确认',
-    content: `确定要删除选中的 ${selectedRowKeys.value.length} 个家庭组吗？`,
-    onOk: async () => {
-      try {
-        const res = await adminFamilyGroupApi.batchDelete(selectedRowKeys.value)
-        if (res.code === 0 && res.ok) {
-          message.success('批量删除成功')
-          selectedRowKeys.value = []
-          onSearch()
-        } else {
-          message.error('批量删除失败：' + res.msg)
-        }
-      } catch (e) {
-        smartSentry.captureError(e)
-        message.error('批量删除失败')
-      }
-    }
-  })
+  message.warning('批量删除功能已禁用')
 }
 
 function onBatchRestore() {
-  if (selectedRowKeys.value.length === 0) {
-    message.warning('请选择要恢复的家庭组')
-    return
-  }
-  
-  Modal.confirm({
-    title: '批量恢复确认',
-    content: `确定要恢复选中的 ${selectedRowKeys.value.length} 个家庭组吗？`,
-    onOk: async () => {
-      try {
-        const res = await adminFamilyGroupApi.batchRestore(selectedRowKeys.value)
-        if (res.code === 0 && res.ok) {
-          message.success('批量恢复成功')
-          selectedRowKeys.value = []
-          onSearch()
-        } else {
-          message.error('批量恢复失败：' + res.msg)
-        }
-      } catch (e) {
-        smartSentry.captureError(e)
-        message.error('批量恢复失败')
-      }
-    }
-  })
+  message.warning('批量恢复功能已禁用')
 }
 
 async function onExport() {

@@ -25,9 +25,9 @@
       <!-- 基本信息卡片 -->
       <a-card title="基本信息" class="info-card">
         <a-descriptions :column="3" bordered size="small">
-          <a-descriptions-item label="家庭组ID">
+          <!-- <a-descriptions-item label="家庭组ID">
             {{ familyDetail.familyGroupId }}
-          </a-descriptions-item>
+          </a-descriptions-item> -->
           <a-descriptions-item label="家庭名称">
             {{ familyDetail.familyName }}
           </a-descriptions-item>
