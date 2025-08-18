@@ -225,12 +225,6 @@ public class OrderService {
                     orderEntity.setPaymentTime(LocalDateTime.now());
                     orderEntity.setPaidAmount(orderEntity.getTotalAmount());
                     break;
-                case 3: // 已确认
-                    orderEntity.setConfirmTime(LocalDateTime.now());
-                    break;
-                case 4: // 已完成
-                    orderEntity.setCompleteTime(LocalDateTime.now());
-                    break;
             }
 
             if (SmartStringUtil.isNotBlank(updateForm.getRemark())) {

@@ -97,15 +97,6 @@
             <a-descriptions-item label="支付时间">
               {{ formatDateTime(orderDetail.paymentTime) }}
             </a-descriptions-item>
-            <a-descriptions-item label="确认时间">
-              {{ formatDateTime(orderDetail.confirmTime) }}
-            </a-descriptions-item>
-            <a-descriptions-item label="完成时间">
-              {{ formatDateTime(orderDetail.completeTime) }}
-            </a-descriptions-item>
-            <a-descriptions-item label="创建人">
-              {{ orderDetail.createBy }}
-            </a-descriptions-item>
             <a-descriptions-item label="更新时间">
               {{ formatDateTime(orderDetail.updateTime) }}
             </a-descriptions-item>

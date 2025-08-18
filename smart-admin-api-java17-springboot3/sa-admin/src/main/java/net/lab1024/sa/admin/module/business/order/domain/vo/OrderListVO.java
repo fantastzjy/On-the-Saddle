@@ -62,12 +62,6 @@ public class OrderListVO {
     @Schema(description = "支付时间")
     private LocalDateTime paymentTime;
 
-    @Schema(description = "确认时间")
-    private LocalDateTime confirmTime;
-
-    @Schema(description = "完成时间")
-    private LocalDateTime completeTime;
-
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
 

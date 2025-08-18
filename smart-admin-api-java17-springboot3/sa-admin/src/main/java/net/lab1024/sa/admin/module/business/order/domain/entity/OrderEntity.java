@@ -50,12 +50,6 @@ public class OrderEntity {
     @DataTracerFieldLabel("支付时间")
     private LocalDateTime paymentTime;
 
-    @DataTracerFieldLabel("确认时间")
-    private LocalDateTime confirmTime;
-
-    @DataTracerFieldLabel("完成时间")
-    private LocalDateTime completeTime;
-
     @DataTracerFieldLabel("订单备注")
     private String remark;
 

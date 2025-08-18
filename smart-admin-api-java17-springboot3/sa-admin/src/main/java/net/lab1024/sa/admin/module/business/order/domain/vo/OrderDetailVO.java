@@ -63,12 +63,6 @@ public class OrderDetailVO {
     @Schema(description = "支付时间")
     private LocalDateTime paymentTime;
 
-    @Schema(description = "确认时间")
-    private LocalDateTime confirmTime;
-
-    @Schema(description = "完成时间")
-    private LocalDateTime completeTime;
-
     @Schema(description = "订单备注")
     private String remark;
 
