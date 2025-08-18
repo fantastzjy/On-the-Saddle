@@ -57,9 +57,6 @@
                 ¥{{ getProductPrice() }}
               </span>
             </a-descriptions-item>
-            <a-descriptions-item label="排序">
-              {{ productDetail.sortOrder }}
-            </a-descriptions-item>
           </a-descriptions>
         </a-col>
       </a-row>

@@ -40,12 +40,6 @@ public class ProductAddForm {
     @Schema(description = "商品子类型")
     private String subType;
 
-
-
-
-    @Schema(description = "排序")
-    private Integer sortOrder;
-
     // ========================================
     // 课程商品字段 m_product_course (productType=1时有效)
     // ========================================

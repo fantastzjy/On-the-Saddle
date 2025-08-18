@@ -40,12 +40,6 @@ public class ProductListVO {
     @Schema(description = "商品子类型")
     private String subType;
 
-
-
-
-    @Schema(description = "排序")
-    private Integer sortOrder;
-
     @Schema(description = "价格信息")
     private String priceInfo;
 

@@ -37,11 +37,6 @@ public class ProductEntity {
     @DataTracerFieldLabel("商品子类型")
     private String subType;
 
-
-
-    @DataTracerFieldLabel("排序")
-    private Integer sortOrder;
-
     private String createBy;
 
     private LocalDateTime createTime;

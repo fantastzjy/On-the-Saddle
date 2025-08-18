@@ -65,17 +65,6 @@
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item label="排序" name="sortOrder">
-              <a-input-number 
-                v-model:value="formData.sortOrder" 
-                :min="0" 
-                :max="9999"
-                placeholder="数值越小越靠前"
-                style="width: 100%"
-              />
-            </a-form-item>
-          </a-col>
         </a-row>
 
       </a-card>
@@ -137,7 +126,6 @@ const formData = reactive({
   productCode: '',
   productType: null,
   subType: '',
-  sortOrder: 0,
   
   // 动态配置字段 - 严格按照数据库表结构
   dynamicConfig: {
@@ -206,8 +194,7 @@ async function loadProductDetail() {
       Object.assign(formData, {
         productId: product.productId,
         productName: product.productName,
-        productCode: product.productCode,
-        sortOrder: product.sortOrder
+        productCode: product.productCode
       });
       
       // 构建dynamicConfig数据
@@ -533,7 +520,6 @@ function resetForm() {
     productCode: '',
     productType: null,
     subType: '',
-    sortOrder: 0,
     
     // 动态配置字段 - 严格按照数据库表结构
     dynamicConfig: {

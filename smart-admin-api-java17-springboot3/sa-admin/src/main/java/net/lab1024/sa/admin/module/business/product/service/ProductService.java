@@ -148,11 +148,6 @@ public class ProductService {
             productEntity.setIsValid(true);
             productEntity.setIsDelete(false);
             
-            // 设置默认值
-            if (productEntity.getSortOrder() == null) {
-                productEntity.setSortOrder(0);
-            }
-            
             // 保存商品基础信息
             productDao.insert(productEntity);
             

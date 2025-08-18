@@ -185,12 +185,6 @@ export const PRODUCT_TABLE_COLUMNS = [
     width: 100
   },
   {
-    title: '排序',
-    dataIndex: 'sortOrder',
-    width: 80,
-    align: 'center'
-  },
-  {
     title: '创建时间',
     dataIndex: 'createTime',
     width: 180,
@@ -215,9 +209,6 @@ export const PRODUCT_FORM_RULES = {
   ],
   productType: [
     { required: true, message: '请选择课程类型', trigger: 'change' }
-  ],
-  sortOrder: [
-    { type: 'number', min: 0, max: 9999, message: '排序值应在0-9999之间', trigger: 'blur' }
   ]
 };
 

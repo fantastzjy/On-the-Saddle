@@ -41,12 +41,6 @@ public class ProductDetailVO {
     @Schema(description = "商品子类型")
     private String subType;
 
-
-
-
-    @Schema(description = "排序")
-    private Integer sortOrder;
-
     @Schema(description = "课程配置详情")
     private Map<String, Object> courseDetails;
 
