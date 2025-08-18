@@ -24,8 +24,6 @@ public class ProductQueryForm extends PageParam {
     @Schema(description = "商品类型: 1-课程 2-课时包 3-活动")
     private Integer productType;
 
-    @Schema(description = "商品状态: 1-上架 2-下架 3-售罄")
-    private Integer status;
 
     @Schema(description = "俱乐部ID")
     private Long clubId;

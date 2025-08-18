@@ -87,22 +87,6 @@ public class ProductController extends SupportBaseController {
         return productService.batchDeleteProducts(productIds, SmartRequestUtil.getRequestUserId());
     }
 
-    @Operation(summary = "更新商品状态")
-    @PostMapping("/updateStatus")
-    public ResponseDTO<String> updateProductStatus(@RequestBody Map<String, Object> params) {
-        Long productId = Long.valueOf(params.get("productId").toString());
-        Integer status = Integer.valueOf(params.get("status").toString());
-        return productService.updateProductStatus(productId, status, SmartRequestUtil.getRequestUserId());
-    }
-
-    @Operation(summary = "批量更新商品状态")
-    @PostMapping("/batchUpdateStatus")
-    public ResponseDTO<String> batchUpdateProductStatus(@RequestBody Map<String, Object> params) {
-        @SuppressWarnings("unchecked")
-        List<Long> productIds = (List<Long>) params.get("productIds");
-        Integer status = Integer.valueOf(params.get("status").toString());
-        return productService.batchUpdateProductStatus(productIds, status, SmartRequestUtil.getRequestUserId());
-    }
 
     // ========================================
     // 商品搜索功能 (对应PROD_BE_006: 商品搜索筛选接口)
@@ -120,11 +104,6 @@ public class ProductController extends SupportBaseController {
         return productService.getProductTypes();
     }
 
-    @Operation(summary = "获取商品状态选项")
-    @GetMapping("/status/options")
-    public ResponseDTO<List<Map<String, Object>>> getProductStatusOptions() {
-        return productService.getProductStatusOptions();
-    }
 
     // ========================================
     // 动态表单配置功能 (对应PROD_BE_002: 商品类型动态配置接口)

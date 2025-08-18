@@ -57,11 +57,6 @@
                 ¥{{ getProductPrice() }}
               </span>
             </a-descriptions-item>
-            <a-descriptions-item label="状态">
-              <a-tag :color="getStatusColor(productDetail.status)">
-                {{ productDetail.statusName }}
-              </a-tag>
-            </a-descriptions-item>
             <a-descriptions-item label="排序">
               {{ productDetail.sortOrder }}
             </a-descriptions-item>
@@ -293,14 +288,6 @@ const getProductTypeColor = (type) => {
   return colors[type] || 'default';
 };
 
-const getStatusColor = (status) => {
-  const colors = {
-    1: 'success',  // 上架
-    2: 'warning',  // 下架
-    3: 'error'     // 售罄
-  };
-  return colors[status] || 'default';
-};
 
 const formatDateTime = (dateTime) => {
   if (!dateTime) return '-';

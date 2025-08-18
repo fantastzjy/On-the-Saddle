@@ -43,11 +43,6 @@ public class ProductDetailVO {
 
 
 
-    @Schema(description = "商品状态: 1-上架 2-下架 3-售罄")
-    private Integer status;
-
-    @Schema(description = "商品状态名称")
-    private String statusName;
 
     @Schema(description = "排序")
     private Integer sortOrder;

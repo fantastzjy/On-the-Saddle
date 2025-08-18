@@ -137,7 +137,6 @@ const formData = reactive({
   productCode: '',
   productType: null,
   subType: '',
-  status: 1,
   sortOrder: 0,
   
   // 动态配置字段 - 严格按照数据库表结构
@@ -534,7 +533,6 @@ function resetForm() {
     productCode: '',
     productType: null,
     subType: '',
-    status: 1,
     sortOrder: 0,
     
     // 动态配置字段 - 严格按照数据库表结构

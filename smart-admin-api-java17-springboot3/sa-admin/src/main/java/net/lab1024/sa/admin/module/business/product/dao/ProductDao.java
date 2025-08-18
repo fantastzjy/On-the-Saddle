@@ -37,15 +37,7 @@ public interface ProductDao extends BaseMapper<ProductEntity> {
      */
     ProductEntity selectByProductCode(@Param("clubId") Long clubId, @Param("productCode") String productCode);
 
-    /**
-     * 查询上架商品列表
-     */
-    List<ProductEntity> selectOnlineProducts(@Param("clubId") Long clubId);
 
-    /**
-     * 批量更新商品状态
-     */
-    int batchUpdateStatus(@Param("productIds") List<Long> productIds, @Param("status") Integer status);
 
     // ========================================
     // 新增方法 - 模块2.1商品管理功能

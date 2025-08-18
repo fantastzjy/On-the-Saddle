@@ -38,8 +38,6 @@ public class ProductEntity {
     private String subType;
 
 
-    @DataTracerFieldLabel("商品状态")
-    private Integer status;
 
     @DataTracerFieldLabel("排序")
     private Integer sortOrder;

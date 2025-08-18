@@ -149,9 +149,6 @@ public class ProductService {
             productEntity.setIsDelete(false);
             
             // 设置默认值
-            if (productEntity.getStatus() == null) {
-                productEntity.setStatus(1); // 默认上架
-            }
             if (productEntity.getSortOrder() == null) {
                 productEntity.setSortOrder(0);
             }
@@ -278,58 +275,6 @@ public class ProductService {
         }
     }
 
-    /**
-     * 更新商品状态
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseDTO<String> updateProductStatus(Long productId, Integer status, Long operatorId) {
-        try {
-            ProductEntity productEntity = productDao.selectById(productId);
-            if (productEntity == null || productEntity.getIsDelete()) {
-                return ResponseDTO.userErrorParam("商品不存在");
-            }
-            
-            productEntity.setStatus(status);
-            productEntity.setUpdateBy(operatorId.toString());
-            productEntity.setUpdateTime(LocalDateTime.now());
-            
-            productDao.updateById(productEntity);
-            
-            log.info("更新商品状态成功，商品ID: {}，状态: {}", productId, status);
-            return ResponseDTO.ok();
-            
-        } catch (Exception e) {
-            log.error("更新商品状态失败", e);
-            return ResponseDTO.userErrorParam("更新商品状态失败");
-        }
-    }
-
-    /**
-     * 批量更新商品状态
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public ResponseDTO<String> batchUpdateProductStatus(List<Long> productIds, Integer status, Long operatorId) {
-        try {
-            if (productIds == null || productIds.isEmpty()) {
-                return ResponseDTO.userErrorParam("请选择要更新的商品");
-            }
-            
-            int successCount = 0;
-            for (Long productId : productIds) {
-                ResponseDTO<String> updateResult = updateProductStatus(productId, status, operatorId);
-                if (updateResult.getOk()) {
-                    successCount++;
-                }
-            }
-            
-            log.info("批量更新商品状态成功，更新{}个商品", successCount);
-            return ResponseDTO.ok("成功更新" + successCount + "个商品状态");
-            
-        } catch (Exception e) {
-            log.error("批量更新商品状态失败", e);
-            return ResponseDTO.userErrorParam("批量更新商品状态失败");
-        }
-    }
 
     // ========================================
     // 商品搜索功能 (对应PROD_BE_006)
@@ -355,17 +300,6 @@ public class ProductService {
         return ResponseDTO.ok(types);
     }
 
-    /**
-     * 获取商品状态选项
-     */
-    public ResponseDTO<List<Map<String, Object>>> getProductStatusOptions() {
-        List<Map<String, Object>> statuses = Arrays.asList(
-            Map.of("value", 1, "label", "上架"),
-            Map.of("value", 2, "label", "下架"),
-            Map.of("value", 3, "label", "售罄")
-        );
-        return ResponseDTO.ok(statuses);
-    }
 
     // ========================================
     // 库存管理功能 (对应PROD_BE_004)
@@ -457,10 +391,6 @@ public class ProductService {
         
         if (queryForm.getProductType() != null) {
             wrapper.eq(ProductEntity::getProductType, queryForm.getProductType());
-        }
-        
-        if (queryForm.getStatus() != null) {
-            wrapper.eq(ProductEntity::getStatus, queryForm.getStatus());
         }
         
         if (SmartStringUtil.isNotBlank(queryForm.getKeyword())) {
@@ -925,9 +855,6 @@ public class ProductService {
             // 设置类型名称
             product.setProductTypeName(getProductTypeName(product.getProductType()));
             
-            // 设置状态名称
-            product.setStatusName(getProductStatusName(product.getStatus()));
-            
             // 设置价格信息和库存信息（示例）
             product.setPriceInfo("¥200起");
             product.setStockInfo(product.getProductType() == 2 ? "库存100" : "无限");
@@ -940,9 +867,6 @@ public class ProductService {
     private void enhanceProductDetailData(ProductDetailVO productDetail) {
         // 设置类型名称
         productDetail.setProductTypeName(getProductTypeName(productDetail.getProductType()));
-        
-        // 设置状态名称
-        productDetail.setStatusName(getProductStatusName(productDetail.getStatus()));
         
         // 根据商品类型查询详细配置
         switch (productDetail.getProductType()) {
@@ -966,18 +890,6 @@ public class ProductService {
             case 1: return "课程";
             case 2: return "课时包";
             case 3: return "活动";
-            default: return "未知";
-        }
-    }
-
-    /**
-     * 获取商品状态名称
-     */
-    private String getProductStatusName(Integer status) {
-        switch (status) {
-            case 1: return "上架";
-            case 2: return "下架";
-            case 3: return "售罄";
             default: return "未知";
         }
     }
