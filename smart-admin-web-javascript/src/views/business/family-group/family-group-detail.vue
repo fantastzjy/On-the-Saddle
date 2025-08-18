@@ -81,12 +81,18 @@
         >
           <!-- 成员信息 -->
           <template #memberInfo="{ record }">
-            <div class="member-info">
+            <div 
+              class="member-info" 
+              @click="onViewMember(record)"
+              style="cursor: pointer;"
+              @mouseenter="(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'"
+              @mouseleave="(e) => e.currentTarget.style.backgroundColor = 'transparent'"
+            >
               <a-avatar :src="record.avatarUrl" :size="40">
                 {{ record.actualName?.charAt(0) }}
               </a-avatar>
               <div class="member-details">
-                <div class="member-name">{{ record.actualName }}</div>
+                <div class="member-name" style="color: #1890ff;">{{ record.actualName }}</div>
                 <div class="member-no">{{ record.memberNo }}</div>
               </div>
             </div>
@@ -311,7 +317,7 @@ async function loadFamilyDetail() {
 }
 
 function onBack() {
-  router.push('/family-group/list')
+  router.push('/family-group')
 }
 
 function onEdit() {
@@ -397,16 +403,27 @@ function onRemoveMember(member) {
     display: flex;
     align-items: center;
     gap: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
 
     .member-details {
       .member-name {
         font-weight: 500;
-        color: #262626;
+        transition: color 0.2s;
       }
 
       .member-no {
         font-size: 12px;
         color: #8c8c8c;
+      }
+    }
+
+    &:hover {
+      background-color: #f5f5f5;
+      
+      .member-name {
+        text-decoration: underline;
       }
     }
   }

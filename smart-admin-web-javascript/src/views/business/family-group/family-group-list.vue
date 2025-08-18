@@ -156,6 +156,18 @@
           @change="onTableChange"
           size="small"
         >
+          <!-- 家庭名称 -->
+          <template #familyName="{ record }">
+            <a 
+              @click="onViewDetail(record)" 
+              style="color: #1890ff; cursor: pointer; text-decoration: none;"
+              @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+              @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+            >
+              {{ record.familyName }}
+            </a>
+          </template>
+
           <!-- 俱乐部名称 -->
           <template #clubName="{ record }">
             <a-tag color="blue">{{ record.clubName || '-' }}</a-tag>
@@ -316,7 +328,8 @@ const tableColumns = [
     title: '家庭名称',
     dataIndex: 'familyName',
     width: 150,
-    ellipsis: true
+    ellipsis: true,
+    slots: { customRender: 'familyName' }
   },
   {
     title: '所属俱乐部',
