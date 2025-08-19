@@ -8,13 +8,15 @@
   * @Copyright  1024创新实验室 （ https://1024lab.net ），Since 2012
 -->
 <template>
-  <a-drawer
+  <a-modal
     :title="form.employeeId ? '编辑员工' : '添加员工'"
-    :width="900"
+    :width="800"
     :open="visible"
-    :body-style="{ paddingBottom: '80px' }"
-    @close="onClose"
+    @ok="onSubmit"
+    @cancel="onClose"
     destroyOnClose
+    okText="确定"
+    cancelText="取消"
   >
     <a-alert message="超管需要直接在数据库表 t_employee修改哦" type="error" closable />
     <br />
@@ -23,41 +25,72 @@
     <a-tabs v-model:activeKey="activeTab" type="card">
       <!-- 基本信息 -->
       <a-tab-pane key="basic" tab="基本信息">
-        <a-form ref="formRef" :model="form" :rules="rules" layout="vertical">
-      <a-form-item label="姓名" name="actualName">
-        <a-input v-model:value.trim="form.actualName" placeholder="请输入姓名" />
-      </a-form-item>
-      <a-form-item label="性别" name="gender">
-        <smart-enum-select style="width: 100%" v-model:value="form.gender" placeholder="请选择性别" enum-name="GENDER_ENUM" />
-      </a-form-item>
-      <a-form-item label="生日" name="birthDate">
-        <a-date-picker v-model:value="form.birthDate" placeholder="请选择生日" style="width: 100%" />
-      </a-form-item>
-      <a-form-item label="身份证号码" name="idCard">
-        <a-input v-model:value.trim="form.idCard" placeholder="请输入身份证号码" />
-      </a-form-item>
-      <a-form-item label="手机号" name="phone">
-        <a-input v-model:value.trim="form.phone" placeholder="请输入手机号" />
-      </a-form-item>
-      <a-form-item label="邮箱" name="email">
-        <a-input v-model:value.trim="form.email" placeholder="请输入邮箱" />
-      </a-form-item>
-      <a-form-item label="登录名" name="loginName">
-        <a-input v-model:value.trim="form.loginName" placeholder="请输入登录名" />
-        <p class="hint">初始密码默认为：随机</p>
-      </a-form-item>
-      <a-form-item label="状态" name="disabledFlag">
-        <a-select v-model:value="form.disabledFlag" placeholder="请选择状态">
-          <a-select-option :value="0">启用</a-select-option>
-          <a-select-option :value="1">禁用</a-select-option>
-        </a-select>
-      </a-form-item>
+        <a-form ref="formRef" :model="form" :rules="rules" layout="horizontal" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="姓名" name="actualName">
+                <a-input v-model:value.trim="form.actualName" placeholder="请输入姓名" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="性别" name="gender">
+                <smart-enum-select style="width: 100%" v-model:value="form.gender" placeholder="请选择性别" enum-name="GENDER_ENUM" />
+              </a-form-item>
+            </a-col>
+          </a-row>
 
-      <a-form-item label="角色" name="roleIdList">
-        <a-select mode="multiple" v-model:value="form.roleIdList" optionFilterProp="title" placeholder="请选择角色">
-          <a-select-option v-for="item in roleList" :key="item.roleId" :title="item.roleName">{{ item.roleName }}</a-select-option>
-        </a-select>
-      </a-form-item>
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="生日" name="birthDate">
+                <a-date-picker v-model:value="form.birthDate" placeholder="请选择生日" style="width: 100%" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="手机号" name="phone">
+                <a-input v-model:value.trim="form.phone" placeholder="请输入手机号" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="邮箱" name="email">
+                <a-input v-model:value.trim="form.email" placeholder="请输入邮箱" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="登录名" name="loginName">
+                <a-input v-model:value.trim="form.loginName" placeholder="请输入登录名" />
+                <p class="hint">初始密码默认为：随机</p>
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="状态" name="disabledFlag">
+                <a-select v-model:value="form.disabledFlag" placeholder="请选择状态">
+                  <a-select-option :value="0">启用</a-select-option>
+                  <a-select-option :value="1">禁用</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item label="角色" name="roleIdList">
+                <a-select mode="multiple" v-model:value="form.roleIdList" optionFilterProp="title" placeholder="请选择角色">
+                  <a-select-option v-for="item in roleList" :key="item.roleId" :title="item.roleName">{{ item.roleName }}</a-select-option>
+                </a-select>
+              </a-form-item>
+            </a-col>
+          </a-row>
+
+          <a-row :gutter="16">
+            <a-col :span="24">
+              <a-form-item label="身份证号码" name="idCard" :label-col="{ span: 3 }" :wrapper-col="{ span: 21 }">
+                <a-input v-model:value.trim="form.idCard" placeholder="请输入身份证号码" />
+              </a-form-item>
+            </a-col>
+          </a-row>
         </a-form>
       </a-tab-pane>
       
@@ -83,12 +116,7 @@
       
       <!-- 简历上传 tab 已被删除 -->
     </a-tabs>
-    <div class="footer">
-      <a-button style="margin-right: 8px" @click="onClose">取消</a-button>
-      <a-button type="primary" style="margin-right: 8px" @click="onSubmit(false)">保存</a-button>
-      <a-button v-if="!form.employeeId" type="primary" @click="onSubmit(true)">保存并继续添加</a-button>
-    </div>
-  </a-drawer>
+  </a-modal>
 </template>
 <script setup>
   import { message } from 'ant-design-vue';
@@ -115,7 +143,7 @@
 
   // ----------------------- 显示/隐藏 ---------------------
 
-  const visible = ref(false); // 是否展示抽屉
+  const visible = ref(false); // 是否展示模态框
   // 隐藏
   function onClose() {
     reset();
@@ -123,7 +151,7 @@
     activeTab.value = 'basic'; // 重置选项卡
   }
   // 显示
-  async function showDrawer(rowData) {
+  async function showModal(rowData) {
     Object.assign(form, formDefault);
     if (rowData && !_.isEmpty(rowData)) {
       Object.assign(form, rowData);
@@ -207,7 +235,7 @@
   }
 
   // 提交数据
-  async function onSubmit(keepAdding) {
+  async function onSubmit() {
     let validateFormRes = await validateForm(formRef.value);
     if (!validateFormRes) {
       message.error('参数验证错误，请仔细填写表单数据!');
@@ -215,22 +243,18 @@
     }
     SmartLoading.show();
     if (form.employeeId) {
-      await updateEmployee(keepAdding);
+      await updateEmployee();
     } else {
-      await addEmployee(keepAdding);
+      await addEmployee();
     }
   }
 
-  async function addEmployee(keepAdding) {
+  async function addEmployee() {
     try {
       let { data } = await employeeApi.addEmployee(form);
       message.success('添加成功');
       emit('show-account', form.loginName, data);
-      if (keepAdding) {
-        reset();
-      } else {
-        onClose();
-      }
+      onClose();
       emit('refresh');
     } catch (error) {
       smartSentry.captureError(error);
@@ -238,15 +262,12 @@
       SmartLoading.hide();
     }
   }
-  async function updateEmployee(keepAdding) {
+  
+  async function updateEmployee() {
     try {
       let result = await employeeApi.updateEmployee(form);
       message.success('更新成功');
-      if (keepAdding) {
-        reset();
-      } else {
-        onClose();
-      }
+      onClose();
       emit('refresh');
     } catch (error) {
       smartSentry.captureError(error);
@@ -283,21 +304,10 @@
 
   // ----------------------- 以下是暴露的方法内容 ----------------------------
   defineExpose({
-    showDrawer,
+    showModal,
   });
 </script>
 <style scoped lang="less">
-  .footer {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    border-top: 1px solid #e9e9e9;
-    padding: 10px 16px;
-    background: #fff;
-    text-align: right;
-    z-index: 1;
-  }
   .hint {
     margin-top: 5px;
     color: #bfbfbf;

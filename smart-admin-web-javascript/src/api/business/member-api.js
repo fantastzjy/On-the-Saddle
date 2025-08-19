@@ -22,9 +22,6 @@ export const memberApi = {
   removeFamilyMember: (familyGroupId, memberId) => postRequest('/club/family/remove-member', {familyGroupId, memberId}),
   setGuardian: (familyGroupId, memberId, isGuardian) => postRequest('/club/family/set-guardian', {familyGroupId, memberId, isGuardian}),
   
-  // 会籍管理
-  renewMembership: (param) => postRequest('/club/member/membership/renew', param),
-  getMembershipHistory: (memberId) => getRequest(`/club/member/membership/history/${memberId}`),
   
   // 辅助接口
   checkPhoneExist: (phone, excludeId) => getRequest(`/club/member/check-phone/${phone}${excludeId ? '?excludeId=' + excludeId : ''}`),

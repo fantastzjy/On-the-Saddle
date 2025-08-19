@@ -68,10 +68,6 @@ public enum DataTracerTypeEnum implements BaseEnum {
      */
     CLUB_FAMILY_GROUP(306, "家庭组管理"),
 
-    /**
-     * 会籍续费
-     */
-    CLUB_MEMBERSHIP_RENEW(307, "会籍续费"),
 
     ;
 

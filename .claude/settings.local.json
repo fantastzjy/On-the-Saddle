@@ -1,5 +1,4 @@
 {
-
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
@@ -9,7 +8,8 @@
       "Bash(cp:*)",
       "Bash(./mvnw:*)",
       "Bash(java:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

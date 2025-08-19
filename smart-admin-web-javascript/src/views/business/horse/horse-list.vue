@@ -132,57 +132,68 @@ const columns = [
     title: '马匹编号',
     dataIndex: 'horseCode',
     width: 120,
+    align: 'center'
   },
   {
     title: '马名',
     dataIndex: 'horseName',
     width: 150,
+    align: 'center'
   },
   {
     title: '芯片号',
     dataIndex: 'chipNo',
     width: 150,
+    align: 'center'
   },
   {
     title: '俱乐部',
     dataIndex: 'clubName',
     width: 150,
+    align: 'center'
   },
   {
     title: '类型',
     dataIndex: 'horseType',
     width: 120,
+    align: 'center'
   },
   {
     title: '品种',
     dataIndex: 'breed',
     width: 120,
+    align: 'center'
   },
   {
     title: '性别',
     dataIndex: 'gender',
     width: 80,
+    align: 'center'
   },
   {
     title: '出生日期',
     dataIndex: 'birthDate',
     width: 120,
+    align: 'center'
   },
   {
     title: '马主',
     dataIndex: 'ownerName',
     width: 100,
+    align: 'center'
   },
   {
     title: '责任教练',
     dataIndex: 'responsibleCoachName',
     width: 100,
+    align: 'center'
   },
   {
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
     width: 220,
+    align: 'center'
   },
 ];
 

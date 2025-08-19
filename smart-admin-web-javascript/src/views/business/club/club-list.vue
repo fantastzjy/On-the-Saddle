@@ -210,68 +210,81 @@ const columns = ref([
     dataIndex: 'clubName',
     width: 180,
     fixed: 'left',
+    align: 'center'
   },
   {
     title: '俱乐部编码',
     dataIndex: 'clubCode',
     width: 140,
+    align: 'center'
   },
   {
     title: 'LOGO',
     dataIndex: 'logoUrl',
     width: 80,
+    align: 'center'
   },
   {
     title: '轮播图片',
     dataIndex: 'carouselImages',
     width: 100,
+    align: 'center'
   },
   {
     title: '地址',
     dataIndex: 'address',
     width: 200,
     ellipsis: true,
+    align: 'center'
   },
   {
     title: '电话',
     dataIndex: 'phone',
     width: 120,
+    align: 'center'
   },
   {
     title: '省份',
     dataIndex: 'province',
     width: 100,
+    align: 'center'
   },
   {
     title: '城市',
     dataIndex: 'city',
     width: 100,
+    align: 'center'
   },
   {
     title: '联系人',
     dataIndex: 'contactPerson',
     width: 100,
+    align: 'center'
   },
   {
     title: '联系电话',
     dataIndex: 'contactPhone',
     width: 120,
+    align: 'center'
   },
   {
     title: '状态',
     dataIndex: 'isValid',
     width: 80,
+    align: 'center'
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     width: 150,
+    align: 'center'
   },
   {
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
     width: 150,
+    align: 'center'
   },
 ]);
 

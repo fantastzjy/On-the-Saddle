@@ -187,70 +187,82 @@ const columns = ref([
     title: '教练编号',
     dataIndex: 'coachNo',
     width: 120,
+    align: 'center'
   },
   {
     title: '用户姓名',
     dataIndex: 'userName',
     width: 120,
-    fixed: 'left',
+    align: 'center'
   },
   {
     title: '所属俱乐部',
     dataIndex: 'clubName',
     width: 150,
     ellipsis: true,
+    align: 'center'
   },
   {
     title: '专长领域',
     dataIndex: 'specialties',
     width: 150,
     ellipsis: true,
+    align: 'center'
   },
   {
     title: '骑手证号',
     dataIndex: 'riderCertNo',
     width: 120,
+    align: 'center'
   },
   {
     title: '场地障碍等级',
     dataIndex: 'riderLevelShowJumping',
     width: 120,
+    align: 'center'
   },
   {
     title: '盛装舞步等级',
     dataIndex: 'riderLevelDressage',
     width: 120,
+    align: 'center'
   },
   {
     title: '三项赛等级',
     dataIndex: 'riderLevelEventing',
     width: 120,
+    align: 'center'
   },
   {
     title: '教练证号',
     dataIndex: 'coachCertNo',
     width: 120,
+    align: 'center'
   },
   {
     title: '教练等级',
     dataIndex: 'coachLevel',
     width: 100,
+    align: 'center'
   },
   {
     title: '从业时间',
     dataIndex: 'entryDate',
     width: 150,
+    align: 'center'
   },
   {
     title: '排序',
     dataIndex: 'sortOrder',
     width: 80,
+    align: 'center'
   },
   {
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
     width: 150,
+    align: 'center'
   },
 ]);
 

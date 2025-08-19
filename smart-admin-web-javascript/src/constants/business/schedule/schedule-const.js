@@ -250,28 +250,33 @@ export const SCHEDULE_TABLE_COLUMNS = [
     title: '课单号',
     dataIndex: 'scheduleNo',
     width: 140,
-    ellipsis: true
+    ellipsis: true,
+    align: 'center'
   },
   {
     title: '会员姓名',
     dataIndex: 'memberName',
-    width: 120
+    width: 120,
+    align: 'center'
   },
   {
     title: '教练姓名',
     dataIndex: 'coachName',
-    width: 120
+    width: 120,
+    align: 'center'
   },
   {
     title: '马匹名称',
     dataIndex: 'horseName',
-    width: 120
+    width: 120,
+    align: 'center'
   },
   {
     title: '上课时间',
     dataIndex: 'startTime',
     width: 180,
-    sorter: true
+    sorter: true,
+    align: 'center'
   },
   {
     title: '课程时长',
@@ -289,7 +294,8 @@ export const SCHEDULE_TABLE_COLUMNS = [
     title: '操作',
     dataIndex: 'action',
     width: 200,
-    fixed: 'right'
+    fixed: 'right',
+    align: 'center'
   }
 ];
 

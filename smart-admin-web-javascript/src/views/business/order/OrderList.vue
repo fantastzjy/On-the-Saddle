@@ -223,43 +223,51 @@ const columns = ref([
   {
     title: '订单号',
     dataIndex: 'orderNo',
-    width: 180
+    width: 180,
+    align: 'center'
   },
   {
     title: '会员信息',
     dataIndex: 'memberInfo',
-    width: 150
+    width: 150,
+    align: 'center'
   },
   {
     title: '订单类型',
     dataIndex: 'orderType',
-    width: 100
+    width: 100,
+    align: 'center'
   },
   {
     title: '订单状态',
     dataIndex: 'orderStatus',
-    width: 100
+    width: 100,
+    align: 'center'
   },
   {
     title: '订单金额',
     dataIndex: 'totalAmount',
-    width: 120
+    width: 120,
+    align: 'center'
   },
   {
     title: '预约信息',
     dataIndex: 'bookingInfo',
-    width: 120
+    width: 120,
+    align: 'center'
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
-    width: 160
+    width: 160,
+    align: 'center'
   },
   {
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
-    width: 80
+    width: 80,
+    align: 'center'
   }
 ]);
 

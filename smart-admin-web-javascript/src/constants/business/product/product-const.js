@@ -171,30 +171,35 @@ export const PRODUCT_TABLE_COLUMNS = [
     title: '课程编码',
     dataIndex: 'productCode',
     width: 120,
-    ellipsis: true
+    ellipsis: true,
+    align: 'center'
   },
   {
     title: '课程名称',
     dataIndex: 'productName',
     width: 200,
-    ellipsis: true
+    ellipsis: true,
+    align: 'center'
   },
   {
     title: '课程类型',
     dataIndex: 'productType',
-    width: 100
+    width: 100,
+    align: 'center'
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     width: 180,
-    sorter: true
+    sorter: true,
+    align: 'center'
   },
   {
     title: '操作',
     dataIndex: 'action',
     width: 180,
-    fixed: 'right'
+    fixed: 'right',
+    align: 'center'
   }
 ];
 

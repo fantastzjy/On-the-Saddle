@@ -142,11 +142,11 @@
           </a-form-item>
         </a-col>
         <a-col :span="12" v-if="form.isMembership === MEMBERSHIP_STATUS.MEMBER">
-          <a-form-item label="会籍到期时间" name="membershipExpireDate">
+          <a-form-item label="会籍到期" name="membershipExpireDate">
             <a-date-picker
               v-model:value="form.membershipExpireDate"
               style="width: 100%"
-              placeholder="请选择会籍到期时间"
+              placeholder="请选择会籍到期日期"
               :disabledDate="disabledExpireDate"
             />
           </a-form-item>
@@ -278,7 +278,7 @@ const rules = {
     }
   ],
   membershipExpireDate: [
-    { required: true, message: '请选择会籍到期时间', trigger: 'change' }
+    { required: true, message: '请选择会籍到期日期', trigger: 'change' }
   ]
 }
 

@@ -343,36 +343,4 @@ create index idx_registration_status
 create index idx_rider_cert_no
     on m_member (rider_cert_no);
 
-create table m_membership_renew_history
-(
-    id              bigint auto_increment comment '主键ID'
-        primary key,
-    member_id       bigint                                 not null comment '会员ID',
-    renew_months    int                                    not null comment '续费月数',
-    renew_amount    decimal(10, 2)                         not null comment '续费金额',
-    old_expire_date date                                   null comment '原到期时间',
-    new_expire_date date                                   not null comment '新到期时间',
-    payment_method  varchar(50)  default ''                not null comment '支付方式',
-    remark          varchar(500) default ''                not null comment '备注',
-    renew_date      date                                   not null comment '续费日期',
-    create_by       varchar(50)  default ''                not null comment '创建人',
-    create_time     datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
-    update_by       varchar(50)  default ''                not null comment '更新人',
-    update_time     datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    is_valid        int          default 1                 not null comment '是否有效;1=有效;0=无效;',
-    is_delete       int          default 0                 not null comment '是否删除;1=已删除;0=未删除;'
-)
-    comment '会籍续费历史表';
-
-create index idx_is_delete
-    on m_membership_renew_history (is_delete);
-
-create index idx_member_id
-    on m_membership_renew_history (member_id);
-
-create index idx_payment_method
-    on m_membership_renew_history (payment_method);
-
-create index idx_renew_date
-    on m_membership_renew_history (renew_date);
 

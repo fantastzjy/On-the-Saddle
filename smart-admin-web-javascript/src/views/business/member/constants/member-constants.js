@@ -123,109 +123,128 @@ export const TABLE_COLUMNS = [
   {
     title: '会员编号',
     dataIndex: 'memberNo',
-    width: 120
-  },
-  {
-    title: 'Union ID',
-    dataIndex: 'unionId',
-    width: 150
-  },
-  {
-    title: 'Open ID',
-    dataIndex: 'openId',
-    width: 150
+    width: 150,
+    align: 'center'
   },
   {
     title: '会员姓名',
     dataIndex: 'actualName',
-    width: 120
+    width: 120,
+    align: 'center'
   },
   {
     title: '手机号',
     dataIndex: 'phone',
     width: 140,
+    align: 'center',
     slots: { customRender: 'phone' }
   },
   {
     title: '性别',
     dataIndex: 'gender',
     width: 80,
+    align: 'center',
     slots: { customRender: 'gender' }
   },
   {
     title: '年龄',
     dataIndex: 'age',
     width: 80,
+    align: 'center',
     slots: { customRender: 'age' }
   },
   {
     title: '注册状态',
     dataIndex: 'registrationStatus',
     width: 100,
+    align: 'center',
     slots: { customRender: 'registrationStatus' }
   },
   {
     title: '会籍状态',
     dataIndex: 'isMembership',
     width: 100,
+    align: 'center',
     slots: { customRender: 'isMembership' }
   },
   {
     title: '会籍到期时间',
     dataIndex: 'membershipExpireDate',
     width: 120,
+    align: 'center',
     slots: { customRender: 'membershipExpireDate' }
   },
   {
     title: '家庭组',
     dataIndex: 'familyName',
-    width: 120
+    width: 120,
+    align: 'center'
   },
   {
     title: '身份证号',
     dataIndex: 'idCardNo',
     width: 180,
+    align: 'center',
     slots: { customRender: 'idCardNo' }
   },
   {
     title: '骑手证号',
     dataIndex: 'riderCertNo',
-    width: 120
+    width: 120,
+    align: 'center'
   },
   {
     title: '默认教练',
     dataIndex: 'defaultCoachName',
     width: 120,
+    align: 'center',
     slots: { customRender: 'defaultCoach' }
   },
   {
     title: '课程级别',
     dataIndex: 'defaultCourseLevel',
     width: 100,
+    align: 'center',
     slots: { customRender: 'defaultCourseLevel' }
+  },
+  {
+    title: 'Union ID',
+    dataIndex: 'unionId',
+    width: 150,
+    align: 'center'
+  },
+  {
+    title: 'Open ID',
+    dataIndex: 'openId',
+    width: 150,
+    align: 'center'
   },
   {
     title: '创建方式',
     dataIndex: 'createdByGuardian',
     width: 100,
+    align: 'center',
     slots: { customRender: 'createdByGuardian' }
   },
   {
     title: '状态',
     dataIndex: 'disabledFlag',
     width: 80,
+    align: 'center',
     slots: { customRender: 'disabledFlag' }
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     width: 150,
+    align: 'center',
     slots: { customRender: 'createTime' }
   },
   {
     title: '操作',
     dataIndex: 'action',
     width: 200,
+    align: 'center',
     fixed: 'right',
     slots: { customRender: 'action' }
   }

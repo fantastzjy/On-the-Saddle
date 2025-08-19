@@ -36,7 +36,7 @@
       </div>
     </div>
     <div class="btn-group">
-      <a-button class="btn" type="primary" @click="showDrawer" v-privilege="'system:employee:add'">添加成员</a-button>
+      <a-button class="btn" type="primary" @click="showModal" v-privilege="'system:employee:add'">添加成员</a-button>
 
       <span class="smart-table-column-operate">
         <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.SYSTEM.EMPLOYEE" :refresh="queryEmployee" />
@@ -63,7 +63,7 @@
         </template>
         <template v-else-if="column.dataIndex === 'operate'">
           <div class="smart-table-operate">
-            <a-button v-privilege="'system:employee:update'" type="link" size="small" @click="showDrawer(record)">编辑</a-button>
+            <a-button v-privilege="'system:employee:update'" type="link" size="small" @click="showModal(record)">编辑</a-button>
             <a-button
               v-privilege="'system:employee:password:reset'"
               type="link"
@@ -356,7 +356,7 @@
   const employeeFormModal = ref(); //组件
 
   // 展示编辑弹窗
-  function showDrawer(rowData) {
+  function showModal(rowData) {
     let params = {};
     if (rowData) {
       params = _.cloneDeep(rowData);
@@ -364,7 +364,7 @@
     } else if (props.departmentId) {
       params.departmentId = props.departmentId;
     }
-    employeeFormModal.value.showDrawer(params);
+    employeeFormModal.value.showModal(params);
   }
 
   // 重置密码

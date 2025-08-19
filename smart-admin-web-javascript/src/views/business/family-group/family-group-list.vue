@@ -329,18 +329,21 @@ const tableColumns = [
     dataIndex: 'familyName',
     width: 150,
     ellipsis: true,
+    align: 'center',
     slots: { customRender: 'familyName' }
   },
   {
     title: '所属俱乐部',
     dataIndex: 'clubName',
     width: 120,
+    align: 'center',
     slots: { customRender: 'clubName' }
   },
   {
     title: '主要联系人',
     key: 'mainContact',
     width: 140,
+    align: 'center',
     slots: { customRender: 'mainContact' }
   },
   {
@@ -354,12 +357,14 @@ const tableColumns = [
     title: '家庭描述',
     dataIndex: 'description',
     width: 200,
-    ellipsis: true
+    ellipsis: true,
+    align: 'center'
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     width: 150,
+    align: 'center',
     customRender: ({ text }) => dayjs(text).format('YYYY-MM-DD HH:mm')
   },
   {
@@ -374,6 +379,7 @@ const tableColumns = [
     key: 'action',
     width: 200,
     fixed: 'right',
+    align: 'center',
     slots: { customRender: 'action' }
   }
 ]

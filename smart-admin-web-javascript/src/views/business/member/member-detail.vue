@@ -14,14 +14,6 @@
           <EditOutlined />
           编辑
         </a-button>
-        <a-button
-          v-if="memberInfo.isMembership"
-          v-privilege="'club:member:membership'"
-          @click="showMembershipModal"
-        >
-          <CrownOutlined />
-          会籍管理
-        </a-button>
       </template>
     </a-page-header>
 
@@ -129,34 +121,6 @@
       </a-col>
     </a-row>
 
-    <!-- 会籍信息（仅会籍会员显示） -->
-    <a-card v-if="memberInfo.isMembership" title="会籍信息" class="membership-card">
-      <a-descriptions :column="4" size="middle">
-        <a-descriptions-item label="会籍状态">
-          <a-tag color="gold">会籍会员</a-tag>
-        </a-descriptions-item>
-        <a-descriptions-item label="到期时间">
-          <span :style="getMembershipExpireStyle(memberInfo.membershipExpireDate)">
-            {{ memberInfo.membershipExpireDate ? dayjs(memberInfo.membershipExpireDate).format('YYYY-MM-DD') : '-' }}
-          </span>
-        </a-descriptions-item>
-        <a-descriptions-item label="剩余天数">
-          <span :style="getMembershipExpireStyle(memberInfo.membershipExpireDate)">
-            {{ getMembershipRemainingDays(memberInfo.membershipExpireDate) }}
-          </span>
-        </a-descriptions-item>
-        <a-descriptions-item label="续费操作">
-          <a-button
-            v-privilege="'club:member:membership'"
-            type="link"
-            @click="showMembershipModal"
-            size="small"
-          >
-            续费管理
-          </a-button>
-        </a-descriptions-item>
-      </a-descriptions>
-    </a-card>
 
 
     <!-- 详细信息标签页 -->
@@ -228,8 +192,6 @@
     <!-- 会员表单弹窗 -->
     <MemberFormModal ref="memberFormModalRef" @reload="loadMemberDetail" />
     
-    <!-- 会籍续费弹窗 -->
-    <MembershipRenewModal ref="membershipRenewModalRef" @reload="loadMemberDetail" />
   </div>
 </template>
 
@@ -245,7 +207,6 @@ import {
 import { memberApi } from '/@/api/business/member-api'
 import { smartSentry } from '/@/lib/smart-sentry'
 import MemberFormModal from './components/member-form-modal.vue'
-import MembershipRenewModal from './components/membership-renew-modal.vue'
 import {
   REGISTRATION_STATUS,
   REGISTRATION_STATUS_TEXT,
@@ -266,7 +227,6 @@ const router = useRouter()
 
 // ----------------------- 组件引用 -----------------------
 const memberFormModalRef = ref()
-const membershipRenewModalRef = ref()
 
 // ----------------------- 响应式数据 -----------------------
 const memberInfo = ref({})
@@ -415,9 +375,6 @@ function showEditModal() {
   memberFormModalRef.value.showModal(memberInfo.value)
 }
 
-function showMembershipModal() {
-  membershipRenewModalRef.value.showModal(memberInfo.value)
-}
 
 
 function onOrderTableChange(pagination) {
@@ -580,9 +537,6 @@ function getOrderStatusColor(status) {
   }
 }
 
-.membership-card {
-  margin-bottom: 24px;
-}
 
 
 .detail-tabs-card {
