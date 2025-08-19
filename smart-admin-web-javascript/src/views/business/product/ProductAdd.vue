@@ -75,6 +75,7 @@
           v-model:value="formData.dynamicConfig"
           :form-config="dynamicFormConfig"
           :loading="configLoading"
+          :form-props="{ labelCol: { span: 3 }, wrapperCol: { span: 21 } }"
           @validate="onDynamicFormValidate"
           @change="onDynamicFormChange"
         />
@@ -566,6 +567,7 @@ function goBack() {
 <style scoped>
 .product-form {
   max-width: 1000px;
+  margin: 0 auto;
 }
 
 .form-section {
