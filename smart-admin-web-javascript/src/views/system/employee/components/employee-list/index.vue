@@ -10,7 +10,7 @@
 <template>
   <a-card class="employee-container">
     <div class="header">
-      <a-typography-title :level="5">部门人员</a-typography-title>
+      <a-typography-title :level="5">角色人员</a-typography-title>
       <div class="query-operate">
         <a-radio-group v-model:value="params.disabledFlag" style="margin: 8px; flex-shrink: 0" @change="queryEmployeeByKeyword(false)">
           <a-radio-button :value="undefined">全部</a-radio-button>
@@ -122,7 +122,7 @@
   // ----------------------- 以下是字段定义 emits props ---------------------
 
   const props = defineProps({
-    departmentId: Number,
+    roleId: Number,
     breadcrumb: Array,
   });
 
@@ -212,7 +212,7 @@
   const tableData = ref();
 
   let defaultParams = {
-    departmentId: undefined,
+    roleId: undefined,
     disabledFlag: false,
     keyword: undefined,
     searchCount: undefined,
@@ -222,6 +222,12 @@
   };
   const params = reactive({ ...defaultParams });
   const total = ref(0);
+
+  // ----------------------- 多选操作变量声明 ---------------------
+  let selectedRowKeys = ref([]);
+  let selectedRows = ref([]);
+  // 是否有选中：用于 批量操作按钮的禁用
+  const hasSelected = computed(() => selectedRowKeys.value.length > 0);
 
   // 搜索重置
   function reset() {
@@ -234,13 +240,25 @@
   async function queryEmployee() {
     tableLoading.value = true;
     try {
-      params.departmentId = props.departmentId;
-      let res = await employeeApi.queryEmployee(params);
-      for (const item of res.data.list) {
-        item.roleNameList = _.join(item.roleNameList, ',');
+      if (props.roleId) {
+        // 按角色查询员工
+        params.roleId = props.roleId;
+        let res = await employeeApi.queryEmployeeByRole(params);
+        for (const item of res.data.list) {
+          item.roleNameList = _.join(item.roleNameList, ',');
+        }
+        tableData.value = res.data.list;
+        total.value = res.data.total;
+      } else {
+        // 没有选择角色时，显示所有员工
+        params.departmentId = undefined; // 不按部门筛选
+        let res = await employeeApi.queryEmployee(params);
+        for (const item of res.data.list) {
+          item.roleNameList = _.join(item.roleNameList, ',');
+        }
+        tableData.value = res.data.list;
+        total.value = res.data.total;
       }
-      tableData.value = res.data.list;
-      total.value = res.data.total;
       // 清除选中
       selectedRowKeys.value = [];
       selectedRows.value = [];
@@ -252,17 +270,38 @@
   }
 
   // 根据关键字 查询
-  async function queryEmployeeByKeyword(allDepartment) {
+  async function queryEmployeeByKeyword(allRole) {
     tableLoading.value = true;
     try {
       params.pageNum = 1;
-      params.departmentId = allDepartment ? undefined : props.departmentId;
-      let res = await employeeApi.queryEmployee(params);
-      for (const item of res.data.list) {
-        item.roleNameList = _.join(item.roleNameList, ',');
+      if (allRole) {
+        // 选择全部时，显示所有员工
+        params.departmentId = undefined;
+        let res = await employeeApi.queryEmployee(params);
+        for (const item of res.data.list) {
+          item.roleNameList = _.join(item.roleNameList, ',');
+        }
+        tableData.value = res.data.list;
+        total.value = res.data.total;
+      } else if (props.roleId) {
+        // 按选中的角色查询
+        params.roleId = props.roleId;
+        let res = await employeeApi.queryEmployeeByRole(params);
+        for (const item of res.data.list) {
+          item.roleNameList = _.join(item.roleNameList, ',');
+        }
+        tableData.value = res.data.list;
+        total.value = res.data.total;
+      } else {
+        // 没有选中角色时，显示所有员工
+        params.departmentId = undefined;
+        let res = await employeeApi.queryEmployee(params);
+        for (const item of res.data.list) {
+          item.roleNameList = _.join(item.roleNameList, ',');
+        }
+        tableData.value = res.data.list;
+        total.value = res.data.total;
       }
-      tableData.value = res.data.list;
-      total.value = res.data.total;
       // 清除选中
       selectedRowKeys.value = [];
       selectedRows.value = [];
@@ -274,9 +313,9 @@
   }
 
   watch(
-    () => props.departmentId,
+    () => props.roleId,
     () => {
-      if (props.departmentId !== params.departmentId) {
+      if (props.roleId !== params.roleId) {
         params.pageNum = 1;
         queryEmployee();
       }
@@ -285,11 +324,6 @@
   );
 
   // ----------------------- 多选操作 ---------------------
-
-  let selectedRowKeys = ref([]);
-  let selectedRows = ref([]);
-  // 是否有选中：用于 批量操作按钮的禁用
-  const hasSelected = computed(() => selectedRowKeys.value.length > 0);
 
   function onSelectChange(keyArray, selectRows) {
     selectedRowKeys.value = keyArray;

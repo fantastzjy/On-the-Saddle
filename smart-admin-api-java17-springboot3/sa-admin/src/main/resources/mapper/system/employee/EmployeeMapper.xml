@@ -197,4 +197,39 @@
         WHERE employee_id = #{employeeId}
     </update>
 
+    <select id="queryEmployeeByRole" resultType="net.lab1024.sa.admin.module.system.employee.domain.vo.EmployeeVO">
+        SELECT 
+            t_employee.*,
+            t_department.department_name
+        FROM t_employee
+        LEFT JOIN t_department ON t_department.department_id = t_employee.department_id
+        <where>
+            <!-- 根据角色查询的条件 -->
+            <if test="roleId != null">
+                AND EXISTS (
+                    SELECT 1 FROM t_role_employee 
+                    WHERE t_role_employee.employee_id = t_employee.employee_id 
+                    AND t_role_employee.role_id = #{roleId}
+                )
+            </if>
+            <!-- 关键字搜索 -->
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    INSTR(t_employee.actual_name,#{keyword})
+                    OR INSTR(t_employee.phone,#{keyword})
+                    OR INSTR(t_employee.login_name,#{keyword})
+                )
+            </if>
+            <!-- 禁用状态 -->
+            <if test="disabledFlag != null">
+                AND t_employee.disabled_flag = #{disabledFlag}
+            </if>
+            <!-- 删除标识 -->
+            <if test="deletedFlag != null">
+                AND t_employee.deleted_flag = #{deletedFlag}
+            </if>
+        </where>
+        ORDER BY t_employee.create_time DESC
+    </select>
+
 </mapper>

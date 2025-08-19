@@ -108,4 +108,9 @@ public interface EmployeeDao extends BaseMapper<EmployeeEntity> {
      */
     Integer updatePassword(@Param("employeeId") Long employeeId, @Param("password") String password);
 
+    /**
+     * 根据角色ID查询员工列表(分页)
+     */
+    List<EmployeeVO> queryEmployeeByRole(Page page, @Param("roleId") Long roleId, @Param("keyword") String keyword, @Param("disabledFlag") Boolean disabledFlag, @Param("deletedFlag") Boolean deletedFlag);
+
 }

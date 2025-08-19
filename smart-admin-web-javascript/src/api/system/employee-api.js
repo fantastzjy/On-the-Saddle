@@ -95,4 +95,10 @@ export const employeeApi = {
   queryEmployeeByDeptId: (departmentId) => {
     return getRequest(`/employee/getAllEmployeeByDepartmentId/${departmentId}`);
   },
+  /**
+   * 根据角色查询员工(分页)
+   */
+  queryEmployeeByRole: (params) => {
+    return postRequest('/employee/queryByRole', params);
+  },
 };

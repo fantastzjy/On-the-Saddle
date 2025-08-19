@@ -420,6 +420,43 @@ public class EmployeeService {
     }
 
     /**
+     * 根据角色查询员工列表(分页)
+     */
+    public ResponseDTO<PageResult<EmployeeVO>> queryEmployeeByRole(EmployeeByRoleQueryForm queryForm) {
+        queryForm.setDeletedFlag(false);
+        Page pageParam = SmartPageUtil.convert2PageQuery(queryForm);
+
+        List<EmployeeVO> employeeList = employeeDao.queryEmployeeByRole(pageParam, queryForm.getRoleId(), 
+                queryForm.getKeyword(), queryForm.getDisabledFlag(), queryForm.getDeletedFlag());
+        
+        if (CollectionUtils.isEmpty(employeeList)) {
+            PageResult<EmployeeVO> pageResult = SmartPageUtil.convert2PageResult(pageParam, employeeList);
+            return ResponseDTO.ok(pageResult);
+        }
+
+        // 查询员工角色
+        List<Long> employeeIdList = employeeList.stream().map(EmployeeVO::getEmployeeId).collect(Collectors.toList());
+        List<RoleEmployeeVO> roleEmployeeEntityList = employeeIdList.isEmpty() ? Collections.emptyList() : roleEmployeeDao.selectRoleByEmployeeIdList(employeeIdList);
+        Map<Long, List<Long>> employeeRoleIdListMap = roleEmployeeEntityList.stream().collect(Collectors.groupingBy(RoleEmployeeVO::getEmployeeId, Collectors.mapping(RoleEmployeeVO::getRoleId, Collectors.toList())));
+        Map<Long, List<String>> employeeRoleNameListMap = roleEmployeeEntityList.stream().collect(Collectors.groupingBy(RoleEmployeeVO::getEmployeeId, Collectors.mapping(RoleEmployeeVO::getRoleName, Collectors.toList())));
+
+        // 查询员工职位
+        List<Long> positionIdList = employeeList.stream().map(EmployeeVO::getPositionId).filter(Objects::nonNull).collect(Collectors.toList());
+        List<PositionEntity> positionEntityList = positionIdList.isEmpty() ? Collections.emptyList() : positionDao.selectBatchIds(positionIdList);
+        Map<Long, String> positionNameMap = positionEntityList.stream().collect(Collectors.toMap(PositionEntity::getPositionId, PositionEntity::getPositionName));
+
+        employeeList.forEach(e -> {
+            e.setRoleIdList(employeeRoleIdListMap.getOrDefault(e.getEmployeeId(), Lists.newArrayList()));
+            e.setRoleNameList(employeeRoleNameListMap.getOrDefault(e.getEmployeeId(), Lists.newArrayList()));
+            e.setDepartmentName(departmentService.getDepartmentPath(e.getDepartmentId()));
+            e.setPositionName(positionNameMap.get(e.getPositionId()));
+        });
+        
+        PageResult<EmployeeVO> pageResult = SmartPageUtil.convert2PageResult(pageParam, employeeList);
+        return ResponseDTO.ok(pageResult);
+    }
+
+    /**
      * 根据登录名获取员工
      */
     public EmployeeEntity getByLoginName(String loginName) {

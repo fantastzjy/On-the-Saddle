@@ -47,9 +47,7 @@
   async function queryAllRole() {
     let res = await roleApi.queryAll();
     roleList.value = res.data;
-    if (!_.isEmpty(res.data) && res.data[0].roleId) {
-      selectedKeys.value = [res.data[0].roleId];
-    }
+    // 不再默认选择第一个角色，让用户手动选择
   }
 
   let selectedKeys = ref([]);

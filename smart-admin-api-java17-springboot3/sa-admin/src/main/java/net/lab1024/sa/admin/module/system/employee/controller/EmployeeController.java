@@ -126,4 +126,10 @@ public class EmployeeController {
         return employeeService.queryAllEmployee(disabledFlag);
     }
 
+    @Operation(summary = "按角色查询员工(分页) @author Claude Code")
+    @PostMapping("/employee/queryByRole")
+    public ResponseDTO<PageResult<EmployeeVO>> queryByRole(@Valid @RequestBody EmployeeByRoleQueryForm query) {
+        return employeeService.queryEmployeeByRole(query);
+    }
+
 }
