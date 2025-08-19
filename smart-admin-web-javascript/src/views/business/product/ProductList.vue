@@ -118,7 +118,7 @@
         </template>
 
         <template v-if="column.dataIndex === 'action'">
-          <div class="smart-table-operate">
+          <div class="smart-table-operate" style="display: flex; justify-content: center; align-items: center;">
             <a-button
               @click="detail(record.productId)"
               v-privilege="'business:product:detail'"

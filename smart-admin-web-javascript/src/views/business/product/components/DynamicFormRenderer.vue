@@ -217,6 +217,7 @@ const emit = defineEmits(['update:value', 'change', 'validate']);
 // ======================== 响应式数据 ========================
 const formRef = ref();
 const formData = reactive({});
+const isInitializing = ref(false); // 标记是否正在初始化
 
 // ======================== 计算属性 ========================
 const dynamicRules = computed(() => {
@@ -293,12 +294,13 @@ watch(() => props.value, (newVal) => {
 
 watch(() => props.formConfig, (newConfig) => {
   if (newConfig && newConfig.length > 0) {
+    isInitializing.value = true;
     initFormData();
-    // 延迟触发验证检查
+    // 初始化完成后，稍微延迟一下再重置标记
     nextTick(() => {
       setTimeout(() => {
-        checkFormValid();
-      }, 200);
+        isInitializing.value = false;
+      }, 100);
     });
   }
 }, { immediate: true });
@@ -306,10 +308,13 @@ watch(() => props.formConfig, (newConfig) => {
 watch(formData, (newVal) => {
   emit('update:value', { ...newVal });
   emit('change', { ...newVal });
-  // 延迟触发验证
-  setTimeout(() => {
-    checkFormValid();
-  }, 100);
+  
+  // 只有在非初始化状态下才进行验证
+  if (!isInitializing.value) {
+    setTimeout(() => {
+      checkFormValid();
+    }, 100);
+  }
 }, { deep: true });
 
 // ======================== 方法 ========================

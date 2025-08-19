@@ -206,16 +206,16 @@ async function ajaxQuery() {
 
 const columns = ref([
   {
-    title: '俱乐部名称',
-    dataIndex: 'clubName',
-    width: 180,
+    title: '俱乐部编码',
+    dataIndex: 'clubCode',
+    width: 140,
     fixed: 'left',
     align: 'center'
   },
   {
-    title: '俱乐部编码',
-    dataIndex: 'clubCode',
-    width: 140,
+    title: '俱乐部名称',
+    dataIndex: 'clubName',
+    width: 180,
     align: 'center'
   },
   {

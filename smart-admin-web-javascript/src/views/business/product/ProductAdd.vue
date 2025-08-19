@@ -70,7 +70,7 @@
       </a-card>
 
       <!-- 动态表单配置 -->
-      <a-card size="small" title="商品配置" class="form-section" v-if="formData.productType">
+      <a-card size="small" :title="configSectionTitle" class="form-section" v-if="formData.productType">
         <DynamicFormRenderer
           v-model:value="formData.dynamicConfig"
           :form-config="dynamicFormConfig"
@@ -168,6 +168,19 @@ const isEdit = computed(() => {
 
 const showPricePreview = computed(() => {
   return formData.productType && formData.dynamicConfig && Object.keys(formData.dynamicConfig).length > 0;
+});
+
+const configSectionTitle = computed(() => {
+  switch (formData.productType) {
+    case 1:
+      return '课程配置';
+    case 2:
+      return '课时包配置';
+    case 3:
+      return '活动配置';
+    default:
+      return '商品配置';
+  }
 });
 
 // ======================== 初始化 ========================

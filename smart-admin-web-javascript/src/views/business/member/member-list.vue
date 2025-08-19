@@ -167,7 +167,7 @@
               size="small"
               type="link"
             >
-              查看
+              详情
             </a-button>
             <a-button
               v-privilege="'club:member:update'"
