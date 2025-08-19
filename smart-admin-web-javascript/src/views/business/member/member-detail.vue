@@ -467,24 +467,24 @@ function getDisabledFlagColor(disabledFlag) {
 
 function getOrderStatusText(status) {
   const statusMap = {
-    0: '待支付',
-    1: '已支付',
-    2: '已确认',
-    3: '已完成',
-    4: '已取消',
-    5: '已退款'
+    1: '待支付',
+    2: '已支付',
+    3: '已确认',
+    4: '已完成',
+    5: '已取消',
+    6: '已退款'
   }
   return statusMap[status] || '未知'
 }
 
 function getOrderStatusColor(status) {
   const colorMap = {
-    0: 'orange',
-    1: 'blue',
-    2: 'cyan',
-    3: 'green',
-    4: 'red',
-    5: 'purple'
+    1: 'orange',   // 待支付
+    2: 'blue',     // 已支付
+    3: 'cyan',     // 已确认
+    4: 'green',    // 已完成
+    5: 'red',      // 已取消
+    6: 'purple'    // 已退款
   }
   return colorMap[status] || 'default'
 }

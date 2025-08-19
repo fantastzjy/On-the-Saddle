@@ -9,51 +9,10 @@
   <div class="order-detail-container">
     <a-card :loading="loading" style="margin-bottom: 16px;">
       <template #title>
-        <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center;">
           <div>
             <ArrowLeftOutlined @click="goBack" style="margin-right: 8px; cursor: pointer;" />
             订单详情
-          </div>
-          <div>
-            <a-button 
-              v-if="orderDetail.orderStatus === 1" 
-              type="primary" 
-              @click="confirmPayment" 
-              v-privilege="'business:order:payment'"
-              style="margin-right: 8px;"
-            >
-              <CheckOutlined />
-              确认支付
-            </a-button>
-            <a-button 
-              v-if="orderDetail.orderStatus === 2" 
-              type="primary" 
-              @click="confirmOrder" 
-              v-privilege="'business:order:confirm'"
-              style="margin-right: 8px;"
-            >
-              <CheckCircleOutlined />
-              确认订单
-            </a-button>
-            <a-button 
-              v-if="orderDetail.orderStatus === 3" 
-              type="primary" 
-              @click="completeOrder" 
-              v-privilege="'business:order:complete'"
-              style="margin-right: 8px;"
-            >
-              <CheckSquareOutlined />
-              完成订单
-            </a-button>
-            <a-button 
-              v-if="orderDetail.orderStatus < 4" 
-              danger 
-              @click="cancelOrder" 
-              v-privilege="'business:order:cancel'"
-            >
-              <CloseOutlined />
-              取消订单
-            </a-button>
           </div>
         </div>
       </template>
@@ -239,10 +198,6 @@ import { useRoute, useRouter } from 'vue-router';
 import { message, Modal } from 'ant-design-vue';
 import { 
   ArrowLeftOutlined, 
-  CheckOutlined,
-  CheckCircleOutlined,
-  CheckSquareOutlined,
-  CloseOutlined,
   FileTextOutlined
 } from '@ant-design/icons-vue';
 import { orderApi } from '/@/api/business/order/order-api';
@@ -360,75 +315,6 @@ const loadOrderDetail = async () => {
 
 const goBack = () => {
   router.back();
-};
-
-const confirmPayment = async () => {
-  try {
-    const res = await orderApi.confirmPayment(orderDetail.value.orderId);
-    if (res.ok) {
-      message.success('确认支付成功');
-      loadOrderDetail();
-    } else {
-      message.error(res.msg || '确认支付失败');
-    }
-  } catch (error) {
-    message.error('确认支付失败');
-    smartSentry.captureError(error);
-  }
-};
-
-const confirmOrder = async () => {
-  try {
-    const res = await orderApi.confirmOrder(orderDetail.value.orderId);
-    if (res.ok) {
-      message.success('确认订单成功');
-      loadOrderDetail();
-    } else {
-      message.error(res.msg || '确认订单失败');
-    }
-  } catch (error) {
-    message.error('确认订单失败');
-    smartSentry.captureError(error);
-  }
-};
-
-const completeOrder = async () => {
-  try {
-    const res = await orderApi.completeOrder(orderDetail.value.orderId);
-    if (res.ok) {
-      message.success('完成订单成功');
-      loadOrderDetail();
-    } else {
-      message.error(res.msg || '完成订单失败');
-    }
-  } catch (error) {
-    message.error('完成订单失败');
-    smartSentry.captureError(error);
-  }
-};
-
-const cancelOrder = () => {
-  Modal.confirm({
-    title: '确认取消',
-    content: `确定要取消订单"${orderDetail.value.orderNo}"吗？取消后将同时取消所有关联的预约。`,
-    okText: '确认取消',
-    cancelText: '取消',
-    okType: 'danger',
-    onOk: async () => {
-      try {
-        const res = await orderApi.cancelOrder(orderDetail.value.orderId, '手动取消');
-        if (res.ok) {
-          message.success('取消订单成功');
-          loadOrderDetail();
-        } else {
-          message.error(res.msg || '取消订单失败');
-        }
-      } catch (error) {
-        message.error('取消订单失败');
-        smartSentry.captureError(error);
-      }
-    }
-  });
 };
 
 const confirmBooking = (booking) => {
