@@ -10,10 +10,6 @@
     <a-card size="small" title="多人课价格配置">
       <template #extra>
         <a-space>
-          <a-button type="link" size="small" @click="autoSetPrices">
-            <ThunderboltOutlined />
-            智能定价
-          </a-button>
           <a-button type="link" size="small" @click="resetToBasePrice">
             <RedoOutlined />
             重置价格
@@ -137,7 +133,6 @@
             <ul class="tips-list">
               <li>基础价格为单人课价格：¥{{ basePrice.toFixed(2) }}/人</li>
               <li>建议人数越多，单价越优惠（递减定价策略）</li>
-              <li>可点击"智能定价"自动设置合理的递减价格</li>
               <li>配置的人数档位不能超过"最大人数"设置</li>
             </ul>
           </template>
@@ -173,7 +168,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue';
-import { RedoOutlined, PlusOutlined, DeleteOutlined, ThunderboltOutlined } from '@ant-design/icons-vue';
+import { RedoOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
 
 // ======================== Props & Emits ========================
 const props = defineProps({
@@ -518,13 +513,6 @@ function calculateSuggestedPrice(people) {
   return Number((props.basePrice * discountRate).toFixed(2));
 }
 
-function autoSetPrices() {
-  priceConfigs.forEach(config => {
-    config.price = calculateSuggestedPrice(config.people);
-  });
-  emitConfigChange();
-}
-
 function resetToBasePrice() {
   priceConfigs.forEach(config => {
     config.price = calculateSuggestedPrice(config.people);
@@ -571,7 +559,7 @@ onMounted(() => {
   if (props.basePrice > 0 && !props.value) {
     setTimeout(() => {
       console.log('Auto setting prices...');
-      autoSetPrices();
+      resetToBasePrice();
     }, 100);
   }
 });
