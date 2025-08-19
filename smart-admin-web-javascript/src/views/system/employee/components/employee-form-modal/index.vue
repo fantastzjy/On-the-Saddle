@@ -42,9 +42,6 @@
       <a-form-item label="邮箱" name="email">
         <a-input v-model:value.trim="form.email" placeholder="请输入邮箱" />
       </a-form-item>
-      <a-form-item label="部门" name="departmentId">
-        <DepartmentTreeSelect ref="departmentTreeSelect" width="100%" :init="false" v-model:value="form.departmentId" />
-      </a-form-item>
       <a-form-item label="登录名" name="loginName">
         <a-input v-model:value.trim="form.loginName" placeholder="请输入登录名" />
         <p class="hint">初始密码默认为：随机</p>
@@ -54,9 +51,6 @@
           <a-select-option :value="0">启用</a-select-option>
           <a-select-option :value="1">禁用</a-select-option>
         </a-select>
-      </a-form-item>
-      <a-form-item label="职务" name="positionId">
-        <PositionSelect v-model:value="form.positionId" placeholder="请选择职务" />
       </a-form-item>
 
       <a-form-item label="角色" name="roleIdList">

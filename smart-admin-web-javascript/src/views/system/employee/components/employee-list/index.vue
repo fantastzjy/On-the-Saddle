@@ -10,7 +10,7 @@
 <template>
   <a-card class="employee-container">
     <div class="header">
-      <a-typography-title :level="5">角色人员</a-typography-title>
+      <a-typography-title :level="5">员工列表</a-typography-title>
       <div class="query-operate">
         <a-radio-group v-model:value="params.disabledFlag" style="margin: 8px; flex-shrink: 0" @change="queryEmployeeByKeyword(false)">
           <a-radio-button :value="undefined">全部</a-radio-button>
@@ -37,8 +37,6 @@
     </div>
     <div class="btn-group">
       <a-button class="btn" type="primary" @click="showDrawer" v-privilege="'system:employee:add'">添加成员</a-button>
-      <a-button class="btn" @click="updateEmployeeDepartment" v-privilege="'system:employee:department:update'">调整部门</a-button>
-      <a-button class="btn" @click="batchDelete" v-privilege="'system:employee:delete'">批量删除</a-button>
 
       <span class="smart-table-column-operate">
         <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.SYSTEM.EMPLOYEE" :refresh="queryEmployee" />
@@ -57,9 +55,6 @@
       bordered
     >
       <template #bodyCell="{ text, record, index, column }">
-        <template v-if="column.dataIndex === 'administratorFlag'">
-          <a-tag color="error" v-if="text">超管</a-tag>
-        </template>
         <template v-if="column.dataIndex === 'disabledFlag'">
           <a-tag :color="text ? 'error' : 'processing'">{{ text ? '禁用' : '启用' }}</a-tag>
         </template>
@@ -138,75 +133,56 @@
     {
       title: '姓名',
       dataIndex: 'actualName',
-      width: 85,
-    },
-    {
-      title: '性别',
-      dataIndex: 'gender',
-      width: 70,
-    },
-    {
-      title: '登录账号',
-      dataIndex: 'loginName',
-      width: 100,
-    },
-    {
-      title: '职务',
-      dataIndex: 'positionName',
-      width: 100,
-      ellipsis: true,
+      align: 'center',
     },
     {
       title: '角色',
       dataIndex: 'roleNameList',
-      width: 100,
+      align: 'center',
     },
     {
-      title: '部门',
-      dataIndex: 'departmentName',
-      ellipsis: true,
-      width: 200,
+      title: '性别',
+      dataIndex: 'gender',
+      align: 'center',
     },
-
+    {
+      title: '登录账号',
+      dataIndex: 'loginName',
+      align: 'center',
+    },
     {
       title: '手机号',
       dataIndex: 'phone',
-      width: 85,
+      align: 'center',
     },
     {
       title: '邮箱',
       dataIndex: 'email',
-      width: 100,
       ellipsis: true,
+      align: 'center',
     },
-
     {
       title: '生日',
       dataIndex: 'birthDate',
-      width: 100,
+      align: 'center',
     },
     {
       title: '身份证号码',
       dataIndex: 'idCard',
-      width: 120,
       ellipsis: true,
-    },
-    {
-      title: '超管',
-      dataIndex: 'administratorFlag',
-      width: 60,
+      align: 'center',
     },
     {
       title: '状态',
       dataIndex: 'disabledFlag',
-      width: 60,
+      align: 'center',
     },
-
     {
       title: '操作',
       dataIndex: 'operate',
-      width: 140,
+      width: 200,
       fixed: 'right',
+      align: 'center',
     },
   ]);
   const tableData = ref();

@@ -10,11 +10,11 @@
 <template>
   <div class="height100">
     <a-row :gutter="16" class="height100">
-      <a-col :span="6">
+      <a-col :span="4">
         <RoleList ref="roleList" />
       </a-col>
 
-      <a-col :span="18" class="height100">
+      <a-col :span="20" class="height100">
         <div class="employee-box height100">
           <EmployeeList style="flex-grow: 2.5" class="employee" :roleId="selectedRoleId" />
         </div>

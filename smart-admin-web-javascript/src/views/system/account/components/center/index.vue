@@ -33,9 +33,6 @@
             <a-form-item label="邮箱" name="email">
               <a-input v-model:value.trim="form.email" placeholder="请输入邮箱" />
             </a-form-item>
-            <a-form-item label="职务" name="positionId">
-              <PositionSelect v-model:value="form.positionId" placeholder="请选择职务" />
-            </a-form-item>
             <a-form-item label="备注" name="remark">
               <a-textarea class="form-item" v-model:value="form.remark" placeholder="请输入备注" :rows="4" />
             </a-form-item>

@@ -9,21 +9,10 @@
   *
 -->
 <template>
-  <a-card title="角色列表" class="role-container" style="padding: 0">
-    <template #extra>
-      <a-button type="primary" size="small" @click="showRoleFormModal" v-privilege="'system:role:add'">添加</a-button>
-    </template>
+  <a-card title="角色" class="role-container" style="padding: 0">
     <a-menu mode="vertical" v-model:selectedKeys="selectedKeys">
       <a-menu-item v-for="item in roleList" :key="item.roleId">
-        <a-popover placement="right">
-          <template #content>
-            <div style="display: flex; flex-direction: column">
-              <a-button type="text" @click="deleteRole(item.roleId)" v-privilege="'system:role:delete'">删除</a-button>
-              <a-button type="text" @click="showRoleFormModal(item)" v-privilege="'system:role:update'">编辑</a-button>
-            </div>
-          </template>
-          {{ item.roleName }}
-        </a-popover>
+        {{ item.roleName }}
       </a-menu-item>
     </a-menu>
   </a-card>
@@ -104,6 +93,17 @@
 
     :deep(.ant-card-body) {
       padding: 5px;
+    }
+
+    // 角色菜单居中
+    :deep(.ant-menu-item) {
+      text-align: center;
+      justify-content: center;
+    }
+
+    // 卡片标题居中
+    :deep(.ant-card-head-title) {
+      text-align: center;
     }
   }
   .ant-menu-inline,
