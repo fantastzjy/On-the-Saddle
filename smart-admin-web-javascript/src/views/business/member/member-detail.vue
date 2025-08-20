@@ -469,10 +469,9 @@ function getOrderStatusText(status) {
   const statusMap = {
     1: '待支付',
     2: '已支付',
-    3: '已确认',
-    4: '已完成',
-    5: '已取消',
-    6: '已退款'
+    3: '已核销',
+    4: '已取消',
+    5: '已退款'
   }
   return statusMap[status] || '未知'
 }
@@ -481,10 +480,9 @@ function getOrderStatusColor(status) {
   const colorMap = {
     1: 'orange',   // 待支付
     2: 'blue',     // 已支付
-    3: 'cyan',     // 已确认
-    4: 'green',    // 已完成
-    5: 'red',      // 已取消
-    6: 'purple'    // 已退款
+    3: 'green',    // 已核销
+    4: 'red',      // 已取消
+    5: 'purple'    // 已退款
   }
   return colorMap[status] || 'default'
 }

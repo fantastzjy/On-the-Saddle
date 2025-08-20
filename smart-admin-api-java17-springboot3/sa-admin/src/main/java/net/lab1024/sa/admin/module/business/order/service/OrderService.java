@@ -256,12 +256,12 @@ public class OrderService {
                 return ResponseDTO.userErrorParam("订单不存在");
             }
 
-            if (orderEntity.getOrderStatus() >= 4) {
-                return ResponseDTO.userErrorParam("订单已完成，无法取消");
+            if (orderEntity.getOrderStatus() >= 3) {
+                return ResponseDTO.userErrorParam("订单已核销，无法取消");
             }
 
             // 更新订单状态为已取消
-            orderEntity.setOrderStatus(5);
+            orderEntity.setOrderStatus(4);
             orderEntity.setUpdateTime(LocalDateTime.now());
             if (SmartStringUtil.isNotBlank(cancelReason)) {
                 orderEntity.setRemark(orderEntity.getRemark() + " [取消原因：" + cancelReason + "]");
@@ -390,20 +390,19 @@ public class OrderService {
      * 验证订单状态流转是否合法
      */
     private boolean isValidStatusTransition(Integer currentStatus, Integer newStatus) {
-        // 订单状态：1-待支付 2-已支付 3-已确认 4-已完成 5-已取消
+        // 订单状态：1-待支付 2-已支付 3-已核销 4-已取消 5-已退款
         if (currentStatus.equals(newStatus)) {
             return true;
         }
 
         switch (currentStatus) {
             case 1: // 待支付
-                return newStatus == 2 || newStatus == 5; // 可以支付或取消
+                return newStatus == 2 || newStatus == 4; // 可以支付或取消
             case 2: // 已支付
-                return newStatus == 3 || newStatus == 5; // 可以确认或取消
-            case 3: // 已确认
-                return newStatus == 4 || newStatus == 5; // 可以完成或取消
-            case 4: // 已完成
-            case 5: // 已取消
+                return newStatus == 3 || newStatus == 4 || newStatus == 5; // 可以核销、取消或退款
+            case 3: // 已核销
+            case 4: // 已取消
+            case 5: // 已退款
                 return false; // 终态，不能再变更
             default:
                 return false;
@@ -417,14 +416,15 @@ public class OrderService {
         switch (newStatus) {
             case 2: // 已支付 -> 预约状态不变（仍为待确认）
                 break;
-            case 3: // 已确认 -> 确认所有待确认的预约
+            case 3: // 已核销 -> 确认并完成所有预约
                 orderBookingService.confirmBookingsByOrderId(orderEntity.getOrderId());
-                break;
-            case 4: // 已完成 -> 完成所有预约
                 orderBookingService.completeBookingsByOrderId(orderEntity.getOrderId());
                 break;
-            case 5: // 已取消 -> 取消所有预约
+            case 4: // 已取消 -> 取消所有预约
                 orderBookingService.cancelBookingsByOrderId(orderEntity.getOrderId(), "订单已取消");
+                break;
+            case 5: // 已退款 -> 取消所有预约
+                orderBookingService.cancelBookingsByOrderId(orderEntity.getOrderId(), "订单已退款");
                 break;
         }
     }
@@ -461,10 +461,9 @@ public class OrderService {
         switch (orderStatus) {
             case 1: return "待支付";
             case 2: return "已支付";
-            case 3: return "已确认";
-            case 4: return "已完成";
-            case 5: return "已取消";
-            case 6: return "已退款";
+            case 3: return "已核销";
+            case 4: return "已取消";
+            case 5: return "已退款";
             default: return "未知状态";
         }
     }

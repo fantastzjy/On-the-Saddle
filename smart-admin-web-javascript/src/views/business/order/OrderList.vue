@@ -38,10 +38,9 @@
         >
           <a-select-option value="1">待支付</a-select-option>
           <a-select-option value="2">已支付</a-select-option>
-          <a-select-option value="3">已确认</a-select-option>
-          <a-select-option value="4">已完成</a-select-option>
-          <a-select-option value="5">已取消</a-select-option>
-          <a-select-option value="6">已退款</a-select-option>
+          <a-select-option value="3">已核销</a-select-option>
+          <a-select-option value="4">已取消</a-select-option>
+          <a-select-option value="5">已退款</a-select-option>
         </a-select>
       </a-form-item>
 
@@ -342,10 +341,9 @@ const getOrderStatusColor = (orderStatus) => {
   const colors = {
     1: 'default',    // 待支付
     2: 'processing', // 已支付
-    3: 'warning',    // 已确认
-    4: 'success',    // 已完成
-    5: 'error',      // 已取消
-    6: 'volcano'     // 已退款
+    3: 'success',    // 已核销
+    4: 'error',      // 已取消
+    5: 'volcano'     // 已退款
   };
   return colors[orderStatus] || 'default';
 };
