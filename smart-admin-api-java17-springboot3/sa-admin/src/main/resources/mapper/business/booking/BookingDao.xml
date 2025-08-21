@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.booking.dao.BookingDao">
+
+    <!-- 查询教练时间冲突的预约 -->
+    <select id="findCoachTimeConflicts" resultType="net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity">
+        SELECT * FROM m_booking 
+        WHERE coach_id = #{coachId}
+        AND booking_status = 2 
+        AND booking_id != #{excludeBookingId}
+        AND (
+            (start_time &lt;= #{startTime} AND end_time &gt; #{startTime}) OR
+            (start_time &lt; #{endTime} AND end_time &gt;= #{endTime}) OR  
+            (start_time &gt;= #{startTime} AND end_time &lt;= #{endTime})
+        )
+    </select>
+
+    <!-- 查询马匹时间冲突的预约 -->
+    <select id="findHorseTimeConflicts" resultType="net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity">
+        SELECT * FROM m_booking 
+        WHERE horse_id = #{horseId}
+        AND booking_status = 2
+        AND booking_id != #{excludeBookingId}
+        AND (
+            (start_time &lt;= #{startTime} AND end_time &gt; #{startTime}) OR
+            (start_time &lt; #{endTime} AND end_time &gt;= #{endTime}) OR
+            (start_time &gt;= #{startTime} AND end_time &lt;= #{endTime})
+        )
+    </select>
+
+</mapper>

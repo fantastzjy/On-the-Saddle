@@ -106,5 +106,19 @@ export const bookingApi = {
    */
   getAvailableTimeSlots: (params) => {
     return getRequest('/api/admin/booking/availableTimeSlots', params)
+  },
+
+  /**
+   * 预约改期
+   */
+  rescheduleBooking: (data) => {
+    return postRequest('/api/admin/booking/reschedule', data)
+  },
+
+  /**
+   * 改期冲突检测
+   */
+  checkRescheduleConflict: (data) => {
+    return postRequest('/api/admin/booking/checkRescheduleConflict', data)
   }
 }

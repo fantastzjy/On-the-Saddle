@@ -299,50 +299,43 @@
     <!-- 快速操作 -->
     <a-card title="快速操作" v-if="bookingDetail.bookingStatus === 2">
       <a-space>
-        <a-button 
-          type="primary" 
-          @click="checkinBooking"
-          v-privilege="'business:booking:checkin'"
-        >
-          <LoginOutlined />
-          核销预约
-        </a-button>
-        <a-button 
-          @click="rescheduleBooking"
-          v-privilege="'business:booking:reschedule'"
-        >
-          <SwapOutlined />
-          改期
-        </a-button>
-        <a-button 
-          @click="addBookingRecord"
-          v-privilege="'business:booking:record'"
-        >
-          <FileAddOutlined />
-          添加记录
-        </a-button>
+        <!-- 未核销时显示核销和改期按钮 -->
+        <template v-if="!bookingDetail.arrivalTime">
+          <a-button 
+            type="primary" 
+            @click="checkinBooking"
+            v-privilege="'business:booking:checkin'"
+          >
+            <LoginOutlined />
+            核销预约
+          </a-button>
+          
+          <a-button 
+            @click="showRescheduleModal"
+            v-privilege="'business:booking:reschedule'"
+          >
+            <SwapOutlined />
+            改期
+          </a-button>
+        </template>
+        
+        <!-- 已核销时显示核销记录 -->
+        <template v-else>
+          <a-descriptions title="核销记录" :column="1">
+            <a-descriptions-item label="核销时间">
+              {{ formatDateTime(bookingDetail.arrivalTime) }}
+            </a-descriptions-item>
+          </a-descriptions>
+        </template>
       </a-space>
     </a-card>
 
-    <a-card title="快速操作" v-else-if="bookingDetail.bookingStatus === 3">
-      <a-space>
-        <a-button 
-          type="primary" 
-          @click="completeBooking"
-          v-privilege="'business:booking:complete'"
-        >
-          <CheckCircleOutlined />
-          完成预约
-        </a-button>
-        <a-button 
-          @click="addBookingRecord"
-          v-privilege="'business:booking:record'"
-        >
-          <FileAddOutlined />
-          添加记录
-        </a-button>
-      </a-space>
-    </a-card>
+    <!-- 改期弹窗 -->
+    <BookingRescheduleModal
+      v-model:visible="rescheduleModalVisible"
+      :booking-info="bookingDetail"
+      @success="onRescheduleSuccess"
+    />
   </div>
 </template>
 
@@ -368,6 +361,7 @@ import {
 import { bookingApi } from '/@/api/business/booking/booking-api';
 import { smartSentry } from '/@/lib/smart-sentry';
 import { COURSE_LEVEL_REVERSE_MAP } from '/@/views/business/member/constants/member-constants';
+import BookingRescheduleModal from './components/BookingRescheduleModal.vue';
 import dayjs from 'dayjs';
 
 const route = useRoute();
@@ -376,6 +370,9 @@ const router = useRouter();
 // 响应式数据
 const loading = ref(false);
 const bookingDetail = ref({});
+
+// 改期弹窗相关
+const rescheduleModalVisible = ref(false);
 
 // 生命周期
 onMounted(() => {
@@ -480,6 +477,19 @@ const completeBooking = async () => {
 
 const rescheduleBooking = () => {
   message.info('改期功能待实现');
+};
+
+// 改期相关方法
+const showRescheduleModal = () => {
+  console.log('BookingDetail - bookingDetail data:', bookingDetail.value);
+  console.log('BookingDetail - startTime:', bookingDetail.value.startTime, typeof bookingDetail.value.startTime);
+  console.log('BookingDetail - endTime:', bookingDetail.value.endTime, typeof bookingDetail.value.endTime);
+  rescheduleModalVisible.value = true;
+};
+
+const onRescheduleSuccess = () => {
+  rescheduleModalVisible.value = false;
+  loadBookingDetail(); // 刷新预约详情
 };
 
 const addBookingRecord = () => {

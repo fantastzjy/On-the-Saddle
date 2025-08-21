@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.booking.dao.BookingDao;
 import net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity;
 import net.lab1024.sa.admin.module.business.booking.domain.form.BookingQueryForm;
+import net.lab1024.sa.admin.module.business.booking.domain.form.BookingRescheduleForm;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingDetailVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingListVO;
+import net.lab1024.sa.admin.module.business.booking.domain.vo.ConflictCheckResult;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
@@ -19,8 +21,11 @@ import net.lab1024.sa.admin.module.business.horse.dao.HorseDao;
 import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
+import net.lab1024.sa.admin.module.business.schedule.dao.LessonScheduleDao;
+import net.lab1024.sa.admin.module.business.schedule.domain.entity.LessonScheduleEntity;
 import net.lab1024.sa.admin.module.system.employee.dao.EmployeeDao;
 import net.lab1024.sa.admin.module.system.employee.domain.entity.EmployeeEntity;
+import net.lab1024.sa.base.module.support.operatelog.OperateLogService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -69,6 +74,12 @@ public class BookingService {
 
 	@Autowired
 	private EmployeeDao employeeDao;
+
+	@Autowired
+	private LessonScheduleDao scheduleDao;
+
+	@Autowired
+	private OperateLogService operateLogService;
 
 	/**
 	 * 分页查询预约列表
@@ -370,8 +381,8 @@ public class BookingService {
 				return ResponseDTO.userErrorParam("只有已确认的预约才能核销");
 			}
 
-			booking.setBookingStatus(4); // 已完成
-			booking.setCompletionTime(LocalDateTime.now());
+			// 只记录核销时间，不改变状态
+			booking.setArrivalTime(LocalDateTime.now());
 			booking.setUpdateTime(LocalDateTime.now());
 			bookingDao.updateById(booking);
 
@@ -646,5 +657,89 @@ public class BookingService {
 			default:
 				return "未知";
 		}
+	}
+
+	/**
+	 * 预约改期
+	 */
+	@Transactional(rollbackFor = Exception.class)
+	public ResponseDTO<Void> rescheduleBooking(Long bookingId, BookingRescheduleForm rescheduleForm) {
+		try {
+			// 1. 校验预约状态
+			BookingEntity booking = bookingDao.selectById(bookingId);
+			if (booking == null) {
+				return ResponseDTO.userErrorParam("预约不存在");
+			}
+			
+			if (booking.getBookingStatus() != 2) {
+				return ResponseDTO.userErrorParam("只有已确认的预约才能改期");
+			}
+			
+			// 2. 校验新时间的可用性（教练、马匹冲突检测）
+			ConflictCheckResult conflictResult = checkTimeConflict(
+				booking.getCoachId(), 
+				booking.getHorseId(),
+				rescheduleForm.getNewStartTime(),
+				rescheduleForm.getNewEndTime(),
+				bookingId // 排除当前预约
+			);
+			
+			if (conflictResult.isHasConflict()) {
+				return ResponseDTO.userErrorParam("新时间段存在冲突：" + conflictResult.getConflictMessage());
+			}
+			
+			// 3. 记录原时间用于日志
+			LocalDateTime originalStartTime = booking.getStartTime();
+			
+			// 4. 更新预约时间
+			booking.setStartTime(rescheduleForm.getNewStartTime());
+			booking.setEndTime(rescheduleForm.getNewEndTime());
+			booking.setUpdateTime(LocalDateTime.now());
+			bookingDao.updateById(booking);
+			
+			// 5. 同步更新课表时间
+			LessonScheduleEntity schedule = scheduleDao.selectByBookingId(bookingId);
+			if (schedule != null) {
+				schedule.setStartTime(rescheduleForm.getNewStartTime());
+				schedule.setEndTime(rescheduleForm.getNewEndTime());
+				schedule.setLessonDate(rescheduleForm.getNewStartTime().toLocalDate());
+				scheduleDao.updateById(schedule);
+			}
+			
+			// 6. 记录改期日志
+			log.info("预约改期成功，预约ID：{}，原时间：{}，新时间：{}", 
+				bookingId, originalStartTime, rescheduleForm.getNewStartTime());
+			
+			return ResponseDTO.ok();
+			
+		} catch (Exception e) {
+			log.error("预约改期失败，预约ID：{}", bookingId, e);
+			return ResponseDTO.userErrorParam("预约改期失败");
+		}
+	}
+
+	/**
+	 * 时间冲突检测
+	 */
+	public ConflictCheckResult checkTimeConflict(Long coachId, Long horseId, 
+	                                           LocalDateTime startTime, LocalDateTime endTime, 
+	                                           Long excludeBookingId) {
+		ConflictCheckResult result = new ConflictCheckResult();
+		
+		// 检查教练时间冲突
+		List<BookingEntity> coachConflicts = bookingDao.findCoachTimeConflicts(
+			coachId, startTime, endTime, excludeBookingId);
+		if (!coachConflicts.isEmpty()) {
+			result.addConflict("教练", coachConflicts);
+		}
+		
+		// 检查马匹时间冲突  
+		List<BookingEntity> horseConflicts = bookingDao.findHorseTimeConflicts(
+			horseId, startTime, endTime, excludeBookingId);
+		if (!horseConflicts.isEmpty()) {
+			result.addConflict("马匹", horseConflicts);
+		}
+		
+		return result;
 	}
 }

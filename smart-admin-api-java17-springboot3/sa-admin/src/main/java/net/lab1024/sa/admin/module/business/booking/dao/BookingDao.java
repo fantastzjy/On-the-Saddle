@@ -64,4 +64,20 @@ public interface BookingDao extends BaseMapper<BookingEntity> {
      * 统计预约数量
      */
     int countBookingsByStatus(@Param("clubId") Long clubId, @Param("bookingStatus") Integer bookingStatus);
+
+    /**
+     * 查询教练时间冲突的预约
+     */
+    List<BookingEntity> findCoachTimeConflicts(@Param("coachId") Long coachId,
+                                             @Param("startTime") LocalDateTime startTime,
+                                             @Param("endTime") LocalDateTime endTime,
+                                             @Param("excludeBookingId") Long excludeBookingId);
+
+    /**
+     * 查询马匹时间冲突的预约  
+     */
+    List<BookingEntity> findHorseTimeConflicts(@Param("horseId") Long horseId,
+                                             @Param("startTime") LocalDateTime startTime,
+                                             @Param("endTime") LocalDateTime endTime,
+                                             @Param("excludeBookingId") Long excludeBookingId);
 }

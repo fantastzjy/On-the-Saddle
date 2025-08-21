@@ -5,8 +5,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.booking.domain.form.BatchBookingForm;
 import net.lab1024.sa.admin.module.business.booking.domain.form.BookingQueryForm;
+import net.lab1024.sa.admin.module.business.booking.domain.form.BookingRescheduleForm;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingDetailVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingListVO;
+import net.lab1024.sa.admin.module.business.booking.domain.vo.ConflictCheckResult;
 import net.lab1024.sa.admin.module.business.booking.service.BookingService;
 import net.lab1024.sa.base.common.controller.SupportBaseController;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -70,6 +72,12 @@ public class BookingController extends SupportBaseController {
         return bookingService.cancelBooking(bookingId, reason);
     }
 
+    @Operation(summary = "预约改期", description = "修改预约时间，自动检测时间冲突")
+    @PostMapping("/reschedule")
+    public ResponseDTO<Void> rescheduleBooking(@RequestBody @Valid BookingRescheduleForm rescheduleForm) {
+        return bookingService.rescheduleBooking(rescheduleForm.getBookingId(), rescheduleForm);
+    }
+
     // ========================================
     // 批量操作
     // ========================================
@@ -105,10 +113,20 @@ public class BookingController extends SupportBaseController {
     }
 
     @Operation(summary = "预约时间冲突检测", description = "检测预约时间是否冲突")
-    @PostMapping("/checkConflict")
-    public ResponseDTO<Object> checkTimeConflict(@RequestBody Object data) {
-        // 实现时间冲突检测逻辑
-        return ResponseDTO.ok("时间冲突检测功能待实现");
+    @PostMapping("/checkRescheduleConflict")
+    public ResponseDTO<ConflictCheckResult> checkRescheduleConflict(@RequestBody @Valid BookingRescheduleForm rescheduleForm) {
+        BookingDetailVO booking = bookingService.getBookingDetail(rescheduleForm.getBookingId()).getData();
+        if (booking == null) {
+            return ResponseDTO.userErrorParam("预约不存在");
+        }
+        
+        ConflictCheckResult result = bookingService.checkTimeConflict(
+            booking.getCoachId(), booking.getHorseId(),
+            rescheduleForm.getNewStartTime(), rescheduleForm.getNewEndTime(),
+            rescheduleForm.getBookingId()
+        );
+        
+        return ResponseDTO.ok(result);
     }
 
     @Operation(summary = "获取可用时间段", description = "获取指定条件下的可用时间段")

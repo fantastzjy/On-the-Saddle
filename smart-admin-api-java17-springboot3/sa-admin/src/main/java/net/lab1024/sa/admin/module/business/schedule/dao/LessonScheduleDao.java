@@ -3,6 +3,7 @@ package net.lab1024.sa.admin.module.business.schedule.dao;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import net.lab1024.sa.admin.module.business.schedule.domain.entity.LessonScheduleEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 课单表Dao
@@ -13,5 +14,10 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface LessonScheduleDao extends BaseMapper<LessonScheduleEntity> {
+
+    /**
+     * 根据预约ID查询课单
+     */
+    LessonScheduleEntity selectByBookingId(@Param("bookingId") Long bookingId);
 
 }

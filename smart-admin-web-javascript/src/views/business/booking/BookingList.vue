@@ -130,9 +130,14 @@
         </template>
 
         <template v-else-if="column.dataIndex === 'bookingStatus'">
-          <a-tag :color="getStatusColor(text)">
-            {{ getStatusName(text) }}
-          </a-tag>
+          <a-space direction="vertical" size="small">
+            <a-tag :color="getStatusColor(text)">
+              {{ getStatusName(text) }}
+            </a-tag>
+            <a-tag v-if="record.arrivalTime" color="success" size="small">
+              已核销 {{ formatTime(record.arrivalTime) }}
+            </a-tag>
+          </a-space>
         </template>
 
         <template v-else-if="column.dataIndex === 'bookingDate'">
@@ -160,33 +165,33 @@
         <template v-else-if="column.dataIndex === 'action'">
           <a-space>
             <a @click="showBookingDetail(record)" v-privilege="'business:booking:detail'">详情</a>
-            <a 
-              @click="confirmBooking(record)" 
-              v-if="record.bookingStatus === 1"
-              v-privilege="'business:booking:confirm'"
-            >
-              确认
-            </a>
+            
+            <!-- 已确认且未核销：显示核销和改期 -->
+            <template v-if="record.bookingStatus === 2 && !record.arrivalTime">
+              <a 
+                @click="checkinBooking(record)" 
+                v-privilege="'business:booking:checkin'"
+                style="color: #52c41a;"
+              >
+                核销
+              </a>
+              <a 
+                @click="showRescheduleModal(record)" 
+                v-privilege="'business:booking:reschedule'"
+                style="color: #1890ff;"
+              >
+                改期
+              </a>
+            </template>
+            
+            <!-- 已确认但未核销：可以取消 -->
             <a 
               @click="cancelBooking(record)" 
-              v-if="record.bookingStatus <= 2"
+              v-if="record.bookingStatus === 2 && !record.arrivalTime"
               v-privilege="'business:booking:cancel'"
+              style="color: #ff4d4f;"
             >
               取消
-            </a>
-            <a 
-              @click="checkinBooking(record)" 
-              v-if="record.bookingStatus === 2"
-              v-privilege="'business:booking:checkin'"
-            >
-              核销
-            </a>
-            <a 
-              @click="editBooking(record)" 
-              v-if="record.bookingStatus <= 2"
-              v-privilege="'business:booking:update'"
-            >
-              编辑
             </a>
           </a-space>
         </template>
@@ -209,6 +214,13 @@
         :showTotal="(total) => `共${total}条`"
       />
     </div>
+
+    <!-- 改期弹窗 -->
+    <BookingRescheduleModal
+      v-model:visible="rescheduleModalVisible"
+      :booking-info="currentBookingInfo"
+      @success="onRescheduleSuccess"
+    />
   </div>
 </template>
 
@@ -228,6 +240,7 @@ import { smartSentry } from '/@/lib/smart-sentry';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 import TableOperator from '/@/components/support/table-operator/index.vue';
+import BookingRescheduleModal from './components/BookingRescheduleModal.vue';
 import dayjs from 'dayjs';
 
 // 常量定义
@@ -327,6 +340,10 @@ const rowSelection = {
 
 // 其他数据
 const coachList = ref([]);
+
+// 改期弹窗相关
+const rescheduleModalVisible = ref(false);
+const currentBookingInfo = ref(null);
 
 // 生命周期
 onMounted(() => {
@@ -535,6 +552,26 @@ const formatDate = (date) => {
 
 const filterOption = (input, option) => {
   return option.children[0].children.toLowerCase().includes(input.toLowerCase());
+};
+
+// 改期相关方法
+const showRescheduleModal = (record) => {
+  console.log('BookingList - record data:', record);
+  console.log('BookingList - startTime:', record.startTime, typeof record.startTime);
+  console.log('BookingList - endTime:', record.endTime, typeof record.endTime);
+  currentBookingInfo.value = record;
+  rescheduleModalVisible.value = true;
+};
+
+const onRescheduleSuccess = () => {
+  rescheduleModalVisible.value = false;
+  currentBookingInfo.value = null;
+  queryData(); // 刷新数据
+};
+
+const formatTime = (dateTime) => {
+  if (!dateTime) return '';
+  return dayjs(dateTime).format('HH:mm');
 };
 </script>
 
