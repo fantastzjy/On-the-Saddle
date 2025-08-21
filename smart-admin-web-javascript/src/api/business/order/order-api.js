@@ -60,6 +60,13 @@ export const orderApi = {
   },
 
   /**
+   * 核销预约
+   */
+  completeBooking: (bookingId) => {
+    return postRequest(`/api/admin/order/booking/complete/${bookingId}`)
+  },
+
+  /**
    * 订单统计
    */
   getOrderStatistics: (clubId) => {

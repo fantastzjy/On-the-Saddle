@@ -43,7 +43,14 @@
               ¥{{ orderDetail.paidAmount || 0 }}
             </a-descriptions-item>
             <a-descriptions-item label="支付方式">
-              {{ orderDetail.paymentMethod || '-' }}
+              <a-tag v-if="orderDetail.paymentMethod" 
+                     :color="getPaymentMethodConfig(orderDetail.paymentMethod).color">
+                <template #icon>
+                  <component :is="getPaymentMethodConfig(orderDetail.paymentMethod).icon + '-outlined'" />
+                </template>
+                {{ orderDetail.paymentMethodName || getPaymentMethodConfig(orderDetail.paymentMethod).name }}
+              </a-tag>
+              <span v-else>-</span>
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
@@ -67,7 +74,9 @@
       <a-divider />
       <a-descriptions title="会员信息" :column="2" bordered>
         <a-descriptions-item label="会员姓名">
-          {{ orderDetail.memberName }}
+          <a-button type="link" @click="goToMemberDetail" :disabled="!orderDetail.memberId" style="padding: 0; height: auto;">
+            {{ orderDetail.memberName }}
+          </a-button>
         </a-descriptions-item>
         <a-descriptions-item label="联系电话">
           {{ orderDetail.memberPhone }}
@@ -151,31 +160,13 @@
           <template v-if="column.dataIndex === 'action'">
             <a-space>
               <a-button 
-                v-if="record.bookingStatus === 1" 
-                size="small" 
-                type="link"
-                @click="confirmBooking(record)"
-                v-privilege="'business:booking:confirm'"
-              >
-                确认预约
-              </a-button>
-              <a-button 
                 v-if="record.bookingStatus === 2" 
                 size="small" 
-                type="link"
-                @click="startBooking(record)"
-                v-privilege="'business:booking:start'"
-              >
-                开始上课
-              </a-button>
-              <a-button 
-                v-if="record.bookingStatus === 3" 
-                size="small" 
-                type="link"
+                type="primary"
                 @click="completeBooking(record)"
                 v-privilege="'business:booking:complete'"
               >
-                完成上课
+                核销
               </a-button>
               <a-button 
                 size="small" 
@@ -202,6 +193,7 @@ import {
 } from '@ant-design/icons-vue';
 import { orderApi } from '/@/api/business/order/order-api';
 import { smartSentry } from '/@/lib/smart-sentry';
+import { getPaymentMethodConfig } from '/@/config/payment-config';
 import dayjs from 'dayjs';
 
 const route = useRoute();
@@ -317,16 +309,29 @@ const goBack = () => {
   router.back();
 };
 
+const goToMemberDetail = () => {
+  if (orderDetail.value.memberId) {
+    router.push({ name: 'MemberDetail', params: { memberId: orderDetail.value.memberId } });
+  }
+};
+
 const confirmBooking = (booking) => {
   message.info('确认预约功能需要与预约管理模块集成');
 };
 
-const startBooking = (booking) => {
-  message.info('开始上课功能需要与预约管理模块集成');
-};
-
-const completeBooking = (booking) => {
-  message.info('完成上课功能需要与预约管理模块集成');
+const completeBooking = async (booking) => {
+  try {
+    const res = await orderApi.completeBooking(booking.bookingId);
+    if (res.ok) {
+      message.success('核销成功');
+      loadOrderDetail(); // 重新加载订单详情
+    } else {
+      message.error('核销失败：' + res.msg);
+    }
+  } catch (error) {
+    message.error('核销失败');
+    smartSentry.captureError(error);
+  }
 };
 
 const viewBookingDetail = (booking) => {

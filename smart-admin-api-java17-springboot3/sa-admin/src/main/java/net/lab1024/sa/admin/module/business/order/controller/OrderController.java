@@ -9,6 +9,7 @@ import net.lab1024.sa.admin.module.business.order.domain.form.OrderStatusUpdateF
 import net.lab1024.sa.admin.module.business.order.domain.vo.OrderDetailVO;
 import net.lab1024.sa.admin.module.business.order.domain.vo.OrderListVO;
 import net.lab1024.sa.admin.module.business.order.service.OrderService;
+import net.lab1024.sa.admin.module.business.order.service.OrderBookingService;
 import net.lab1024.sa.base.common.controller.SupportBaseController;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -34,6 +35,9 @@ public class OrderController extends SupportBaseController {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private OrderBookingService orderBookingService;
 
     // ========================================
     // 订单基础CRUD操作
@@ -101,6 +105,16 @@ public class OrderController extends SupportBaseController {
         updateForm.setOrderStatus(4); // 已完成
         updateForm.setRemark("订单完成");
         return orderService.updateOrderStatus(updateForm);
+    }
+
+    // ========================================
+    // 预约操作接口
+    // ========================================
+
+    @Operation(summary = "核销预约", description = "核销单个预约，从已确认状态直接跳转到已完成")
+    @PostMapping("/booking/complete/{bookingId}")
+    public ResponseDTO<Void> completeBooking(@PathVariable Long bookingId) {
+        return orderBookingService.completeBooking(bookingId);
     }
 
     // ========================================

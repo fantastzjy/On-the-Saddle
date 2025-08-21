@@ -94,7 +94,6 @@
         <a-col :span="8">
           <a-descriptions title="教练信息" :column="1" bordered>
             <a-descriptions-item label="教练姓名">
-              <a-avatar size="small" :src="scheduleDetail.coachAvatar" style="margin-right: 8px;" />
               <a 
                 @click="navigateToCoachDetail" 
                 style="color: #1890ff; cursor: pointer; text-decoration: none;"

@@ -60,6 +60,9 @@ public class OrderDetailVO {
     @Schema(description = "支付方式")
     private String paymentMethod;
 
+    @Schema(description = "支付方式名称")
+    private String paymentMethodName;
+
     @Schema(description = "支付时间")
     private LocalDateTime paymentTime;
 

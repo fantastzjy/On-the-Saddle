@@ -107,7 +107,7 @@
         </a-button>
       </div>
       <div class="smart-table-setting-block">
-        <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.BOOKING.BOOKING" :refresh="queryData" />
+        <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.SCHEDULE.BOOKING" :refresh="queryData" />
       </div>
     </a-row>
 

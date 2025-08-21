@@ -118,7 +118,8 @@ public class OrderBookingService {
     }
 
     /**
-     * 完成订单的所有预约
+     * 完成订单的所有预约（核销功能）
+     * 支持从已确认状态直接跳转到已完成状态
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> completeBookingsByOrderId(Long orderId) {
@@ -129,7 +130,8 @@ public class OrderBookingService {
             );
             
             for (BookingEntity booking : bookings) {
-                if (booking.getBookingStatus() < 4) { // 未完成状态
+                // 修改状态校验：支持从已确认(2)或进行中(3)状态直接跳转到已完成(4)
+                if (booking.getBookingStatus() == 2 || booking.getBookingStatus() == 3) {
                     booking.setBookingStatus(4); // 已完成
                     booking.setCompletionTime(LocalDateTime.now());
                     booking.setUpdateTime(LocalDateTime.now());
@@ -137,6 +139,8 @@ public class OrderBookingService {
                     
                     // 同步更新课表状态
                     scheduleService.updateScheduleStatusByBooking(booking.getBookingId(), 4);
+                    
+                    log.info("预约核销成功，预约ID：{}，从状态{}直接跳转到已完成", booking.getBookingId(), booking.getBookingStatus());
                 }
             }
 
@@ -146,6 +150,41 @@ public class OrderBookingService {
         } catch (Exception e) {
             log.error("完成订单{}的预约失败", orderId, e);
             return ResponseDTO.userErrorParam("完成预约失败");
+        }
+    }
+
+    /**
+     * 核销单个预约
+     * 支持从已确认状态直接跳转到已完成状态
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseDTO<Void> completeBooking(Long bookingId) {
+        try {
+            BookingEntity booking = bookingDao.selectById(bookingId);
+            if (booking == null) {
+                return ResponseDTO.userErrorParam("预约不存在");
+            }
+            
+            // 状态校验：只有已确认(2)的预约才能核销
+            if (booking.getBookingStatus() != 2) {
+                return ResponseDTO.userErrorParam("只有已确认的预约才能核销");
+            }
+            
+            // 直接设置为已完成
+            booking.setBookingStatus(4); // 已完成
+            booking.setCompletionTime(LocalDateTime.now());
+            booking.setUpdateTime(LocalDateTime.now());
+            bookingDao.updateById(booking);
+            
+            // 同步更新课表状态
+            scheduleService.updateScheduleStatusByBooking(bookingId, 4);
+            
+            log.info("单个预约核销成功，预约ID：{}，从已确认直接跳转到已完成", bookingId);
+            return ResponseDTO.ok();
+            
+        } catch (Exception e) {
+            log.error("预约核销失败，预约ID：{}", bookingId, e);
+            return ResponseDTO.userErrorParam("核销失败：" + e.getMessage());
         }
     }
 

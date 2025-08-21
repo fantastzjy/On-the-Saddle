@@ -25,6 +25,16 @@ export const scheduleRouters = [
         }
       },
       {
+        path: 'booking',
+        name: 'ScheduleBooking',
+        component: () => import('/@/views/business/booking/BookingList.vue'),
+        meta: {
+          title: '预约管理',
+          requireAuth: true,
+          privilege: 'business:booking:query'
+        }
+      },
+      {
         path: 'add',
         name: 'ScheduleAdd',
         component: () => import('/@/views/business/schedule/ScheduleAdd.vue'),
@@ -57,7 +67,7 @@ export const scheduleRouters = [
     ]
   },
   
-  // 预约管理
+  // 预约管理（独立路由，保持向后兼容）
   {
     path: '/booking',
     name: 'Booking',
@@ -82,6 +92,16 @@ export const scheduleRouters = [
           title: '新增预约',
           requireAuth: true,
           privilege: 'business:booking:add'
+        }
+      },
+      {
+        path: 'edit/:id',
+        name: 'BookingEdit',
+        component: () => import('/@/views/business/booking/BookingAdd.vue'),
+        meta: {
+          title: '编辑预约',
+          requireAuth: true,
+          privilege: 'business:booking:update'
         }
       },
       {

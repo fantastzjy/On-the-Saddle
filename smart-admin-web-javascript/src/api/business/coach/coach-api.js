@@ -15,6 +15,11 @@ export const coachApi = {
     return postRequest('/club/coach/page/query', param);
   },
 
+  // 分页查询教练列表（别名方法，用于预约管理页面）
+  getCoachList: (param) => {
+    return postRequest('/club/coach/page/query', param);
+  },
+
   // 查询教练详情
   detail: (coachId) => {
     return getRequest(`/club/coach/get/${coachId}`);

@@ -52,9 +52,6 @@
       <a-row :gutter="24">
         <a-col :span="12">
           <a-descriptions title="预约信息" :column="1" bordered>
-            <a-descriptions-item label="预约单号">
-              {{ bookingDetail.bookingNo }}
-            </a-descriptions-item>
             <a-descriptions-item label="预约状态">
               <a-tag :color="getStatusColor(bookingDetail.bookingStatus)">
                 {{ bookingDetail.bookingStatusName }}
@@ -62,19 +59,22 @@
             </a-descriptions-item>
             <a-descriptions-item label="课程类型">
               <a-tag :color="getLessonTypeColor(bookingDetail.lessonType)">
-                {{ bookingDetail.lessonTypeName }}
+                {{ bookingDetail.lessonType }}
               </a-tag>
             </a-descriptions-item>
             <a-descriptions-item label="预约费用">
               <span style="font-size: 18px; font-weight: bold; color: #ff4d4f;">
-                ¥{{ bookingDetail.totalFee }}
+                ¥{{ bookingDetail.totalFee || 0 }}
               </span>
             </a-descriptions-item>
-            <a-descriptions-item label="预付款">
-              ¥{{ bookingDetail.deposit || 0 }}
+            <a-descriptions-item label="教练费用">
+              ¥{{ bookingDetail.actualCoachFee || 0 }}
+            </a-descriptions-item>
+            <a-descriptions-item label="马匹费用">
+              ¥{{ bookingDetail.actualHorseFee || 0 }}
             </a-descriptions-item>
             <a-descriptions-item label="付费方式">
-              {{ getPaymentMethodName(bookingDetail.paymentMethod) }}
+              {{ bookingDetail.paymentMethod || '未设置' }}
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
@@ -85,61 +85,73 @@
               {{ formatDate(bookingDetail.bookingDate) }}
             </a-descriptions-item>
             <a-descriptions-item label="开始时间">
-              {{ bookingDetail.startTime }}
+              {{ formatDateTime(bookingDetail.startTime) }}
             </a-descriptions-item>
             <a-descriptions-item label="结束时间">
-              {{ bookingDetail.endTime }}
+              {{ formatDateTime(bookingDetail.endTime) }}
             </a-descriptions-item>
             <a-descriptions-item label="课程时长">
-              {{ bookingDetail.duration }} 分钟
+              {{ bookingDetail.duration || 0 }} 分钟
             </a-descriptions-item>
             <a-descriptions-item label="创建时间">
               {{ formatDateTime(bookingDetail.createTime) }}
             </a-descriptions-item>
-            <a-descriptions-item label="确认时间">
-              {{ formatDateTime(bookingDetail.confirmTime) }}
+            <a-descriptions-item label="核销时间" v-if="bookingDetail.arrivalTime">
+              {{ formatDateTime(bookingDetail.arrivalTime) }}
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
       </a-row>
 
-      <!-- 参与人员信息 -->
+      <!-- 参与人员信息 - 完全统一为课程详情页面格式 -->
       <a-divider />
       <a-row :gutter="24">
         <a-col :span="8">
-          <a-descriptions title="会员信息" :column="1" bordered>
-            <a-descriptions-item label="会员姓名">
-              <a-avatar size="small" :src="bookingDetail.memberInfo?.avatar" style="margin-right: 8px;" />
-              {{ bookingDetail.memberInfo?.name }}
+          <a-descriptions title="教练信息" :column="1" bordered>
+            <a-descriptions-item label="教练姓名">
+              <a 
+                @click="navigateToCoachDetail" 
+                style="color: #1890ff; cursor: pointer; text-decoration: none;"
+                @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+                @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+              >
+                {{ bookingDetail.coachName }}
+                <LinkOutlined style="margin-left: 4px; font-size: 12px;" />
+              </a>
             </a-descriptions-item>
             <a-descriptions-item label="联系电话">
-              {{ bookingDetail.memberInfo?.phone }}
+              {{ bookingDetail.coachPhone || '未提供' }}
             </a-descriptions-item>
-            <a-descriptions-item label="会员等级">
-              <a-tag :color="getMemberLevelColor(bookingDetail.memberInfo?.memberLevel)">
-                {{ bookingDetail.memberInfo?.memberLevelName }}
-              </a-tag>
+            <a-descriptions-item label="专业特长">
+              {{ bookingDetail.coachSpecialties }}
             </a-descriptions-item>
-            <a-descriptions-item label="骑乘经验">
-              {{ bookingDetail.memberInfo?.ridingExperience }}
+            <a-descriptions-item label="等级">
+              {{ bookingDetail.coachLevel }}
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
         
         <a-col :span="8">
-          <a-descriptions title="教练信息" :column="1" bordered>
-            <a-descriptions-item label="教练姓名">
-              <a-avatar size="small" :src="bookingDetail.coachInfo?.avatar" style="margin-right: 8px;" />
-              {{ bookingDetail.coachInfo?.name }}
+          <a-descriptions title="会员信息" :column="1" bordered>
+            <a-descriptions-item label="会员姓名">
+              <a 
+                @click="navigateToMemberDetail" 
+                style="color: #1890ff; cursor: pointer; text-decoration: none;"
+                @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+                @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+              >
+                {{ bookingDetail.memberName }}
+                <LinkOutlined style="margin-left: 4px; font-size: 12px;" />
+              </a>
             </a-descriptions-item>
             <a-descriptions-item label="联系电话">
-              {{ bookingDetail.coachInfo?.phone }}
+              {{ bookingDetail.memberPhone }}
             </a-descriptions-item>
-            <a-descriptions-item label="专业特长">
-              {{ bookingDetail.coachInfo?.specialties }}
+            <a-descriptions-item label="默认教练">
+              {{ bookingDetail.defaultCoachName || '未设置' }}
             </a-descriptions-item>
-            <a-descriptions-item label="等级">
-              {{ bookingDetail.coachInfo?.level }}
+            <a-descriptions-item label="课程级别">
+              {{ getCourseLevelText(bookingDetail.memberLevel) || '未设置' }}
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
@@ -147,29 +159,62 @@
         <a-col :span="8">
           <a-descriptions title="马匹信息" :column="1" bordered>
             <a-descriptions-item label="马匹名称">
-              {{ bookingDetail.horseInfo?.name }}
+              <a 
+                @click="navigateToHorseDetail" 
+                style="color: #1890ff; cursor: pointer; text-decoration: none;"
+                @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+                @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+              >
+                {{ bookingDetail.horseName }}
+                <LinkOutlined style="margin-left: 4px; font-size: 12px;" />
+              </a>
             </a-descriptions-item>
             <a-descriptions-item label="品种">
-              {{ bookingDetail.horseInfo?.breed }}
+              {{ bookingDetail.horseBreed }}
             </a-descriptions-item>
             <a-descriptions-item label="年龄">
-              {{ bookingDetail.horseInfo?.age }} 岁
+              {{ bookingDetail.horseAge }} 岁
             </a-descriptions-item>
-            <a-descriptions-item label="性格特点">
-              {{ bookingDetail.horseInfo?.temperament }}
+            <a-descriptions-item label="健康状态">
+              <a-tag :color="getHealthStatusColor(bookingDetail.horseHealthStatus)">
+                {{ bookingDetail.horseHealthStatus }}
+              </a-tag>
             </a-descriptions-item>
           </a-descriptions>
         </a-col>
       </a-row>
 
+      <!-- 商品信息 -->
+      <a-divider />
+      <div>
+        <h4 style="margin-bottom: 16px;">
+          <BookOutlined style="margin-right: 8px;" />
+          商品信息
+        </h4>
+        <a-descriptions :column="2" bordered>
+          <a-descriptions-item label="商品名称">
+            {{ bookingDetail.productName || '未设置' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="商品类型">
+            {{ bookingDetail.productType || '未设置' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="商品价格">
+            ¥{{ bookingDetail.productPrice || 0 }}
+          </a-descriptions-item>
+          <a-descriptions-item label="难度等级">
+            {{ bookingDetail.difficultyLevel || '未设置' }}
+          </a-descriptions-item>
+        </a-descriptions>
+      </div>
+
       <!-- 联系信息 -->
       <a-divider />
       <a-descriptions title="联系信息" :column="2" bordered>
         <a-descriptions-item label="联系人">
-          {{ bookingDetail.contactName }}
+          {{ bookingDetail.contactName || bookingDetail.memberName }}
         </a-descriptions-item>
         <a-descriptions-item label="联系电话">
-          {{ bookingDetail.contactPhone }}
+          {{ bookingDetail.contactPhone || bookingDetail.memberPhone }}
         </a-descriptions-item>
       </a-descriptions>
 
@@ -187,7 +232,7 @@
           min-height: 100px;
           white-space: pre-wrap;
         ">
-          {{ bookingDetail.bookingNotes || '暂无备注' }}
+          {{ bookingDetail.bookingNotes || bookingDetail.memberRemark || '暂无备注' }}
         </div>
       </div>
 
@@ -219,26 +264,17 @@
             <HistoryOutlined style="margin-right: 8px;" />
             预约记录
           </h4>
-          <a-descriptions :column="2" bordered v-if="bookingDetail.bookingRecord">
-            <a-descriptions-item label="实际开始时间">
-              {{ bookingDetail.bookingRecord.actualStartTime }}
+          <a-descriptions :column="2" bordered>
+            <a-descriptions-item label="核销时间">
+              {{ formatDateTime(bookingDetail.arrivalTime) || '未核销' }}
             </a-descriptions-item>
-            <a-descriptions-item label="实际结束时间">
-              {{ bookingDetail.bookingRecord.actualEndTime }}
+            <a-descriptions-item label="完成时间">
+              {{ formatDateTime(bookingDetail.completionTime) || '未完成' }}
             </a-descriptions-item>
-            <a-descriptions-item label="服务评价" :span="2">
-              {{ bookingDetail.bookingRecord.serviceEvaluation }}
-            </a-descriptions-item>
-            <a-descriptions-item label="客户反馈" :span="2">
-              {{ bookingDetail.bookingRecord.customerFeedback }}
-            </a-descriptions-item>
-            <a-descriptions-item label="处理备注" :span="2">
-              {{ bookingDetail.bookingRecord.processingNotes }}
+            <a-descriptions-item label="取消原因" :span="2" v-if="bookingDetail.cancelReason">
+              {{ bookingDetail.cancelReason }}
             </a-descriptions-item>
           </a-descriptions>
-          <div v-else style="text-align: center; color: #999; padding: 40px;">
-            暂无预约记录
-          </div>
         </div>
       </div>
 
@@ -325,10 +361,13 @@ import {
   LoginOutlined,
   SwapOutlined,
   FileAddOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  BookOutlined,
+  LinkOutlined
 } from '@ant-design/icons-vue';
 import { bookingApi } from '/@/api/business/booking/booking-api';
 import { smartSentry } from '/@/lib/smart-sentry';
+import { COURSE_LEVEL_REVERSE_MAP } from '/@/views/business/member/constants/member-constants';
 import dayjs from 'dayjs';
 
 const route = useRoute();
@@ -496,6 +535,52 @@ const formatDate = (date) => {
 const formatDateTime = (dateTime) => {
   if (!dateTime) return '-';
   return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss');
+};
+
+const getHealthStatusColor = (status) => {
+  if (status === '健康') return 'success';
+  if (status === '轻微不适') return 'warning';
+  if (status === '需要休息') return 'orange';
+  if (status === '康复中') return 'blue';
+  if (status === '停止工作') return 'error';
+  return 'default';
+};
+
+// 课程级别转换函数
+const getCourseLevelText = (level) => {
+  if (!level) return '';
+  return COURSE_LEVEL_REVERSE_MAP[level] || level;
+};
+
+// 链接跳转功能
+const navigateToCoachDetail = () => {
+  if (bookingDetail.value.coachId) {
+    const url = router.resolve({ 
+      name: 'CoachDetail', 
+      params: { id: bookingDetail.value.coachId } 
+    }).href;
+    window.open(url, '_blank');
+  }
+};
+
+const navigateToMemberDetail = () => {
+  if (bookingDetail.value.memberId) {
+    const url = router.resolve({ 
+      name: 'MemberDetail', 
+      params: { id: bookingDetail.value.memberId } 
+    }).href;
+    window.open(url, '_blank');
+  }
+};
+
+const navigateToHorseDetail = () => {
+  if (bookingDetail.value.horseId) {
+    const url = router.resolve({ 
+      name: 'HorseDetail', 
+      params: { id: bookingDetail.value.horseId } 
+    }).href;
+    window.open(url, '_blank');
+  }
 };
 </script>
 

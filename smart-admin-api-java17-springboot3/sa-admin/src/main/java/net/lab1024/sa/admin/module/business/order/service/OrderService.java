@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.booking.dao.BookingDao;
 import net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity;
+import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
+import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
 import net.lab1024.sa.admin.module.business.order.dao.OrderItemDao;
 import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
@@ -15,6 +17,7 @@ import net.lab1024.sa.admin.module.business.order.domain.form.OrderQueryForm;
 import net.lab1024.sa.admin.module.business.order.domain.form.OrderStatusUpdateForm;
 import net.lab1024.sa.admin.module.business.order.domain.vo.OrderDetailVO;
 import net.lab1024.sa.admin.module.business.order.domain.vo.OrderListVO;
+import net.lab1024.sa.admin.module.business.order.domain.enums.PaymentMethodEnum;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
@@ -56,6 +59,9 @@ public class OrderService {
 
     @Autowired
     private OrderBookingService orderBookingService;
+
+    @Autowired
+    private MemberDao memberDao;
 
     // ========================================
     // 订单核心业务逻辑
@@ -171,6 +177,15 @@ public class OrderService {
 
             OrderDetailVO orderDetailVO = SmartBeanUtil.copy(orderEntity, OrderDetailVO.class);
 
+            // 补充会员信息
+            if (orderEntity.getMemberId() != null) {
+                MemberEntity member = memberDao.selectById(orderEntity.getMemberId());
+                if (member != null) {
+                    orderDetailVO.setMemberName(member.getActualName());
+                    orderDetailVO.setMemberPhone(member.getPhone());
+                }
+            }
+
             // 补充订单明细
             List<OrderItemEntity> orderItems = orderItemDao.selectList(
                 new LambdaQueryWrapper<OrderItemEntity>()
@@ -224,6 +239,7 @@ public class OrderService {
                 case 2: // 已支付
                     orderEntity.setPaymentTime(LocalDateTime.now());
                     orderEntity.setPaidAmount(orderEntity.getTotalAmount());
+                    log.info("订单支付成功，订单ID：{}，将自动确认预约", updateForm.getOrderId());
                     break;
             }
 
@@ -234,7 +250,18 @@ public class OrderService {
             orderDao.updateById(orderEntity);
 
             // 根据订单状态变更，触发相应的预约状态变更
-            handleOrderStatusChange(orderEntity, updateForm.getOrderStatus());
+            try {
+                handleOrderStatusChange(orderEntity, updateForm.getOrderStatus());
+            } catch (Exception e) {
+                log.error("处理订单状态变更时发生异常，订单ID：{}，状态：{}", updateForm.getOrderId(), updateForm.getOrderStatus(), e);
+                // 如果是支付状态但预约确认失败，需要记录异常但不回滚订单状态
+                if (updateForm.getOrderStatus() == 2) {
+                    log.warn("订单支付成功但预约确认失败，订单ID：{}，需要人工处理", updateForm.getOrderId());
+                    // 可以在这里添加告警或重试机制
+                } else {
+                    throw e; // 其他状态变更失败则抛出异常，触发事务回滚
+                }
+            }
 
             log.info("更新订单状态成功，订单ID：{}，新状态：{}", updateForm.getOrderId(), updateForm.getOrderStatus());
             return ResponseDTO.ok();
@@ -370,6 +397,9 @@ public class OrderService {
     private void enhanceOrderDetailData(OrderDetailVO orderDetail) {
         orderDetail.setOrderTypeName(getOrderTypeName(orderDetail.getOrderType()));
         orderDetail.setOrderStatusName(getOrderStatusName(orderDetail.getOrderStatus()));
+        
+        // 补充支付方式名称
+        orderDetail.setPaymentMethodName(PaymentMethodEnum.getNameByCode(orderDetail.getPaymentMethod()));
 
         // 补充订单明细中的类型名称
         if (orderDetail.getOrderItems() != null) {
@@ -414,10 +444,10 @@ public class OrderService {
      */
     private void handleOrderStatusChange(OrderEntity orderEntity, Integer newStatus) {
         switch (newStatus) {
-            case 2: // 已支付 -> 预约状态不变（仍为待确认）
-                break;
-            case 3: // 已核销 -> 确认并完成所有预约
+            case 2: // 已支付 -> 自动确认所有预约并生成课表
                 orderBookingService.confirmBookingsByOrderId(orderEntity.getOrderId());
+                break;
+            case 3: // 已核销 -> 完成所有预约
                 orderBookingService.completeBookingsByOrderId(orderEntity.getOrderId());
                 break;
             case 4: // 已取消 -> 取消所有预约
