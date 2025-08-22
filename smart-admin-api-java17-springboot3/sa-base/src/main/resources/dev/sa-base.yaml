@@ -106,7 +106,8 @@ springdoc:
   swagger-ui:
     enabled: true # 开关
     doc-expansion: none  #关闭展开
-    tags-sorter: alpha
+    tags-sorter: original   # original=原始顺序(代码顺序), alpha=字母排序
+    operations-sorter: method  # method=按HTTP方法和代码顺序, alpha=字母排序
     server-base-url:
   api-docs:
     enabled: true # 开关

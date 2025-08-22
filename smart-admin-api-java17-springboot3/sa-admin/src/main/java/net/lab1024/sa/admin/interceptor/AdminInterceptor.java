@@ -8,11 +8,15 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.admin.module.business.member.constant.MemberAppConst;
+import net.lab1024.sa.admin.module.business.member.domain.RequestMember;
+import net.lab1024.sa.admin.module.business.member.service.MemberAppService;
 import net.lab1024.sa.admin.module.system.login.domain.RequestEmployee;
 import net.lab1024.sa.admin.module.system.login.service.LoginService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.code.SystemErrorCode;
 import net.lab1024.sa.base.common.code.UserErrorCode;
+import net.lab1024.sa.base.common.domain.RequestUser;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartRequestUtil;
 import net.lab1024.sa.base.common.util.SmartResponseUtil;
@@ -41,6 +45,9 @@ public class AdminInterceptor implements HandlerInterceptor {
     @Resource
     private LoginService loginService;
 
+    @Resource
+    private MemberAppService memberAppService;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
@@ -60,34 +67,64 @@ public class AdminInterceptor implements HandlerInterceptor {
 
             String tokenValue = StpUtil.getTokenValue();
             String loginId = (String) StpUtil.getLoginIdByToken(tokenValue);
-            RequestEmployee requestEmployee = loginService.getLoginEmployee(loginId, request);
+            
+            // 判断是否为会员token
+            boolean isMemberToken = tokenValue != null && tokenValue.startsWith(MemberAppConst.MEMBER_TOKEN_PREFIX);
+            
+            Object requestUser = null;
+            if (isMemberToken) {
+                // 会员登录逻辑
+                requestUser = memberAppService.getLoginMember(loginId, request);
+            } else {
+                // 员工登录逻辑
+                requestUser = loginService.getLoginEmployee(loginId, request);
+            }
 
             // --------------- 第二步： 校验 登录 ---------------
 
             Method method = ((HandlerMethod) handler).getMethod();
             NoNeedLogin noNeedLogin = ((HandlerMethod) handler).getMethodAnnotation(NoNeedLogin.class);
             if (noNeedLogin != null) {
-                checkActiveTimeout(requestEmployee);
+                if (isMemberToken) {
+                    checkMemberActiveTimeout((RequestMember) requestUser);
+                } else {
+                    checkActiveTimeout((RequestEmployee) requestUser);
+                }
                 return true;
             }
 
-            if (requestEmployee == null) {
+            if (requestUser == null) {
                 SmartResponseUtil.write(response, ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID));
                 return false;
             }
 
             // 检测token 活跃频率
-            checkActiveTimeout(requestEmployee);
-
+            if (isMemberToken) {
+                checkMemberActiveTimeout((RequestMember) requestUser);
+            } else {
+                checkActiveTimeout((RequestEmployee) requestUser);
+            }
 
             // --------------- 第三步： 校验 权限 ---------------
 
-            SmartRequestUtil.setRequestUser(requestEmployee);
+            SmartRequestUtil.setRequestUser((RequestUser) requestUser);
             if (SaAnnotationStrategy.instance.isAnnotationPresent.apply(method, SaIgnore.class)) {
                 return true;
             }
 
-            // 如果是超级管理员的话，不需要校验权限
+            // 会员请求不需要复杂的权限校验，只检查基本状态
+            if (isMemberToken) {
+                RequestMember requestMember = (RequestMember) requestUser;
+                // 检查会员状态
+                if (requestMember.getDisabledFlag() != null && requestMember.getDisabledFlag() == 1) {
+                    SmartResponseUtil.write(response, ResponseDTO.error(UserErrorCode.NO_PERMISSION));
+                    return false;
+                }
+                return true;
+            }
+
+            // 如果是员工超级管理员的话，不需要校验权限
+            RequestEmployee requestEmployee = (RequestEmployee) requestUser;
             if (requestEmployee.getAdministratorFlag()) {
                 return true;
             }
@@ -127,6 +164,19 @@ public class AdminInterceptor implements HandlerInterceptor {
     private void checkActiveTimeout(RequestEmployee requestEmployee) {
         // 用户不在线，也不用检测
         if (requestEmployee == null) {
+            return;
+        }
+
+        StpUtil.checkActiveTimeout();
+        StpUtil.updateLastActiveToNow();
+    }
+
+    /**
+     * 检测会员token活跃频率
+     */
+    private void checkMemberActiveTimeout(RequestMember requestMember) {
+        // 会员不在线，也不用检测
+        if (requestMember == null) {
             return;
         }
 

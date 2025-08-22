@@ -1,6 +1,9 @@
 package net.lab1024.sa.base.common.util;
 
+import cn.hutool.extra.servlet.JakartaServletUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.base.common.constant.RequestHeaderConst;
 import net.lab1024.sa.base.common.domain.RequestUser;
 
 /**
@@ -33,6 +36,20 @@ public class SmartRequestUtil {
 
     public static void remove() {
         REQUEST_THREAD_LOCAL.remove();
+    }
+
+    /**
+     * 获取客户端IP
+     */
+    public static String getIp(HttpServletRequest request) {
+        return JakartaServletUtil.getClientIP(request);
+    }
+
+    /**
+     * 获取用户代理
+     */
+    public static String getUserAgent(HttpServletRequest request) {
+        return JakartaServletUtil.getHeaderIgnoreCase(request, RequestHeaderConst.USER_AGENT);
     }
 
 

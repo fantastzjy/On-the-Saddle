@@ -65,12 +65,12 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .components(components())
                 .info(new Info()
-                        .title("SmartAdmin 3.X 接口文档")
-                        .contact(new Contact().name("1024创新实验室").email("lab1024@163.com").url("https://1024lab.net"))
-                        .version("v3.X")
-                        .description("<font color=\"#DC143C\">**以「高质量代码」为核心，「简洁、高效、安全」**</font>基于 SpringBoot + Sa-Token + Mybatis-Plus 和 Vue3 + Vite5 + Ant Design (同时支持JavaScript和TypeScript双版本) 的快速开发平台。" +
-                                "<br/><font color=\"#DC143C\">**国内首个满足《网络安全》、《数据安全》、三级等保**</font>， 支持登录限制、支持国产接口加解密等安全、支持数据加解密等一系列安全体系的开源项目。" +
-                                "<br/><font color=\"#DC143C\">**我们开源一套漂亮的代码和一套整洁的代码规范**</font>，让大家在这浮躁的代码世界里感受到一股把代码写好的清流！同时又让开发者节省大量的时间，减少加班，快乐工作，保持谦逊，保持学习，热爱代码，更热爱生活！")
+                        .title("鞍境接口文档")
+                        // .contact(new Contact().name("1024创新实验室").email("lab1024@163.com").url("https://1024lab.net"))
+                        // .version("v3.X")
+                        // .description("<font color=\"#DC143C\">**以「高质量代码」为核心，「简洁、高效、安全」**</font>基于 SpringBoot + Sa-Token + Mybatis-Plus 和 Vue3 + Vite5 + Ant Design (同时支持JavaScript和TypeScript双版本) 的快速开发平台。" +
+                        //         "<br/><font color=\"#DC143C\">**国内首个满足《网络安全》、《数据安全》、三级等保**</font>， 支持登录限制、支持国产接口加解密等安全、支持数据加解密等一系列安全体系的开源项目。" +
+                        //         "<br/><font color=\"#DC143C\">**我们开源一套漂亮的代码和一套整洁的代码规范**</font>，让大家在这浮躁的代码世界里感受到一股把代码写好的清流！同时又让开发者节省大量的时间，减少加班，快乐工作，保持谦逊，保持学习，热爱代码，更热爱生活！")
                 )
                 .addSecurityItem(new SecurityRequirement().addList(RequestHeaderConst.TOKEN));
     }
@@ -81,11 +81,20 @@ public class SwaggerConfig {
     }
 
     @Bean
+    public GroupedOpenApi memberAppApi() {
+        return GroupedOpenApi.builder()
+                .group("1-小程序接口")  // 数字前缀确保排序
+                .pathsToMatch("/app/member/**")
+                .addOperationCustomizer(new SmartOperationCustomizer())
+                .build();
+    }
+
+    @Bean
     public GroupedOpenApi businessApi() {
         return GroupedOpenApi.builder()
-                .group("业务接口")
+                .group("2-业务接口")
                 .pathsToMatch("/**")
-                .pathsToExclude(SwaggerTagConst.Support.URL_PREFIX + "/**")
+                .pathsToExclude(SwaggerTagConst.Support.URL_PREFIX + "/**", "/app/member/**")
                 .addOperationCustomizer(new SmartOperationCustomizer())
                 .build();
 
@@ -94,7 +103,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi supportApi() {
         return GroupedOpenApi.builder()
-                .group("支撑接口(Support)")
+                .group("3-支撑接口(Support)")  // 添加数字前缀
                 .pathsToMatch(SwaggerTagConst.Support.URL_PREFIX + "/**")
                 .addOperationCustomizer(new SmartOperationCustomizer())
                 .build();
