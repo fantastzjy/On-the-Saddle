@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import jakarta.annotation.Resource;
+import net.lab1024.sa.admin.module.business.coach.service.CoachService;
 import net.lab1024.sa.admin.module.system.department.dao.DepartmentDao;
 import net.lab1024.sa.admin.module.system.department.domain.entity.DepartmentEntity;
 import net.lab1024.sa.admin.module.system.department.domain.vo.DepartmentVO;
@@ -31,6 +32,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,6 +46,7 @@ import java.util.stream.Collectors;
  * @Email lab1024@163.com
  * @Copyright <a href="https://1024lab.net">1024创新实验室</a>
  */
+@Slf4j
 @Service
 public class EmployeeService {
 
@@ -64,6 +67,11 @@ public class EmployeeService {
 
     @Resource
     private SecurityPasswordService securityPasswordService;
+
+    @Resource
+    private CoachService coachService;
+
+    private static final Long COACH_ROLE_ID = 36L; // 教练角色ID
 
     @Resource
     @Lazy
@@ -420,19 +428,43 @@ public class EmployeeService {
     }
 
     /**
-     * 根据角色查询员工列表(分页)
+     * 根据角色查询员工列表(分页) - 智能路由  TODO
      */
     public ResponseDTO<PageResult<EmployeeVO>> queryEmployeeByRole(EmployeeByRoleQueryForm queryForm) {
+        try {
+            // 如果是教练角色，直接查询教练表
+            if (isCoachRole(queryForm.getRoleId())) {
+                return coachService.queryCoachAsEmployees(queryForm);
+            }
+
+            // 其他角色查询普通员工表，排除占位员工
+            return queryNormalEmployeeByRole(queryForm);
+
+        } catch (Exception e) {
+            log.error("按角色查询员工失败", e);
+            return ResponseDTO.userErrorParam("查询失败");
+        }
+    }
+
+    /**
+     * 查询普通员工（排除教练占位员工）
+     */
+    private ResponseDTO<PageResult<EmployeeVO>> queryNormalEmployeeByRole(EmployeeByRoleQueryForm queryForm) {
         queryForm.setDeletedFlag(false);
         Page pageParam = SmartPageUtil.convert2PageQuery(queryForm);
 
-        List<EmployeeVO> employeeList = employeeDao.queryEmployeeByRole(pageParam, queryForm.getRoleId(), 
+        List<EmployeeVO> employeeList = employeeDao.queryEmployeeByRole(pageParam, queryForm.getRoleId(),
                 queryForm.getKeyword(), queryForm.getDisabledFlag(), queryForm.getDeletedFlag());
-        
+
         if (CollectionUtils.isEmpty(employeeList)) {
             PageResult<EmployeeVO> pageResult = SmartPageUtil.convert2PageResult(pageParam, employeeList);
             return ResponseDTO.ok(pageResult);
         }
+
+        // 过滤掉教练占位员工
+        employeeList = employeeList.stream()
+                .filter(emp -> !isCoachPlaceholderEmployee(emp.getEmployeeId()))
+                .collect(Collectors.toList());
 
         // 查询员工角色
         List<Long> employeeIdList = employeeList.stream().map(EmployeeVO::getEmployeeId).collect(Collectors.toList());
@@ -451,7 +483,7 @@ public class EmployeeService {
             e.setDepartmentName(departmentService.getDepartmentPath(e.getDepartmentId()));
             e.setPositionName(positionNameMap.get(e.getPositionId()));
         });
-        
+
         PageResult<EmployeeVO> pageResult = SmartPageUtil.convert2PageResult(pageParam, employeeList);
         return ResponseDTO.ok(pageResult);
     }
@@ -461,6 +493,26 @@ public class EmployeeService {
      */
     public EmployeeEntity getByLoginName(String loginName) {
         return employeeDao.getByLoginName(loginName, false);
+    }
+
+    /**
+     * 判断是否为教练角色
+     */
+    private boolean isCoachRole(Long roleId) {
+        return COACH_ROLE_ID.equals(roleId);
+    }
+
+    /**
+     * 判断是否为教练占位员工
+     */
+    private boolean isCoachPlaceholderEmployee(Long employeeId) {
+        if (employeeId == null) return false;
+        try {
+            EmployeeEntity employee = employeeDao.selectById(employeeId);
+            return employee != null && Integer.valueOf(2).equals(employee.getEmployeeType());
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }

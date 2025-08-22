@@ -1,5 +1,7 @@
 package net.lab1024.sa.admin.module.business.coach.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
@@ -9,20 +11,31 @@ import net.lab1024.sa.admin.module.business.coach.domain.form.CoachQueryForm;
 import net.lab1024.sa.admin.module.business.coach.domain.form.CoachUpdateForm;
 import net.lab1024.sa.admin.module.business.coach.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.coach.domain.vo.CoachVO;
+import net.lab1024.sa.admin.module.system.employee.dao.EmployeeDao;
+import net.lab1024.sa.admin.module.system.employee.domain.entity.EmployeeEntity;
+import net.lab1024.sa.admin.module.system.employee.domain.form.EmployeeByRoleQueryForm;
+import net.lab1024.sa.admin.module.system.employee.domain.vo.EmployeeVO;
+import net.lab1024.sa.admin.module.system.role.service.RoleEmployeeService;
+import net.lab1024.sa.admin.module.system.role.domain.form.RoleEmployeeUpdateForm;
+import java.util.Set;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
+import net.lab1024.sa.base.common.util.SmartStringUtil;
 import net.lab1024.sa.base.module.support.datatracer.constant.DataTracerTypeEnum;
 import net.lab1024.sa.base.module.support.datatracer.service.DataTracerService;
 import net.lab1024.sa.base.module.support.operatelog.annotation.OperateLog;
 import org.apache.commons.lang3.StringUtils;
+import net.lab1024.sa.base.module.support.securityprotect.service.SecurityPasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 教练管理服务
@@ -42,6 +55,18 @@ public class CoachService {
 
     @Resource
     private DataTracerService dataTracerService;
+
+    @Resource
+    private EmployeeDao employeeDao;
+
+    @Resource
+    private RoleEmployeeService roleEmployeeService;
+
+    @Resource
+    private SecurityPasswordService securityPasswordService;
+
+    private static final Long COACH_DEPARTMENT_ID = 100L; // 教练部门ID
+    private static final Long COACH_ROLE_ID = 36L; // 教练角色ID
 
     /**
      * 分页查询教练
@@ -79,29 +104,53 @@ public class CoachService {
             }
         }
 
-        // 校验俱乐部和用户ID的唯一性
-        CoachEntity existCoachByClubUser = coachDao.selectByClubAndUser(createForm.getClubId(), createForm.getUserId());
-        if (existCoachByClubUser != null) {
-            return ResponseDTO.userErrorParam("该用户在此俱乐部已存在教练记录");
+        try {
+            // 1. 创建简单的员工占位记录（仅用于ID绑定）
+            EmployeeEntity employee = createPlaceholderEmployee(createForm);
+            employeeDao.insert(employee);
+
+            // 2. 创建教练记录（包含冗余的基础信息）
+            CoachEntity coachEntity = SmartBeanUtil.copy(createForm, CoachEntity.class);
+            coachEntity.setUserId(employee.getEmployeeId());
+
+            // 设置冗余字段
+            coachEntity.setActualName(createForm.getActualName());
+            coachEntity.setPhone(createForm.getPhone());
+            coachEntity.setEmail(createForm.getEmail());
+            coachEntity.setGender(createForm.getGender());
+            coachEntity.setBirthDate(createForm.getBirthDate());
+            coachEntity.setIdCard(createForm.getIdCard());
+            coachEntity.setDepartmentId(COACH_DEPARTMENT_ID);
+
+            coachEntity.setCreateTime(LocalDateTime.now());
+            coachEntity.setUpdateTime(LocalDateTime.now());
+            coachEntity.setIsValid(1);
+            coachEntity.setIsDelete(0);
+
+            // 设置默认排序
+            if (coachEntity.getSortOrder() == null) {
+                coachEntity.setSortOrder(0);
+            }
+
+            coachDao.insert(coachEntity);
+
+            // 3. 分配教练角色
+            if (COACH_ROLE_ID != null) {
+                RoleEmployeeUpdateForm roleForm = new RoleEmployeeUpdateForm();
+                roleForm.setRoleId(COACH_ROLE_ID);
+                roleForm.setEmployeeIdList(Set.of(employee.getEmployeeId()));
+                roleEmployeeService.batchAddRoleEmployee(roleForm);
+            }
+
+            // 记录数据变动
+            dataTracerService.insert(coachEntity.getCoachId(), DataTracerTypeEnum.CLUB_COACH);
+
+            return ResponseDTO.ok();
+
+        } catch (Exception e) {
+            log.error("创建教练失败", e);
+            return ResponseDTO.userErrorParam("创建教练失败: " + e.getMessage());
         }
-
-        CoachEntity coachEntity = SmartBeanUtil.copy(createForm, CoachEntity.class);
-        coachEntity.setCreateTime(LocalDateTime.now());
-        coachEntity.setUpdateTime(LocalDateTime.now());
-        coachEntity.setIsValid(1);
-        coachEntity.setIsDelete(0);
-        
-        // 设置默认排序
-        if (coachEntity.getSortOrder() == null) {
-            coachEntity.setSortOrder(0);
-        }
-
-        coachDao.insert(coachEntity);
-
-        // 记录数据变动
-        dataTracerService.insert(coachEntity.getCoachId(), DataTracerTypeEnum.CLUB_COACH);
-
-        return ResponseDTO.ok();
     }
 
     /**
@@ -167,5 +216,112 @@ public class CoachService {
     public ResponseDTO<List<CoachListVO>> queryList(Integer isValid, Long clubId) {
         List<CoachListVO> coachList = coachDao.queryList(isValid, clubId);
         return ResponseDTO.ok(coachList);
+    }
+
+    /**
+     * 教练作为员工查询 - 直接查教练表
+     */
+    public ResponseDTO<PageResult<EmployeeVO>> queryCoachAsEmployees(EmployeeByRoleQueryForm queryForm) {
+        try {
+            // 直接查询教练表，不联表员工表
+            LambdaQueryWrapper<CoachEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(CoachEntity::getIsDelete, 0)
+                   .eq(CoachEntity::getIsValid, 1);
+
+            // 关键字搜索（搜索教练表的冗余字段）
+            if (SmartStringUtil.isNotBlank(queryForm.getKeyword())) {
+                wrapper.and(w -> w.like(CoachEntity::getActualName, queryForm.getKeyword())
+                               .or().like(CoachEntity::getPhone, queryForm.getKeyword())
+                               .or().like(CoachEntity::getCoachNo, queryForm.getKeyword()));
+            }
+
+            wrapper.orderByAsc(CoachEntity::getSortOrder)
+                   .orderByDesc(CoachEntity::getCreateTime);
+
+            // 分页查询
+            Page<CoachEntity> page = new Page<>(queryForm.getPageNum(), queryForm.getPageSize());
+            IPage<CoachEntity> pageResult = coachDao.selectPage(page, wrapper);
+
+            // 转换为EmployeeVO格式
+            List<EmployeeVO> employeeVOList = pageResult.getRecords().stream()
+                .map(this::convertCoachToEmployeeVO)
+                .collect(Collectors.toList());
+
+            PageResult<EmployeeVO> result = new PageResult<>();
+            result.setList(employeeVOList);
+            result.setTotal(pageResult.getTotal());
+            result.setPageNum(pageResult.getCurrent());
+            result.setPageSize(pageResult.getSize());
+
+            return ResponseDTO.ok(result);
+
+        } catch (Exception e) {
+            log.error("查询教练作为员工失败", e);
+            return ResponseDTO.userErrorParam("查询教练员工失败");
+        }
+    }
+
+    /**
+     * 将教练转换为员工VO
+     */
+    private EmployeeVO convertCoachToEmployeeVO(CoachEntity coach) {
+        EmployeeVO vo = new EmployeeVO();
+
+        // 基础信息来自教练表的冗余字段
+        vo.setEmployeeId(coach.getUserId()); // 绑定的员工ID
+        vo.setActualName(coach.getActualName());
+        vo.setPhone(coach.getPhone());
+        vo.setEmail(coach.getEmail());
+        vo.setGender(coach.getGender());
+        vo.setBirthDate(coach.getBirthDate());
+        vo.setIdCard(coach.getIdCard());
+        vo.setDepartmentId(coach.getDepartmentId());
+
+        // 教练专业信息 - 扩展字段
+        vo.setCoachId(coach.getCoachId());
+        vo.setCoachNo(coach.getCoachNo());
+        vo.setCoachLevel(coach.getCoachLevel());
+        vo.setSpecialties(coach.getSpecialties());
+
+        // 角色信息
+        vo.setRoleNameList(Arrays.asList("教练"));
+
+        // 备注显示教练专业信息
+        StringBuilder remark = new StringBuilder();
+        if (SmartStringUtil.isNotBlank(coach.getCoachLevel())) {
+            remark.append("等级: ").append(coach.getCoachLevel());
+        }
+        if (SmartStringUtil.isNotBlank(coach.getSpecialties())) {
+            if (remark.length() > 0) remark.append(" | ");
+            remark.append("专长: ").append(coach.getSpecialties());
+        }
+        vo.setRemark(remark.toString());
+
+        // 状态信息
+        vo.setDisabledFlag(coach.getIsValid() == 0);
+        vo.setDeletedFlag(coach.getIsDelete() == 1);
+
+        return vo;
+    }
+
+    /**
+     * 创建占位员工记录（最简化）
+     */
+    private EmployeeEntity createPlaceholderEmployee(CoachCreateForm form) {
+        EmployeeEntity employee = new EmployeeEntity();
+
+        // 最基本的必填信息
+        employee.setLoginName("coach_" + form.getCoachNo());
+        employee.setLoginPwd(SecurityPasswordService.getEncryptPwd("temp_pass_" + System.currentTimeMillis()));
+        employee.setActualName(form.getActualName()); // 同步姓名，保持一致性
+        employee.setDepartmentId(COACH_DEPARTMENT_ID);
+
+        // 标记为占位员工
+        employee.setEmployeeType(2);
+        employee.setDisabledFlag(true); // 禁用登录
+        employee.setDeletedFlag(false);
+        employee.setAdministratorFlag(false);
+
+        return employee;
     }
 }

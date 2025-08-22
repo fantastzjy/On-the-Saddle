@@ -293,11 +293,11 @@ const columns = ref([
     dataIndex: 'horseName',
     width: 100
   },
-  {
-    title: '课程类型',
-    dataIndex: 'lessonTypeName',
-    width: 100
-  },
+  // {
+  //   title: '课程类型',
+  //   dataIndex: 'lessonTypeName',
+  //   width: 100
+  // },
   {
     title: '费用',
     dataIndex: 'totalFee',

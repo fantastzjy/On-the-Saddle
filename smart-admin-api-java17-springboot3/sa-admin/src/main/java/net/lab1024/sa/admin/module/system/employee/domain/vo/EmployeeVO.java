@@ -75,4 +75,24 @@ public class EmployeeVO {
     @DataMasking(DataMaskingTypeEnum.ID_CARD)
     private String idCard;
 
+    @Schema(description = "是否删除")
+    private Boolean deletedFlag;
+
+    @Schema(description = "备注")
+    private String remark;
+
+    // ========== 教练扩展字段 ==========
+
+    @Schema(description = "教练ID（仅教练角色时有值）")
+    private Long coachId;
+
+    @Schema(description = "教练编号（仅教练角色时有值）")
+    private String coachNo;
+
+    @Schema(description = "教练等级（仅教练角色时有值）")
+    private String coachLevel;
+
+    @Schema(description = "教练专长（仅教练角色时有值）")
+    private String specialties;
+
 }

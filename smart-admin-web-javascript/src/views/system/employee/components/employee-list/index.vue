@@ -46,7 +46,7 @@
     <a-table
       :row-selection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }"
       size="small"
-      :columns="columns"
+      :columns="computedColumns"
       :data-source="tableData"
       :pagination="false"
       :loading="tableLoading"
@@ -63,14 +63,24 @@
         </template>
         <template v-else-if="column.dataIndex === 'operate'">
           <div class="smart-table-operate">
-            <a-button v-privilege="'system:employee:update'" type="link" size="small" @click="showModal(record)">编辑</a-button>
-            <a-button
-              v-privilege="'system:employee:password:reset'"
-              type="link"
-              size="small"
-              @click="resetPassword(record.employeeId, record.loginName)"
-              >重置密码</a-button
-            >
+            <!-- 教练员工特有操作 -->
+            <template v-if="record.isCoach">
+              <a-button type="link" size="small" @click="viewCoachDetail(record.coachId)">教练详情</a-button>
+              <a-button type="link" size="small" @click="editCoach(record.coachId)">编辑教练</a-button>
+            </template>
+            
+            <!-- 普通员工操作 -->
+            <template v-else>
+              <a-button v-privilege="'system:employee:update'" type="link" size="small" @click="showModal(record)">编辑</a-button>
+              <a-button
+                v-privilege="'system:employee:password:reset'"
+                type="link"
+                size="small"
+                @click="resetPassword(record.employeeId, record.loginName)"
+                >重置密码</a-button
+              >
+            </template>
+            
             <a-button v-privilege="'system:employee:disabled'" type="link" @click="updateDisabled(record.employeeId, record.disabledFlag)">{{
               record.disabledFlag ? '启用' : '禁用'
             }}</a-button>
@@ -217,21 +227,19 @@
     tableLoading.value = true;
     try {
       if (props.roleId) {
-        // 按角色查询员工
+        // 按角色查询员工 - 后端会自动路由到对应的查询方法
         params.roleId = props.roleId;
         let res = await employeeApi.queryEmployeeByRole(params);
-        for (const item of res.data.list) {
-          item.roleNameList = _.join(item.roleNameList, ',');
-        }
+        
+        // 处理数据，为教练角色添加特殊标记
+        processEmployeeData(res.data.list);
         tableData.value = res.data.list;
         total.value = res.data.total;
       } else {
         // 没有选择角色时，显示所有员工
         params.departmentId = undefined; // 不按部门筛选
         let res = await employeeApi.queryEmployee(params);
-        for (const item of res.data.list) {
-          item.roleNameList = _.join(item.roleNameList, ',');
-        }
+        processEmployeeData(res.data.list);
         tableData.value = res.data.list;
         total.value = res.data.total;
       }
@@ -254,27 +262,21 @@
         // 选择全部时，显示所有员工
         params.departmentId = undefined;
         let res = await employeeApi.queryEmployee(params);
-        for (const item of res.data.list) {
-          item.roleNameList = _.join(item.roleNameList, ',');
-        }
+        processEmployeeData(res.data.list);
         tableData.value = res.data.list;
         total.value = res.data.total;
       } else if (props.roleId) {
         // 按选中的角色查询
         params.roleId = props.roleId;
         let res = await employeeApi.queryEmployeeByRole(params);
-        for (const item of res.data.list) {
-          item.roleNameList = _.join(item.roleNameList, ',');
-        }
+        processEmployeeData(res.data.list);
         tableData.value = res.data.list;
         total.value = res.data.total;
       } else {
         // 没有选中角色时，显示所有员工
         params.departmentId = undefined;
         let res = await employeeApi.queryEmployee(params);
-        for (const item of res.data.list) {
-          item.roleNameList = _.join(item.roleNameList, ',');
-        }
+        processEmployeeData(res.data.list);
         tableData.value = res.data.list;
         total.value = res.data.total;
       }
@@ -417,6 +419,69 @@
       onCancel() {},
     });
   }
+
+  // ----------------------- 教练相关方法 ---------------------
+
+  // 处理教练数据，添加跳转功能
+  function processEmployeeData(employeeList) {
+    employeeList.forEach(item => {
+      item.roleNameList = _.join(item.roleNameList, ',');
+      
+      // 如果是教练，添加跳转信息
+      if (item.coachId) {
+        item.isCoach = true;
+      }
+    });
+  }
+
+  // 判断当前是否为教练角色查询
+  function isCurrentRoleCoach() {
+    return props.roleId && isCoachRoleId(props.roleId);
+  }
+
+  // 判断是否为教练角色ID
+  function isCoachRoleId(roleId) {
+    return roleId === 36; // 教练角色ID
+  }
+
+  // 跳转到教练详情
+  function viewCoachDetail(coachId) {
+    window.open(`#/club/coach/coach-detail?coachId=${coachId}`, '_blank');
+  }
+
+  // 编辑教练信息
+  function editCoach(coachId) {
+    window.open(`#/club/coach/coach-list?editId=${coachId}`, '_blank');
+  }
+
+  // 动态调整表格列显示
+  const computedColumns = computed(() => {
+    let baseColumns = [...columns.value];
+    
+    // 如果是教练角色查询，添加教练专有列
+    if (isCurrentRoleCoach()) {
+      // 在姓名后添加教练编号列
+      baseColumns.splice(1, 0, {
+        title: '教练编号',
+        dataIndex: 'coachNo', 
+        align: 'center',
+        width: 120,
+      });
+      
+      // 在操作列之前添加教练信息列
+      const operateIndex = baseColumns.findIndex(col => col.dataIndex === 'operate');
+      const insertIndex = operateIndex > -1 ? operateIndex : baseColumns.length;
+      baseColumns.splice(insertIndex, 0, {
+        title: '教练信息',
+        dataIndex: 'remark',
+        align: 'center',
+        ellipsis: true,
+        width: 200,
+      });
+    }
+    
+    return baseColumns;
+  });
 </script>
 <style scoped lang="less">
   .employee-container {

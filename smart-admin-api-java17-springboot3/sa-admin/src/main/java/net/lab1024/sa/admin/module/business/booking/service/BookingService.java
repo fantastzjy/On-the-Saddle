@@ -179,7 +179,7 @@ public class BookingService {
 					bookingDetailVO.setMemberGender(getMemberGenderName(member.getGender()));
 					// 使用真实的课程级别
 					bookingDetailVO.setMemberLevel(member.getDefaultCourseLevel());
-					
+
 					// 从扩展数据中解析身高、体重、骑乘经验
 					if (SmartStringUtil.isNotBlank(member.getProfileData())) {
 						try {
@@ -200,7 +200,7 @@ public class BookingService {
 						bookingDetailVO.setRidingExperience("无");
 					}
 					bookingDetailVO.setMemberRemark("无备注");
-					
+
 					// 默认教练姓名需要从会员表的默认教练ID查询
 					if (member.getDefaultCoachId() != null) {
 						try {
@@ -326,7 +326,7 @@ public class BookingService {
 			// 设置预约特有信息的默认值
 			bookingDetailVO.setContactName(bookingDetailVO.getMemberName());
 			bookingDetailVO.setContactPhone(bookingDetailVO.getMemberPhone());
-			bookingDetailVO.setPaymentMethod("会员卡扣费");
+			// bookingDetailVO.setPaymentMethod("会员卡扣费");
 			bookingDetailVO.setDeposit(BigDecimal.ZERO);
 
 			log.info("获取预约详情成功，预约ID：{}", bookingId);
@@ -594,7 +594,7 @@ public class BookingService {
 	 * 马匹性别转换（动物性别）
 	 */
 	private String getHorseGenderName(Integer gender) {
-		if (gender == null) return "未知";
+		if (gender == null) return "未知";   // TODO
 		switch (gender) {
 			case 1:
 				return "雄性";
@@ -670,33 +670,33 @@ public class BookingService {
 			if (booking == null) {
 				return ResponseDTO.userErrorParam("预约不存在");
 			}
-			
+
 			if (booking.getBookingStatus() != 2) {
 				return ResponseDTO.userErrorParam("只有已确认的预约才能改期");
 			}
-			
+
 			// 2. 校验新时间的可用性（教练、马匹冲突检测）
 			ConflictCheckResult conflictResult = checkTimeConflict(
-				booking.getCoachId(), 
+				booking.getCoachId(),
 				booking.getHorseId(),
 				rescheduleForm.getNewStartTime(),
 				rescheduleForm.getNewEndTime(),
 				bookingId // 排除当前预约
 			);
-			
+
 			if (conflictResult.isHasConflict()) {
 				return ResponseDTO.userErrorParam("新时间段存在冲突：" + conflictResult.getConflictMessage());
 			}
-			
+
 			// 3. 记录原时间用于日志
 			LocalDateTime originalStartTime = booking.getStartTime();
-			
+
 			// 4. 更新预约时间
 			booking.setStartTime(rescheduleForm.getNewStartTime());
 			booking.setEndTime(rescheduleForm.getNewEndTime());
 			booking.setUpdateTime(LocalDateTime.now());
 			bookingDao.updateById(booking);
-			
+
 			// 5. 同步更新课表时间
 			LessonScheduleEntity schedule = scheduleDao.selectByBookingId(bookingId);
 			if (schedule != null) {
@@ -705,13 +705,13 @@ public class BookingService {
 				schedule.setLessonDate(rescheduleForm.getNewStartTime().toLocalDate());
 				scheduleDao.updateById(schedule);
 			}
-			
+
 			// 6. 记录改期日志
-			log.info("预约改期成功，预约ID：{}，原时间：{}，新时间：{}", 
+			log.info("预约改期成功，预约ID：{}，原时间：{}，新时间：{}",
 				bookingId, originalStartTime, rescheduleForm.getNewStartTime());
-			
+
 			return ResponseDTO.ok();
-			
+
 		} catch (Exception e) {
 			log.error("预约改期失败，预约ID：{}", bookingId, e);
 			return ResponseDTO.userErrorParam("预约改期失败");
@@ -721,25 +721,25 @@ public class BookingService {
 	/**
 	 * 时间冲突检测
 	 */
-	public ConflictCheckResult checkTimeConflict(Long coachId, Long horseId, 
-	                                           LocalDateTime startTime, LocalDateTime endTime, 
+	public ConflictCheckResult checkTimeConflict(Long coachId, Long horseId,
+	                                           LocalDateTime startTime, LocalDateTime endTime,
 	                                           Long excludeBookingId) {
 		ConflictCheckResult result = new ConflictCheckResult();
-		
+
 		// 检查教练时间冲突
 		List<BookingEntity> coachConflicts = bookingDao.findCoachTimeConflicts(
 			coachId, startTime, endTime, excludeBookingId);
 		if (!coachConflicts.isEmpty()) {
 			result.addConflict("教练", coachConflicts);
 		}
-		
-		// 检查马匹时间冲突  
+
+		// 检查马匹时间冲突
 		List<BookingEntity> horseConflicts = bookingDao.findHorseTimeConflicts(
 			horseId, startTime, endTime, excludeBookingId);
 		if (!horseConflicts.isEmpty()) {
 			result.addConflict("马匹", horseConflicts);
 		}
-		
+
 		return result;
 	}
 }

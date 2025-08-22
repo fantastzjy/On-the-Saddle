@@ -85,6 +85,11 @@ public class EmployeeEntity {
     private Boolean administratorFlag;
 
     /**
+     * 员工类型：1=普通员工，2=教练占位员工
+     */
+    private Integer employeeType;
+
+    /**
      * 是否被禁用 0否1是
      */
     private Boolean disabledFlag;

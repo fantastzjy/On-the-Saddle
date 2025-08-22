@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import net.lab1024.sa.base.module.support.datatracer.annoation.DataTracerFieldLabel;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -29,6 +30,27 @@ public class CoachEntity {
 
     @DataTracerFieldLabel("关联用户ID")
     private Long userId;
+
+    @DataTracerFieldLabel("教练真实姓名")
+    private String actualName;
+
+    @DataTracerFieldLabel("联系电话")
+    private String phone;
+
+    @DataTracerFieldLabel("邮箱地址")
+    private String email;
+
+    @DataTracerFieldLabel("性别")
+    private Integer gender;
+
+    @DataTracerFieldLabel("生日")
+    private LocalDate birthDate;
+
+    @DataTracerFieldLabel("身份证号码")
+    private String idCard;
+
+    @DataTracerFieldLabel("所属部门ID")
+    private Long departmentId;
 
     @DataTracerFieldLabel("教练编号")
     private String coachNo;

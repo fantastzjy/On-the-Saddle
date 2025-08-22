@@ -5,6 +5,7 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -23,9 +24,28 @@ public class CoachCreateForm {
     @NotNull(message = "俱乐部ID不能为空")
     private Long clubId;
 
-    @Schema(description = "关联用户ID")
-    @NotNull(message = "关联用户ID不能为空")
-    private Long userId;
+    @Schema(description = "教练真实姓名")
+    @NotNull(message = "教练姓名不能为空")
+    @Length(max = 30, message = "教练姓名最多30字符")
+    private String actualName;
+
+    @Schema(description = "联系电话")
+    @Length(max = 15, message = "联系电话最多15字符")
+    private String phone;
+
+    @Schema(description = "邮箱地址")
+    @Length(max = 100, message = "邮箱地址最多100字符")
+    private String email;
+
+    @Schema(description = "性别：0女1男")
+    private Integer gender;
+
+    @Schema(description = "生日")
+    private LocalDate birthDate;
+
+    @Schema(description = "身份证号码")
+    @Length(max = 18, message = "身份证号码最多18字符")
+    private String idCard;
 
     @Schema(description = "教练编号")
     @Length(max = 50, message = "教练编号最多50字符")

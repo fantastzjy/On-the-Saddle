@@ -57,11 +57,11 @@
                 {{ bookingDetail.bookingStatusName }}
               </a-tag>
             </a-descriptions-item>
-            <a-descriptions-item label="课程类型">
+            <!-- <a-descriptions-item label="课程类型">
               <a-tag :color="getLessonTypeColor(bookingDetail.lessonType)">
                 {{ bookingDetail.lessonType }}
               </a-tag>
-            </a-descriptions-item>
+            </a-descriptions-item> -->
             <a-descriptions-item label="预约费用">
               <span style="font-size: 18px; font-weight: bold; color: #ff4d4f;">
                 ¥{{ bookingDetail.totalFee || 0 }}
