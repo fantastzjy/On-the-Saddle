@@ -138,7 +138,7 @@ public class AppLoginService {
 			// 9. 构建返回结果
 			MemberAppLoginVO loginVO = SmartBeanUtil.copy(member, MemberAppLoginVO.class);
 			loginVO.setToken(token);
-			loginVO.setFirstLogin(firstLogin);
+			// loginVO.setFirstLogin(firstLogin);
 
 			// 如果有更新的头像，返回最新的
 			if (userInfo != null && StrUtil.isNotBlank(userInfo.getAvatarUrl())) {
