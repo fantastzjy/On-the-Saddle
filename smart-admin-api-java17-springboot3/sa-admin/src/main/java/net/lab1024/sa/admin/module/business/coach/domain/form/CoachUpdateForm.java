@@ -5,6 +5,8 @@ import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMin;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -78,6 +80,10 @@ public class CoachUpdateForm {
 
     @Schema(description = "教练证书图片地址JSON格式")
     private String coachCertImgUrl;
+
+    @Schema(description = "教练费(元/鞍时)")
+    @DecimalMin(value = "0.00", message = "教练费不能小于0")
+    private BigDecimal coachFee;
 
     @Schema(description = "排序")
     private Integer sortOrder;

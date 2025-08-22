@@ -3,6 +3,7 @@ package net.lab1024.sa.admin.module.business.coach.domain.vo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -61,6 +62,9 @@ public class CoachListVO {
 
     @Schema(description = "教练等级")
     private String coachLevel;
+
+    @Schema(description = "教练费(元/鞍时)")
+    private BigDecimal coachFee;
 
     @Schema(description = "排序")
     private Integer sortOrder;

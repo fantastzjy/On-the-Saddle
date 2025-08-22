@@ -84,7 +84,7 @@ public class SwaggerConfig {
     public GroupedOpenApi memberAppApi() {
         return GroupedOpenApi.builder()
                 .group("1-小程序接口")  // 数字前缀确保排序
-                .pathsToMatch("/app/member/**")
+                .pathsToMatch("/app/**")
                 .addOperationCustomizer(new SmartOperationCustomizer())
                 .build();
     }
@@ -94,7 +94,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("2-业务接口")
                 .pathsToMatch("/**")
-                .pathsToExclude(SwaggerTagConst.Support.URL_PREFIX + "/**", "/app/member/**")
+                .pathsToExclude(SwaggerTagConst.Support.URL_PREFIX + "/**", "/app/**")
                 .addOperationCustomizer(new SmartOperationCustomizer())
                 .build();
 

@@ -91,6 +91,9 @@ public class CoachEntity {
     @DataTracerFieldLabel("教练证书图片地址JSON格式")
     private String coachCertImgUrl;
 
+    @DataTracerFieldLabel("教练费")
+    private java.math.BigDecimal coachFee;
+
     @DataTracerFieldLabel("排序")
     private Integer sortOrder;
 

@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
+import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.member.constant.MemberAppConst;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.RequestMember;
@@ -15,6 +17,8 @@ import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppLoginFor
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.*;
 import net.lab1024.sa.admin.util.MemberRequestUtil;
+import net.lab1024.sa.base.module.support.dict.domain.vo.DictDataVO;
+import net.lab1024.sa.base.module.support.dict.service.DictService;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
@@ -28,10 +32,6 @@ import java.time.temporal.ChronoUnit;
 
 /**
  * 会员小程序业务服务
- *
- * @Author Claude Code
- * @Date 2025-01-22
- * @Copyright 马术俱乐部管理系统
  */
 @Slf4j
 @Service
@@ -41,7 +41,10 @@ public class AppLoginService {
 	private MemberDao memberDao;
 
 	@Resource
-	private FamilyGroupService familyGroupService;
+	private ClubDao clubDao;
+
+	@Resource
+	private DictService dictService;
 
 	@Resource
 	private WechatMiniappService wechatMiniappService;
@@ -138,11 +141,26 @@ public class AppLoginService {
 			// 9. 构建返回结果
 			MemberAppLoginVO loginVO = SmartBeanUtil.copy(member, MemberAppLoginVO.class);
 			loginVO.setToken(token);
-			// loginVO.setFirstLogin(firstLogin);
 
 			// 如果有更新的头像，返回最新的
 			if (userInfo != null && StrUtil.isNotBlank(userInfo.getAvatarUrl())) {
 				loginVO.setAvatarUrl(userInfo.getAvatarUrl());
+			}
+
+			// 10. 查询并设置俱乐部名称
+			if (member.getClubId() != null) {
+				ClubEntity club = clubDao.selectById(member.getClubId());
+				if (club != null) {
+					loginVO.setClubName(club.getClubName());
+				}
+			}
+
+			// 11. 查询并设置课程级别名称
+			if (StrUtil.isNotBlank(member.getDefaultCourseLevel())) {
+				DictDataVO courseLevelDict = dictService.getDictData("COURSE_LEVEL", member.getDefaultCourseLevel());
+				if (courseLevelDict != null) {
+					loginVO.setDefaultCourseLevelName(courseLevelDict.getDataLabel());
+				}
 			}
 
 			log.info("会员微信登录成功，memberId: {}, unionId: {}, firstLogin: {} loginVO：{}",
@@ -154,161 +172,6 @@ public class AppLoginService {
 			log.error("会员微信登录失败", e);
 			return ResponseDTO.error(UserErrorCode.USER_STATUS_ERROR, "登录失败，请重试");
 		}
-	}
-
-	/**
-	 * 获取登录的会员信息（供拦截器使用）
-	 */
-	public RequestMember getLoginMember(String loginId, HttpServletRequest request) {
-		try {
-			if (StrUtil.isBlank(loginId) || !loginId.startsWith("member_")) {
-				return null;
-			}
-
-			String memberIdStr = loginId.substring("member_".length());
-			Long memberId = Long.valueOf(memberIdStr);
-
-			MemberEntity member = memberDao.selectById(memberId);
-			if (member == null || member.getIsDelete() == 1 || member.getIsValid() == 0) {
-				return null;
-			}
-
-			// 转换为RequestMember
-			RequestMember requestMember = SmartBeanUtil.copy(member, RequestMember.class);
-			requestMember.setMemberId(member.getMemberId());
-			requestMember.setMemberNo(member.getMemberNo());
-			requestMember.setActualName(member.getActualName());
-			requestMember.setAvatar(member.getAvatarUrl());
-			requestMember.setPhone(member.getPhone());
-			requestMember.setEmail(member.getEmail());
-			requestMember.setClubId(member.getClubId());
-			requestMember.setIsMembership(member.getIsMembership());
-			requestMember.setMembershipStatus(member.getMembershipStatus());
-			requestMember.setRegistrationStatus(member.getRegistrationStatus());
-			requestMember.setDisabledFlag(member.getDisabledFlag());
-
-			// 设置请求信息
-			requestMember.setIp(SmartRequestUtil.getIp(request));
-			requestMember.setUserAgent(SmartRequestUtil.getUserAgent(request));
-
-			return requestMember;
-
-		} catch (Exception e) {
-			log.error("获取登录会员信息失败, loginId: {}", loginId, e);
-			return null;
-		}
-	}
-
-	/**
-	 * 获取会员个人信息
-	 */
-	public ResponseDTO<MemberAppInfoVO> getMemberInfo() {
-		Long memberId = MemberRequestUtil.getRequestMemberId();
-		if (memberId == null) {
-			return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID);
-		}
-
-		MemberEntity member = memberDao.selectById(memberId);
-		if (member == null) {
-			return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST);
-		}
-
-		MemberAppInfoVO infoVO = SmartBeanUtil.copy(member, MemberAppInfoVO.class);
-		return ResponseDTO.ok(infoVO);
-	}
-
-	/**
-	 * 更新会员个人信息
-	 */
-	@Transactional(rollbackFor = Exception.class)
-	public ResponseDTO<String> updateMemberInfo(MemberAppUpdateForm form) {
-		Long memberId = MemberRequestUtil.getRequestMemberId();
-		if (memberId == null) {
-			return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID);
-		}
-
-		// 检查会员是否存在
-		MemberEntity member = memberDao.selectById(memberId);
-		if (member == null) {
-			return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST);
-		}
-
-		// 更新会员信息
-		MemberEntity updateEntity = new MemberEntity();
-		updateEntity.setMemberId(memberId);
-		updateEntity.setActualName(form.getActualName());
-		updateEntity.setPhone(form.getPhone());
-		updateEntity.setEmail(form.getEmail());
-		updateEntity.setAvatarUrl(form.getAvatarUrl());
-		updateEntity.setGender(form.getGender());
-		updateEntity.setBirthDate(form.getBirthDate());
-		updateEntity.setIdCardNo(form.getIdCardNo());
-		updateEntity.setRiderCertNo(form.getRiderCertNo());
-		updateEntity.setDefaultCourseLevel(form.getDefaultCourseLevel());
-		updateEntity.setProfileData(form.getProfileData());
-		updateEntity.setUpdateTime(LocalDateTime.now());
-
-		memberDao.updateById(updateEntity);
-
-		return ResponseDTO.ok();
-	}
-
-	/**
-	 * 获取会籍状态
-	 */
-	public ResponseDTO<MembershipStatusVO> getMembershipStatus() {
-		Long memberId = MemberRequestUtil.getRequestMemberId();
-		if (memberId == null) {
-			return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID);
-		}
-
-		MemberEntity member = memberDao.selectById(memberId);
-		if (member == null) {
-			return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST);
-		}
-
-		MembershipStatusVO statusVO = new MembershipStatusVO();
-		statusVO.setIsMembership(member.getIsMembership());
-		statusVO.setMembershipStatus(member.getMembershipStatus());
-		statusVO.setMembershipExpireDate(member.getMembershipExpireDate());
-
-		// 计算距离到期天数
-		if (member.getMembershipExpireDate() != null) {
-			long daysToExpire = ChronoUnit.DAYS.between(LocalDate.now(), member.getMembershipExpireDate());
-			statusVO.setDaysToExpire(daysToExpire);
-		}
-
-		// 设置状态描述
-		String statusDescription = "未知状态";
-		if (member.getMembershipStatus() != null) {
-			switch (member.getMembershipStatus()) {
-				case 1:
-					statusDescription = "正常";
-					break;
-				case 2:
-					statusDescription = "即将到期";
-					break;
-				case 3:
-					statusDescription = "已过期";
-					break;
-			}
-		}
-		statusVO.setStatusDescription(statusDescription);
-
-		return ResponseDTO.ok(statusVO);
-	}
-
-	/**
-	 * 获取家庭组信息
-	 */
-	public ResponseDTO<FamilyInfoVO> getFamilyInfo() {
-		Long memberId = MemberRequestUtil.getRequestMemberId();
-		if (memberId == null) {
-			return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID);
-		}
-
-		// 调用现有的家庭组服务获取信息
-		return familyGroupService.getFamilyInfoByMemberId(memberId);
 	}
 
 	/**

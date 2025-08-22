@@ -73,7 +73,11 @@ public class MemberAppLoginVO {
     @Schema(description = "会籍有效期")
     private LocalDate membershipExpireDate;
 
+    @Schema(description = "俱乐部名称")
+    private String clubName;
 
+    @Schema(description = "默认课程级别名称")
+    private String defaultCourseLevelName;
 
     // @Schema(description = "注册状态：0-未激活 1-已注册")
     // private Integer registrationStatus;
