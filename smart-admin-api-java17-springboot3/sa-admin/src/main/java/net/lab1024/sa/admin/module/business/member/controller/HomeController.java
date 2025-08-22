@@ -3,14 +3,14 @@ package net.lab1024.sa.admin.module.business.member.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import net.lab1024.sa.admin.module.business.member.domain.form.HomeQueryForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.CourseLevelInfoVO;
 import net.lab1024.sa.admin.module.business.member.service.HomeService;
+import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -32,18 +32,20 @@ public class HomeController {
     /**
      * 获取俱乐部详细信息
      */
-    @GetMapping("/club/info")
+    @PostMapping("/club/info")
+    @NoNeedLogin
     @Operation(summary = "获取俱乐部详细信息")
-    public ResponseDTO<ClubInfoVO> getClubInfo() {
-        return homeService.getClubInfo();
+    public ResponseDTO<ClubInfoVO> getClubInfo(@RequestBody @Valid HomeQueryForm form) {
+        return homeService.getClubInfo(form.getClubId());
     }
 
     /**
      * 获取教练列表
      */
-    @GetMapping("/coach/list")
+    @PostMapping("/coach/list")
+    @NoNeedLogin
     @Operation(summary = "获取教练列表")
-    public ResponseDTO<List<CoachListVO>> getCoachList() {
-        return homeService.getCoachList();
+    public ResponseDTO<List<CoachListVO>> getCoachList(@RequestBody @Valid HomeQueryForm form) {
+        return homeService.getCoachList(form.getClubId());
     }
 }

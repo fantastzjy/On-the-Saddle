@@ -52,9 +52,21 @@
       </a-row>
 
       <a-row :gutter="24">
-        <a-col :span="24">
+        <a-col :span="12">
           <a-form-item label="排序" name="sortOrder">
             <a-input-number v-model:value="form.sortOrder" placeholder="请输入排序" :min="0" style="width: 100%" />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="教练费" name="coachFee">
+            <a-input-number 
+              v-model:value="form.coachFee" 
+              placeholder="请输入教练费"
+              :min="0"
+              :precision="2"
+              addon-after="元/鞍时"
+              style="width: 100%" 
+            />
           </a-form-item>
         </a-col>
       </a-row>
@@ -215,6 +227,7 @@ const formState = {
   coachCertNo: '',
   coachLevel: '',
   coachCertImgUrl: '',
+  coachFee: null,
   sortOrder: 0,
 };
 
@@ -223,6 +236,7 @@ const form = reactive({ ...formState });
 const rules = {
   clubId: [{ required: true, message: '请选择所属俱乐部', trigger: 'change' }],
   userId: [{ required: true, message: '请选择关联用户', trigger: 'change' }],
+  coachFee: [{ type: 'number', min: 0, message: '教练费不能小于0', trigger: 'blur' }],
 };
 
 // ----------------------- 显示/隐藏 -----------------------

@@ -41,6 +41,9 @@
             <a-descriptions-item label="从业时间">
               {{ coach.entryDate ? coach.entryDate.substring(0, 10) : '-' }}
             </a-descriptions-item>
+            <a-descriptions-item label="教练费">
+              {{ coach.coachFee ? `${coach.coachFee}元/鞍时` : '-' }}
+            </a-descriptions-item>
             <a-descriptions-item label="排序">
               {{ coach.sortOrder || 0 }}
             </a-descriptions-item>

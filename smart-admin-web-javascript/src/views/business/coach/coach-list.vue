@@ -75,6 +75,9 @@
         <template v-if="column.dataIndex === 'entryDate'">
           <span>{{ text ? text.substring(0, 10) : '-' }}</span>
         </template>
+        <template v-if="column.dataIndex === 'coachFee'">
+          <span>{{ text ? `${text}` : '-' }}</span>
+        </template>
         <template v-if="column.dataIndex === 'specialties'">
           <a-tooltip :title="text" placement="topLeft">
             <span>{{ text || '-' }}</span>
@@ -243,6 +246,12 @@ const columns = ref([
     title: '教练等级',
     dataIndex: 'coachLevel',
     width: 100,
+    align: 'center'
+  },
+  {
+    title: '教练费(元/鞍时)',
+    dataIndex: 'coachFee',
+    width: 130,
     align: 'center'
   },
   {

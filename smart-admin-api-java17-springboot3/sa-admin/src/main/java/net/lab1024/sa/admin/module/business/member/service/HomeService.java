@@ -8,18 +8,12 @@ import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
 import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
-import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
-import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.CourseLevelInfoVO;
-import net.lab1024.sa.admin.util.MemberRequestUtil;
 import net.lab1024.sa.base.common.code.SystemErrorCode;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
-import net.lab1024.sa.base.module.support.dict.domain.vo.DictDataVO;
-import net.lab1024.sa.base.module.support.dict.service.DictService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -44,33 +38,18 @@ public class HomeService {
     private ClubDao clubDao;
 
     @Resource
-    private MemberDao memberDao;
-
-    @Resource
     private CoachDao coachDao;
 
     /**
      * 获取俱乐部详细信息
      */
-    public ResponseDTO<ClubInfoVO> getClubInfo() {
-        // 获取当前登录会员的俱乐部ID
-        Long memberId = MemberRequestUtil.getRequestMemberId();
-        if (memberId == null) {
-            return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID);
+    public ResponseDTO<ClubInfoVO> getClubInfo(Long clubId) {
+        if (clubId == null) {
+            return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部ID不能为空");
         }
 
-        // 查询会员信息获取clubId
-        MemberEntity member = memberDao.selectById(memberId);
-        if (member == null) {
-            return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "会员信息不存在");
-        }
-
-        if (member.getClubId() == null) {
-            return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "会员未关联俱乐部");
-        }
-
-        ClubEntity club = clubDao.selectById(member.getClubId());
-        if (club == null) {
+        ClubEntity club = clubDao.selectById(clubId);
+        if (club == null || club.getIsDelete() || !club.getIsValid()) {
             return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "俱乐部信息不存在");
         }
 
@@ -81,29 +60,28 @@ public class HomeService {
     /**
      * 获取教练列表
      */
-    public ResponseDTO<List<CoachListVO>> getCoachList() {
+    public ResponseDTO<List<CoachListVO>> getCoachList(Long clubId) {
         try {
-            // 1. 获取当前登录会员的俱乐部ID
-            Long memberId = MemberRequestUtil.getRequestMemberId();
-            if (memberId == null) {
-                return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID);
+            if (clubId == null) {
+                return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部ID不能为空");
             }
 
-            MemberEntity member = memberDao.selectById(memberId);
-            if (member == null || member.getClubId() == null) {
-                return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "会员未关联俱乐部");
+            // 验证俱乐部是否存在且有效
+            ClubEntity club = clubDao.selectById(clubId);
+            if (club == null || club.getIsDelete() || !club.getIsValid()) {
+                return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "俱乐部不存在");
             }
 
-            // 2. 查询该俱乐部的所有有效教练
+            // 查询该俱乐部的所有有效教练
             List<CoachEntity> coaches = coachDao.selectList(
                 new LambdaQueryWrapper<CoachEntity>()
-                    .eq(CoachEntity::getClubId, member.getClubId())
+                    .eq(CoachEntity::getClubId, clubId)
                     .eq(CoachEntity::getIsValid, 1)
                     .eq(CoachEntity::getIsDelete, 0)
                     .orderBy(true, true, CoachEntity::getSortOrder)
             );
 
-            // 3. 转换为VO对象
+            // 转换为VO对象
             List<CoachListVO> result = new ArrayList<>();
             for (CoachEntity coach : coaches) {
                 CoachListVO vo = buildCoachListVO(coach);
