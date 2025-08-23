@@ -138,7 +138,7 @@ export const PRODUCT_DEFAULT_CONFIG = {
   // 活动详情图片配置
   ACTIVITY_DETAIL_IMAGE: {
     MAX_COUNT: 9,           // 最大图片数量
-    MAX_SIZE: 10,           // 最大文件大小(MB)
+    MAX_SIZE: 2,            // 最大文件大小(MB)
     ACCEPTED_TYPES: ['jpg', 'jpeg', 'png', 'gif']
   },
 

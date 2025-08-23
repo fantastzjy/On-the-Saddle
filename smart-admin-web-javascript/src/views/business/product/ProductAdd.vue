@@ -246,7 +246,26 @@ async function loadProductDetail() {
           price: product.activityDetails.price,
           maxParticipants: product.activityDetails.maxParticipants,
           refundRule: product.activityDetails.refundRule,
-          detailImages: product.activityDetails.detailImages || []
+          detailImages: (() => {
+            try {
+              if (product.activityDetails.detailImages) {
+                // 如果是字符串，则解析为数组
+                if (typeof product.activityDetails.detailImages === 'string') {
+                  const parsed = JSON.parse(product.activityDetails.detailImages);
+                  return Array.isArray(parsed) ? parsed : [];
+                }
+                // 如果已经是数组，直接返回
+                if (Array.isArray(product.activityDetails.detailImages)) {
+                  return product.activityDetails.detailImages;
+                }
+              }
+              return [];
+            } catch (error) {
+              console.warn('解析活动详情图片失败:', error);
+              console.warn('原始数据:', product.activityDetails.detailImages);
+              return [];
+            }
+          })()
         };
       } else {
         // 如果没有详情数据，尝试从旧的dynamicConfig字段获取
@@ -256,6 +275,19 @@ async function loadProductDetail() {
               dynamicConfig = JSON.parse(product.dynamicConfig);
             } else {
               dynamicConfig = product.dynamicConfig;
+            }
+            
+            // 如果dynamicConfig中有detailImages，也需要解析
+            if (dynamicConfig.detailImages && typeof dynamicConfig.detailImages === 'string') {
+              try {
+                const parsed = JSON.parse(dynamicConfig.detailImages);
+                if (Array.isArray(parsed)) {
+                  dynamicConfig.detailImages = parsed;
+                }
+              } catch (error) {
+                console.warn('解析dynamicConfig中的detailImages失败:', error);
+                dynamicConfig.detailImages = [];
+              }
             }
           }
         } catch (e) {
@@ -280,6 +312,8 @@ async function loadProductDetail() {
       
       console.log('商品详情加载成功:', product);
       console.log('解析的动态配置数据:', dynamicConfig);
+      console.log('详情图片数据类型:', typeof dynamicConfig.detailImages);
+      console.log('详情图片数据内容:', dynamicConfig.detailImages);
       
       // 先加载表单配置，再设置数据
       if (product.productType) {

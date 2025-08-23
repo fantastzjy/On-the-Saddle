@@ -165,7 +165,7 @@
                         (field.type === FORM_FIELD_TYPE_ENUM.UPLOAD && field.key === 'detailImages')"
               v-model:value="formData[field.key]"
               :max-count="field.maxCount || 9"
-              :max-size="field.maxSize || 10"
+              :max-size="field.maxSize || 2"
               :accept-types="field.acceptTypes || '.jpg,.jpeg,.png,.gif'"
               :show-tips="field.showTips !== false"
               :disabled="field.disabled"

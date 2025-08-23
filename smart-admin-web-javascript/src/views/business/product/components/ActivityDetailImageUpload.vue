@@ -78,14 +78,33 @@
     <a-modal
       v-model:open="previewVisible"
       :footer="null"
-      :width="800"
+      :width="900"
       :centered="true"
       title="图片预览"
+      :styles="{ body: { padding: '20px' } }"
     >
       <div class="preview-container">
-        <img :src="previewUrl" :alt="previewAlt" class="preview-image" />
+        <div class="preview-image-wrapper">
+          <img :src="previewUrl" :alt="previewAlt" class="preview-image" />
+        </div>
         <div class="preview-info">
           <span>第 {{ previewIndex + 1 }} 张 / 共 {{ imageList.length }} 张</span>
+          <div class="preview-navigation" v-if="imageList.length > 1">
+            <a-button 
+              size="small" 
+              :disabled="previewIndex === 0"
+              @click="prevImage"
+            >
+              上一张
+            </a-button>
+            <a-button 
+              size="small" 
+              :disabled="previewIndex === imageList.length - 1"
+              @click="nextImage"
+            >
+              下一张
+            </a-button>
+          </div>
         </div>
       </div>
     </a-modal>
@@ -106,19 +125,15 @@ import { fileApi } from '/@/api/support/file-api';
 import { useUserStore } from '/@/store/modules/system/user';
 import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
 
-// ======================== Props & Emits ========================
+// ======================== Props & Model ========================
 const props = defineProps({
-  value: {
-    type: Array,
-    default: () => []
-  },
   maxCount: {
     type: Number,
     default: 9
   },
   maxSize: {
     type: Number,
-    default: 10 // MB
+    default: 2 // MB
   },
   acceptTypes: {
     type: String,
@@ -130,10 +145,18 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:value', 'change']);
+// 使用 defineModel 替代手动的 emit 和 watch
+const imageList = defineModel('value', {
+  type: Array,
+  default: () => []
+});
+
+// 确保初始化时数据类型正确
+if (!Array.isArray(imageList.value)) {
+  imageList.value = [];
+}
 
 // ======================== 响应式数据 ========================
-const imageList = ref([]);
 const uploading = ref(false);
 const previewVisible = ref(false);
 const previewUrl = ref('');
@@ -144,28 +167,6 @@ const previewAlt = ref('');
 const acceptTypesArray = computed(() => {
   return props.acceptTypes.split(',').map(type => type.trim().toLowerCase());
 });
-
-// ======================== 监听器 ========================
-watch(
-  () => props.value,
-  (newValue) => {
-    if (Array.isArray(newValue)) {
-      imageList.value = [...newValue];
-    } else {
-      imageList.value = [];
-    }
-  },
-  { immediate: true, deep: true }
-);
-
-watch(
-  imageList,
-  (newList) => {
-    emit('update:value', [...newList]);
-    emit('change', [...newList]);
-  },
-  { deep: true }
-);
 
 // ======================== 方法 ========================
 
@@ -216,7 +217,7 @@ async function handleUpload(options) {
     const response = await fileApi.uploadFile(formData, FILE_FOLDER_TYPE_ENUM.COMMON.value);
     
     if (response.ok && response.data && response.data.fileUrl) {
-      // 只存储图片地址字符串
+      // 只存储图片地址字符串，使用defineModel自动同步到父组件
       const imageUrl = response.data.fileUrl;
       imageList.value.push(imageUrl);
       message.success('图片上传成功');
@@ -236,7 +237,7 @@ async function handleUpload(options) {
  */
 function handleDragEnd() {
   // 拖拽完成后，imageList已经自动更新了顺序
-  // watch会自动触发emit
+  // 使用 defineModel，数据会自动同步到父组件
   message.success('图片顺序已更新');
 }
 
@@ -244,8 +245,10 @@ function handleDragEnd() {
  * 删除图片
  */
 function handleRemove(index) {
-  imageList.value.splice(index, 1);
-  message.success('图片已删除');
+  if (index >= 0 && index < imageList.value.length) {
+    imageList.value.splice(index, 1);
+    message.success('图片已删除');
+  }
 }
 
 /**
@@ -256,6 +259,28 @@ function handlePreview(imageUrl, index) {
   previewIndex.value = index;
   previewAlt.value = `详情图片${index + 1}`;
   previewVisible.value = true;
+}
+
+/**
+ * 预览上一张图片
+ */
+function prevImage() {
+  if (previewIndex.value > 0) {
+    previewIndex.value--;
+    previewUrl.value = imageList.value[previewIndex.value];
+    previewAlt.value = `详情图片${previewIndex.value + 1}`;
+  }
+}
+
+/**
+ * 预览下一张图片
+ */
+function nextImage() {
+  if (previewIndex.value < imageList.value.length - 1) {
+    previewIndex.value++;
+    previewUrl.value = imageList.value[previewIndex.value];
+    previewAlt.value = `详情图片${previewIndex.value + 1}`;
+  }
 }
 
 /**
@@ -274,10 +299,21 @@ defineExpose({
 <style lang="less" scoped>
 .activity-detail-image-upload {
   .image-list {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 104px);
     gap: 12px;
     margin-bottom: 12px;
+    justify-content: start;
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(auto-fill, 80px);
+      gap: 8px;
+      
+      .image-item {
+        width: 80px !important;
+        height: 80px !important;
+      }
+    }
 
     .image-item {
       position: relative;
@@ -288,9 +324,11 @@ defineExpose({
       border: 1px solid #d9d9d9;
       background: #fafafa;
       cursor: move;
+      transition: all 0.3s ease;
 
       &:hover {
         border-color: #1890ff;
+        box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
         
         .image-overlay {
           opacity: 1;
@@ -414,20 +452,42 @@ defineExpose({
   }
 
   .preview-container {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .preview-image-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      max-height: 60vh;
+      margin-bottom: 16px;
+    }
 
     .preview-image {
       max-width: 100%;
       max-height: 60vh;
+      width: auto;
+      height: auto;
       object-fit: contain;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .preview-info {
-      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding-top: 16px;
       border-top: 1px solid #f0f0f0;
       color: #666;
       font-size: 14px;
+
+      .preview-navigation {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+      }
     }
   }
 }

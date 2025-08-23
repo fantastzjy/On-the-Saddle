@@ -384,7 +384,7 @@ public class DynamicFormConfigService {
         field.put("required", required);
         field.put("tip", tip);
         field.put("maxCount", 9);
-        field.put("maxSize", 10);
+        field.put("maxSize", 2);
         field.put("acceptTypes", ".jpg,.jpeg,.png,.gif");
         field.put("showTips", true);
         return field;
