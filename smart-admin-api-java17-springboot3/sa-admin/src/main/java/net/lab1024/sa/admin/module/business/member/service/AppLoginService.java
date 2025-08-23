@@ -157,9 +157,21 @@ public class AppLoginService {
 
 			// 11. 查询并设置课程级别名称
 			if (StrUtil.isNotBlank(member.getDefaultCourseLevel())) {
-				DictDataVO courseLevelDict = dictService.getDictData("COURSE_LEVEL", member.getDefaultCourseLevel());
-				if (courseLevelDict != null) {
-					loginVO.setDefaultCourseLevelName(courseLevelDict.getDataLabel());
+				try {
+					DictDataVO courseLevelDict = dictService.getDictData("COURSE_LEVEL", member.getDefaultCourseLevel());
+					if (courseLevelDict != null) {
+						loginVO.setDefaultCourseLevelName(courseLevelDict.getDataLabel());
+					} else {
+						// 字典数据不存在时的降级处理
+						log.warn("课程级别字典数据不存在: clubId={}, memberId={}, courseLevel={}", 
+							member.getClubId(), member.getMemberId(), member.getDefaultCourseLevel());
+						loginVO.setDefaultCourseLevelName(member.getDefaultCourseLevel()); // 使用原值作为显示名称
+					}
+				} catch (Exception e) {
+					// 查询字典失败时的降级处理
+					log.error("查询课程级别字典失败: clubId={}, memberId={}, courseLevel={}", 
+						member.getClubId(), member.getMemberId(), member.getDefaultCourseLevel(), e);
+					loginVO.setDefaultCourseLevelName(member.getDefaultCourseLevel()); // 使用原值作为显示名称
 				}
 			}
 

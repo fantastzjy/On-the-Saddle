@@ -17,9 +17,6 @@ import java.util.List;
 @Schema(description = "教练列表信息")
 public class CoachListVO {
 
-    @Schema(description = "教练ID")
-    private Long coachId;
-
     @Schema(description = "头像地址")
     private String avatarUrl;
 
@@ -29,14 +26,8 @@ public class CoachListVO {
     @Schema(description = "性别：1-男 2-女")
     private Integer gender;
 
-    @Schema(description = "性别描述")
-    private String genderText;
-
     @Schema(description = "骑手等级标签列表")
     private List<String> riderLevelTags;
-
-    @Schema(description = "教练等级标签")
-    private String coachLevelTag;
 
     @Schema(description = "课时费")
     private BigDecimal coachFee;
@@ -46,4 +37,7 @@ public class CoachListVO {
 
     @Schema(description = "教练介绍")
     private String introduction;
+
+    @Schema(description = "不可用时间列表")
+    private List<UnavailableTimeSlotVO> unavailableTimeSlots;
 }

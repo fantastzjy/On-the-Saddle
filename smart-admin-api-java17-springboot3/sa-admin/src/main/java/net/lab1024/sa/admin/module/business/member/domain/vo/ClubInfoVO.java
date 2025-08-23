@@ -3,7 +3,7 @@ package net.lab1024.sa.admin.module.business.member.domain.vo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.LocalTime;
+import java.util.List;
 
 /**
  * 俱乐部信息VO
@@ -16,9 +16,6 @@ import java.time.LocalTime;
 @Schema(description = "俱乐部信息")
 public class ClubInfoVO {
 
-    @Schema(description = "俱乐部ID")
-    private Long clubId;
-
     @Schema(description = "俱乐部名称")
     private String clubName;
 
@@ -26,7 +23,7 @@ public class ClubInfoVO {
     private String logoUrl;
 
     @Schema(description = "轮播图片地址列表")
-    private String carouselImages;
+    private List<String> carouselImages;
 
     @Schema(description = "详细地址")
     private String address;
@@ -34,11 +31,8 @@ public class ClubInfoVO {
     @Schema(description = "电话")
     private String phone;
 
-    @Schema(description = "营业开始时间")
-    private LocalTime businessStartTime;
-
-    @Schema(description = "营业结束时间")
-    private LocalTime businessEndTime;
+    @Schema(description = "营业时间")
+    private String businessHours;
 
     @Schema(description = "俱乐部详情")
     private String description;
