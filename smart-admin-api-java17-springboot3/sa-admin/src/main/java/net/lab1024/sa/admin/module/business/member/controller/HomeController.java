@@ -10,6 +10,7 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.ActivityListVO;
 import net.lab1024.sa.admin.module.business.member.service.HomeService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -70,5 +71,15 @@ public class HomeController {
     @Operation(summary = "创建订单")
     public ResponseDTO<OrderCreateVO> createOrder(@RequestBody @Valid OrderCreateForm form) {
         return homeService.createOrder(form);
+    }
+
+    /**
+     * 获取活动列表
+     */
+    @PostMapping("/activity/list")
+    @NoNeedLogin
+    @Operation(summary = "获取活动列表")
+    public ResponseDTO<List<ActivityListVO>> getActivityList(@RequestBody @Valid HomeQueryForm form) {
+        return homeService.getActivityList(form.getClubCode());
     }
 }

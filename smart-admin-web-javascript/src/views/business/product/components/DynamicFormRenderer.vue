@@ -159,6 +159,18 @@
               :disabled="field.disabled"
             />
             
+            <!-- 活动详情图片上传 -->
+            <ActivityDetailImageUpload
+              v-else-if="field.type === FORM_FIELD_TYPE_ENUM.ACTIVITY_DETAIL_IMAGES || 
+                        (field.type === FORM_FIELD_TYPE_ENUM.UPLOAD && field.key === 'detailImages')"
+              v-model:value="formData[field.key]"
+              :max-count="field.maxCount || 9"
+              :max-size="field.maxSize || 10"
+              :accept-types="field.acceptTypes || '.jpg,.jpeg,.png,.gif'"
+              :show-tips="field.showTips !== false"
+              :disabled="field.disabled"
+            />
+            
             <!-- 自定义插槽 -->
             <slot 
               v-else-if="field.type === 'slot'" 
@@ -188,6 +200,7 @@ import { ref, reactive, computed, watch, nextTick } from 'vue';
 import { FORM_FIELD_TYPE_ENUM } from '/@/constants/business/product/product-const';
 import FileUpload from '/@/components/support/file-upload/index.vue';
 import MultiClassPriceConfig from './MultiClassPriceConfig.vue';
+import ActivityDetailImageUpload from './ActivityDetailImageUpload.vue';
 
 // ======================== Props & Emits ========================
 const props = defineProps({
@@ -354,6 +367,8 @@ function getFieldDefaultValue(field) {
       return [];
     case FORM_FIELD_TYPE_ENUM.DATETIME:
       return null;
+    case FORM_FIELD_TYPE_ENUM.ACTIVITY_DETAIL_IMAGES:
+      return [];
     default:
       return null;
   }
@@ -398,7 +413,8 @@ function getFieldActionText(type) {
     [FORM_FIELD_TYPE_ENUM.DATETIME]: '选择',
     [FORM_FIELD_TYPE_ENUM.CHECKBOX]: '选择',
     [FORM_FIELD_TYPE_ENUM.RADIO]: '选择',
-    [FORM_FIELD_TYPE_ENUM.UPLOAD]: '上传'
+    [FORM_FIELD_TYPE_ENUM.UPLOAD]: '上传',
+    [FORM_FIELD_TYPE_ENUM.ACTIVITY_DETAIL_IMAGES]: '上传'
   };
   return actionMap[type] || '填写';
 }
@@ -413,7 +429,8 @@ function getFieldTrigger(type) {
     [FORM_FIELD_TYPE_ENUM.SWITCH]: 'change',
     [FORM_FIELD_TYPE_ENUM.CHECKBOX]: 'change',
     [FORM_FIELD_TYPE_ENUM.RADIO]: 'change',
-    [FORM_FIELD_TYPE_ENUM.UPLOAD]: 'change'
+    [FORM_FIELD_TYPE_ENUM.UPLOAD]: 'change',
+    [FORM_FIELD_TYPE_ENUM.ACTIVITY_DETAIL_IMAGES]: 'change'
   };
   return triggerMap[type] || 'blur';
 }

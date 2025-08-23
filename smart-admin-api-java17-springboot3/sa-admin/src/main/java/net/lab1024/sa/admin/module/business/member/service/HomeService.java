@@ -15,13 +15,16 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.UnavailableTimeSlotVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.ActivityListVO;
 import net.lab1024.sa.admin.module.business.member.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
 import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
+import net.lab1024.sa.admin.module.business.product.dao.ProductActivityDao;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
+import net.lab1024.sa.admin.module.business.product.domain.entity.ProductActivityEntity;
 import net.lab1024.sa.base.common.code.SystemErrorCode;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -57,6 +60,9 @@ public class HomeService {
 
     @Resource
     private ProductCourseDao productCourseDao;
+
+    @Resource
+    private ProductActivityDao productActivityDao;
 
     @Resource
     private OrderDao orderDao;
@@ -339,11 +345,14 @@ public class HomeService {
             // orderDao.insert(order);
 
             // 构建响应
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime expireTime = now.plusMinutes(30);
+            
             OrderCreateVO vo = new OrderCreateVO();
             vo.setOrderNo(orderNo);
             vo.setStatus(1);
-            // vo.setCreateTime(order.getCreateTime());
-            // vo.setExpireTime(order.getExpireTime());
+            vo.setCreateTime(now);
+            vo.setExpireTime(expireTime);
             vo.setPaymentCountdown(1800L); // 30分钟 = 1800秒
 
             return ResponseDTO.ok(vo);
@@ -360,5 +369,75 @@ public class HomeService {
         String timestamp = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         String randomNum = String.format("%06d", new Random().nextInt(1000000));
         return timestamp + randomNum;
+    }
+
+    /**
+     * 获取活动列表
+     */
+    public ResponseDTO<List<ActivityListVO>> getActivityList(String clubCode) {
+        try {
+            if (StrUtil.isBlank(clubCode)) {
+                return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部编码不能为空");
+            }
+
+            // 验证俱乐部是否存在且有效
+            ClubEntity club = clubDao.selectByClubCode(clubCode);
+            if (club == null || club.getIsDelete() || !club.getIsValid()) {
+                return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "俱乐部不存在");
+            }
+
+            // 查询该俱乐部的活动商品，过滤活动类型（productType=3，假设3代表活动）
+            List<ProductEntity> products = productDao.selectList(
+                new LambdaQueryWrapper<ProductEntity>()
+                    .eq(ProductEntity::getClubId, club.getClubId())
+                    .eq(ProductEntity::getProductType, 3) // 3代表活动类型
+                    .eq(ProductEntity::getIsValid, true)
+                    .eq(ProductEntity::getIsDelete, false)
+                    .orderBy(true, true, ProductEntity::getProductId)
+            );
+
+            // 转换为VO对象
+            List<ActivityListVO> result = new ArrayList<>();
+            for (ProductEntity product : products) {
+                // 查询对应的活动配置信息
+                ProductActivityEntity activityConfig = productActivityDao.selectOne(
+                    new LambdaQueryWrapper<ProductActivityEntity>()
+                        .eq(ProductActivityEntity::getProductId, product.getProductId())
+                );
+                
+                if (activityConfig != null) {
+                    ActivityListVO vo = new ActivityListVO();
+                    vo.setActivityName(activityConfig.getActivityName());
+                    vo.setActivityDetail(activityConfig.getActivityDetails());
+                    vo.setStartTime(activityConfig.getStartTime());
+                    vo.setEndTime(activityConfig.getEndTime());
+                    vo.setLocation(activityConfig.getActivityLocation());
+                    vo.setPrice(activityConfig.getPrice() != null ? activityConfig.getPrice() : BigDecimal.ZERO);
+                    vo.setRefundRule(StrUtil.isNotBlank(activityConfig.getRefundRule()) ? 
+                        activityConfig.getRefundRule() : "退款规则待定");
+                    
+                    // 解析详情图片JSON为List<String>
+                    if (StrUtil.isNotBlank(activityConfig.getDetailImages())) {
+                        try {
+                            JSONArray imageArray = JSONUtil.parseArray(activityConfig.getDetailImages());
+                            List<String> imageList = imageArray.toList(String.class);
+                            vo.setDetailImages(imageList);
+                        } catch (Exception e) {
+                            log.warn("解析活动详情图片JSON失败: {}", activityConfig.getDetailImages(), e);
+                            vo.setDetailImages(new ArrayList<>());
+                        }
+                    } else {
+                        vo.setDetailImages(new ArrayList<>());
+                    }
+                    
+                    result.add(vo);
+                }
+            }
+
+            return ResponseDTO.ok(result);
+        } catch (Exception e) {
+            log.error("获取活动列表失败", e);
+            return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "获取活动列表失败");
+        }
     }
 }

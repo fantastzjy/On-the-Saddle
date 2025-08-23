@@ -9,7 +9,8 @@
       "Bash(./mvnw:*)",
       "Bash(java:*)",
       "Bash(grep:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

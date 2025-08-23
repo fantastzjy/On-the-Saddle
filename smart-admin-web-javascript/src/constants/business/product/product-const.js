@@ -82,7 +82,8 @@ export const FORM_FIELD_TYPE_ENUM = {
   UPLOAD: 'upload',
   SWITCH: 'switch',
   CHECKBOX: 'checkbox',
-  RADIO: 'radio'
+  RADIO: 'radio',
+  ACTIVITY_DETAIL_IMAGES: 'activity-detail-images'
 };
 
 // ==================== 价格计算类型 ====================

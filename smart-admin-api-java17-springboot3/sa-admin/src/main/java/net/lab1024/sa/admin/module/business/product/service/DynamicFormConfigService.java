@@ -243,7 +243,7 @@ public class DynamicFormConfigService {
         fields.add(createTextareaField("refundRule", "退款规则", true, "请明确退款政策"));
         
         // 详情图片
-        fields.add(createUploadField("detailImages", "详情图片", false, "最多上传9张图片"));
+        fields.add(createActivityDetailImagesField("detailImages", "详情图片", false, "最多上传9张图片"));
         
         config.put("fields", fields);
         config.put("rules", getActivityValidationRules());
@@ -370,6 +370,23 @@ public class DynamicFormConfigService {
         field.put("type", "checkbox");
         field.put("required", required);
         field.put("options", options);
+        return field;
+    }
+
+    /**
+     * 创建活动详情图片上传字段
+     */
+    private Map<String, Object> createActivityDetailImagesField(String key, String label, boolean required, String tip) {
+        Map<String, Object> field = new HashMap<>();
+        field.put("key", key);
+        field.put("label", label);
+        field.put("type", "activity-detail-images");
+        field.put("required", required);
+        field.put("tip", tip);
+        field.put("maxCount", 9);
+        field.put("maxSize", 10);
+        field.put("acceptTypes", ".jpg,.jpeg,.png,.gif");
+        field.put("showTips", true);
         return field;
     }
 
