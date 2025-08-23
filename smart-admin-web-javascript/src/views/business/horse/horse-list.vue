@@ -15,8 +15,8 @@
             </a-select>
           </a-form-item>
 
-          <a-form-item label="马匹类型" class="smart-query-form-item">
-            <a-select style="width: 120px" v-model:value="queryForm.horseType" placeholder="请选择类型" allowClear>
+          <a-form-item label="归属" class="smart-query-form-item">
+            <a-select style="width: 120px" v-model:value="queryForm.horseType" placeholder="请选择归属" allowClear>
               <a-select-option :value="1">俱乐部马</a-select-option>
               <a-select-option :value="2">马主马</a-select-option>
               <a-select-option :value="3">教练马</a-select-option>
@@ -65,10 +65,11 @@
         bordered
       >
         <template #bodyCell="{ text, record, column }">
-          <template v-if="column.dataIndex === 'horseType'">
-            <a-tag v-if="text === 1" color="blue">俱乐部马</a-tag>
-            <a-tag v-else-if="text === 2" color="green">马主马</a-tag>
-            <a-tag v-else-if="text === 3" color="orange">教练马</a-tag>
+          <template v-if="column.dataIndex === 'ownership'">
+            <span v-if="record.horseType === 1">{{ record.clubName }}</span>
+            <span v-else-if="record.horseType === 2">{{ record.ownerName || '-' }}</span>
+            <span v-else-if="record.horseType === 3">{{ record.responsibleCoachName || '-' }}</span>
+            <span v-else>-</span>
           </template>
           <template v-else-if="column.dataIndex === 'gender'">
             <span v-if="text === 1">公马</span>
@@ -147,19 +148,13 @@ const columns = [
     align: 'center'
   },
   {
-    title: '俱乐部',
-    dataIndex: 'clubName',
+    title: '归属',
+    dataIndex: 'ownership',
     width: 150,
     align: 'center'
   },
   {
-    title: '类型',
-    dataIndex: 'horseType',
-    width: 120,
-    align: 'center'
-  },
-  {
-    title: '品种',
+    title: '血统',
     dataIndex: 'breed',
     width: 120,
     align: 'center'

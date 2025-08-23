@@ -332,7 +332,8 @@ const getOrderTypeColor = (orderType) => {
   const colors = {
     1: 'blue',    // 课程订单
     2: 'green',   // 课时包订单
-    3: 'orange'   // 活动订单
+    3: 'orange',  // 活动订单
+    4: 'purple'   // 体验课订单
   };
   return colors[orderType] || 'default';
 };

@@ -106,6 +106,7 @@
     <EmployeeFormModal ref="employeeFormModal" @refresh="queryEmployee" @show-account="showAccount" />
     <EmployeeDepartmentFormModal ref="employeeDepartmentFormModal" @refresh="queryEmployee" />
     <EmployeePasswordDialog ref="employeePasswordDialog" />
+    <CoachFormModal ref="coachFormModalRef" @refresh="queryEmployee" />
   </a-card>
 </template>
 <script setup>
@@ -119,6 +120,7 @@
   import EmployeeFormModal from '../employee-form-modal/index.vue';
   import EmployeeDepartmentFormModal from '../employee-department-form-modal/index.vue';
   import EmployeePasswordDialog from '../employee-password-dialog/index.vue';
+  import CoachFormModal from '../../../../business/coach/components/coach-form-modal.vue';
   import { PAGE_SIZE_OPTIONS, showTableTotal } from '/@/constants/common-const';
   import { smartSentry } from '/@/lib/smart-sentry';
   import TableOperator from '/@/components/support/table-operator/index.vue';
@@ -133,6 +135,10 @@
 
   //-------------回显账号密码信息----------
   let employeePasswordDialog = ref();
+  
+  // 教练编辑弹窗引用
+  const coachFormModalRef = ref();
+  
   function showAccount(accountName, passWord) {
     employeePasswordDialog.value.showModal(accountName, passWord);
   }
@@ -445,7 +451,7 @@
 
   // 编辑教练信息
   function editCoach(coachId) {
-    window.open(`#/club/coach/coach-list?editId=${coachId}`, '_blank');
+    coachFormModalRef.value.show(coachId);
   }
 
   // 动态调整表格列显示

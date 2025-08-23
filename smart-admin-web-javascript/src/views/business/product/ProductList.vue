@@ -318,7 +318,8 @@ function getProductTypeColor(value) {
   const colorMap = {
     [PRODUCT_TYPE_ENUM.COURSE.value]: 'blue',
     [PRODUCT_TYPE_ENUM.PACKAGE.value]: 'green',
-    [PRODUCT_TYPE_ENUM.ACTIVITY.value]: 'purple'
+    [PRODUCT_TYPE_ENUM.ACTIVITY.value]: 'purple',
+    [PRODUCT_TYPE_ENUM.EXPERIENCE.value]: 'orange'
   };
   return colorMap[value] || 'default';
 }

@@ -33,8 +33,8 @@
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label="马匹类型" name="horseType">
-            <a-select v-model:value="formState.form.horseType" placeholder="请选择马匹类型" @change="onHorseTypeChange">
+          <a-form-item label="归属" name="horseType">
+            <a-select v-model:value="formState.form.horseType" placeholder="请选择归属" @change="onHorseTypeChange">
               <a-select-option :value="1">俱乐部马</a-select-option>
               <a-select-option :value="2">马主马</a-select-option>
               <a-select-option :value="3">教练马</a-select-option>
@@ -58,8 +58,8 @@
 
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-form-item label="品种" name="breed">
-            <a-input v-model:value="formState.form.breed" placeholder="请输入品种" />
+          <a-form-item label="血统" name="breed">
+            <a-input v-model:value="formState.form.breed" placeholder="请输入血统" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
@@ -261,9 +261,9 @@ const formRules = {
   horseCode: [{ required: true, message: '请输入马匹编号' }],
   horseName: [{ required: true, message: '请输入马名' }],
   clubId: [{ required: true, message: '请选择俱乐部' }],
-  horseType: [{ required: true, message: '请选择马匹类型' }],
+  horseType: [{ required: true, message: '请选择归属' }],
   chipNo: [{ required: true, message: '请输入芯片号' }],
-  breed: [{ required: true, message: '请输入品种' }],
+  breed: [{ required: true, message: '请输入血统' }],
   gender: [{ required: true, message: '请选择性别' }],
   healthStatus: [{ required: true, message: '请选择健康状态' }],
   workStatus: [{ required: true, message: '请选择工作状态' }],

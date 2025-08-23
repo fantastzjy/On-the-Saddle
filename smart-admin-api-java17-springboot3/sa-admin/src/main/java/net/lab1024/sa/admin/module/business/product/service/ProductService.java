@@ -9,9 +9,11 @@ import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductPackageDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductActivityDao;
+import net.lab1024.sa.admin.module.business.product.dao.ProductExperienceDao;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductPackageEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductActivityEntity;
+import net.lab1024.sa.admin.module.business.product.domain.entity.ProductExperienceEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
@@ -56,6 +58,9 @@ public class ProductService {
 
     @Autowired
     private ProductActivityDao productActivityDao;
+
+    @Autowired
+    private ProductExperienceDao productExperienceDao;
 
     @Autowired
     private FileService fileService;
@@ -290,7 +295,8 @@ public class ProductService {
         List<Map<String, Object>> types = Arrays.asList(
             Map.of("value", 1, "label", "课程"),
             Map.of("value", 2, "label", "课时包"),
-            Map.of("value", 3, "label", "活动")
+            Map.of("value", 3, "label", "活动"),
+            Map.of("value", 4, "label", "体验课")
         );
         return ResponseDTO.ok(types);
     }
@@ -432,6 +438,9 @@ public class ProductService {
             case 3:
                 typePrefix = "ACTIVITY";
                 break;
+            case 4:
+                typePrefix = "EXPERIENCE";
+                break;
             default:
                 typePrefix = "PRODUCT";
                 break;
@@ -493,6 +502,9 @@ public class ProductService {
                     break;
                 case 3: // 活动
                     saveActivityConfigFromForm(productId, form);
+                    break;
+                case 4: // 体验课
+                    saveExperienceConfigFromForm(productId, form);
                     break;
             }
         } catch (Exception e) {
@@ -649,6 +661,49 @@ public class ProductService {
             }
         } catch (Exception e) {
             log.error("保存活动配置失败，商品ID: {}", productId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * 从表单保存体验课配置
+     */
+    private void saveExperienceConfigFromForm(Long productId, Object form) {
+        try {
+            // 先删除已存在的配置
+            LambdaQueryWrapper<ProductExperienceEntity> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(ProductExperienceEntity::getProductId, productId);
+            productExperienceDao.delete(deleteWrapper);
+            
+            // 创建新的体验课配置
+            ProductExperienceEntity experienceEntity = new ProductExperienceEntity();
+            experienceEntity.setProductId(productId);
+            
+            // 从表单对象提取字段值
+            if (form instanceof ProductAddForm) {
+                ProductAddForm addForm = (ProductAddForm) form;
+                experienceEntity.setPrice(addForm.getPrice());
+                experienceEntity.setDurationMinutes(addForm.getDurationMinutes());
+                experienceEntity.setDurationPeriods(addForm.getDurationPeriods());
+                experienceEntity.setMaxStudents(addForm.getMaxStudents());
+            } else if (form instanceof ProductUpdateForm) {
+                ProductUpdateForm updateForm = (ProductUpdateForm) form;
+                experienceEntity.setPrice(updateForm.getPrice());
+                experienceEntity.setDurationMinutes(updateForm.getDurationMinutes());
+                experienceEntity.setDurationPeriods(updateForm.getDurationPeriods());
+                experienceEntity.setMaxStudents(updateForm.getMaxStudents());
+            }
+            
+            experienceEntity.setCreateTime(LocalDateTime.now());
+            experienceEntity.setUpdateTime(LocalDateTime.now());
+            
+            // 只有当有有效数据时才保存
+            if (experienceEntity.getPrice() != null) {
+                productExperienceDao.insert(experienceEntity);
+                log.info("保存体验课配置成功，商品ID: {}", productId);
+            }
+        } catch (Exception e) {
+            log.error("保存体验课配置失败，商品ID: {}", productId, e);
             throw e;
         }
     }
@@ -874,6 +929,9 @@ public class ProductService {
             case 3: // 活动
                 productDetail.setActivityDetails(getActivityDetails(productDetail.getProductId()));
                 break;
+            case 4: // 体验课
+                productDetail.setExperienceDetails(getExperienceDetails(productDetail.getProductId()));
+                break;
         }
     }
 
@@ -885,6 +943,7 @@ public class ProductService {
             case 1: return "课程";
             case 2: return "课时包";
             case 3: return "活动";
+            case 4: return "体验课";
             default: return "未知";
         }
     }
@@ -983,6 +1042,30 @@ public class ProductService {
             return activityDetails;
         } catch (Exception e) {
             log.error("获取活动详情失败，商品ID: {}", productId, e);
+            return new HashMap<>();
+        }
+    }
+
+    /**
+     * 获取体验课详情配置
+     */
+    private Map<String, Object> getExperienceDetails(Long productId) {
+        try {
+            LambdaQueryWrapper<ProductExperienceEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ProductExperienceEntity::getProductId, productId);
+            ProductExperienceEntity experienceEntity = productExperienceDao.selectOne(wrapper);
+            
+            Map<String, Object> experienceDetails = new HashMap<>();
+            if (experienceEntity != null) {
+                experienceDetails.put("price", experienceEntity.getPrice());
+                experienceDetails.put("durationMinutes", experienceEntity.getDurationMinutes());
+                experienceDetails.put("durationPeriods", experienceEntity.getDurationPeriods());
+                experienceDetails.put("maxStudents", experienceEntity.getMaxStudents());
+            }
+            
+            return experienceDetails;
+        } catch (Exception e) {
+            log.error("获取体验课详情失败，商品ID: {}", productId, e);
             return new HashMap<>();
         }
     }

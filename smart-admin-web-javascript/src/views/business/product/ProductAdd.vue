@@ -167,8 +167,8 @@ const isEdit = computed(() => {
 });
 
 const showPricePreview = computed(() => {
-  // 活动类型不显示价格预览
-  if (formData.productType === 3) {
+  // 活动类型和体验课不显示价格预览
+  if (formData.productType === 3 || formData.productType === 4) {
     return false;
   }
   
@@ -183,6 +183,8 @@ const configSectionTitle = computed(() => {
       return '课时包配置';
     case 3:
       return '活动配置';
+    case 4:
+      return '体验课配置';
     default:
       return '商品配置';
   }
@@ -271,6 +273,14 @@ async function loadProductDetail() {
               return [];
             }
           })()
+        };
+      } else if (product.productType === 4 && product.experienceDetails && Object.keys(product.experienceDetails).length > 0) {
+        // 体验课类型：从experienceDetails获取数据
+        dynamicConfig = {
+          price: product.experienceDetails.price,
+          durationMinutes: product.experienceDetails.durationMinutes,
+          durationPeriods: product.experienceDetails.durationPeriods,
+          maxStudents: product.experienceDetails.maxStudents
         };
       } else {
         // 如果没有详情数据，尝试从旧的dynamicConfig字段获取
@@ -430,7 +440,6 @@ function checkRequiredFields(data) {
   if (formData.productType === 1) {
     // 课程类型必填字段检查
     return data.classType && 
-           data.durationMinutes && 
            data.durationPeriods && 
            data.maxStudents && 
            data.coachFee !== null && data.coachFee !== undefined &&
@@ -452,6 +461,11 @@ function checkRequiredFields(data) {
            data.price !== null && data.price !== undefined &&
            data.maxParticipants &&
            data.refundRule;
+  } else if (formData.productType === 4) {
+    // 体验课类型必填字段检查（使用基础单价）
+    return data.price !== null && data.price !== undefined &&
+           data.durationMinutes && 
+           data.maxStudents;
   }
   
   return false;
@@ -536,6 +550,14 @@ async function onSubmit() {
         maxParticipants: formData.dynamicConfig.maxParticipants,
         refundRule: formData.dynamicConfig.refundRule,
         detailImages: JSON.stringify(formData.dynamicConfig.detailImages)
+      }),
+      
+      // 体验课商品字段 (productType=4) - 使用基础价格字段
+      ...(formData.productType === 4 && {
+        price: formData.dynamicConfig.price,
+        durationMinutes: formData.dynamicConfig.durationMinutes,
+        durationPeriods: formData.dynamicConfig.durationPeriods,
+        maxStudents: formData.dynamicConfig.maxStudents
       })
     };
 

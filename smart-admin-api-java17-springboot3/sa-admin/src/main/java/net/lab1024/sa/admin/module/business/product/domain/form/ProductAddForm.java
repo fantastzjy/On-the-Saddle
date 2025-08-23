@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 
 /**
  * 商品新增表单 - 严格按照数据库表结构设计
- * 对应主表 m_product 和扩展表 m_product_course/m_product_package/m_product_activity
+ * 对应主表 m_product 和扩展表 m_product_course/m_product_package/m_product_activity/m_product_experience
  *
  * @Author 1024创新实验室
  * @Date 2024-08-16
@@ -33,7 +33,7 @@ public class ProductAddForm {
     @Schema(description = "商品编码")
     private String productCode;
 
-    @Schema(description = "商品类型: 1-课程 2-课时包 3-活动")
+    @Schema(description = "商品类型: 1-课程 2-课时包 3-活动 4-体验课")
     @NotNull(message = "商品类型不能为空")
     private Integer productType;
 

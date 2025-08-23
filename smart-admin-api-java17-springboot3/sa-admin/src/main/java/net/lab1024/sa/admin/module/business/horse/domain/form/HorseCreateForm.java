@@ -30,7 +30,7 @@ public class HorseCreateForm {
     @Schema(description = "马匹编号")
     private String horseCode;
 
-    @Schema(description = "品种")
+    @Schema(description = "血统")
     private String breed;
 
     @Schema(description = "性别：1-公 2-母 3-骟")

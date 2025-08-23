@@ -11,6 +11,11 @@ import net.lab1024.sa.admin.module.business.horse.domain.form.HorseUpdateForm;
 import net.lab1024.sa.admin.module.business.horse.domain.vo.HorseListVO;
 import net.lab1024.sa.admin.module.business.horse.domain.vo.HorseVO;
 import net.lab1024.sa.admin.module.business.horse.service.HorseService;
+import net.lab1024.sa.admin.module.business.schedule.domain.form.ResourceScheduleCreateForm;
+import net.lab1024.sa.admin.module.business.schedule.domain.form.ResourceScheduleQueryForm;
+import net.lab1024.sa.admin.module.business.schedule.domain.form.ResourceScheduleUpdateForm;
+import net.lab1024.sa.admin.module.business.schedule.domain.vo.ResourceScheduleVO;
+import net.lab1024.sa.admin.module.business.schedule.service.ResourceScheduleService;
 import net.lab1024.sa.base.module.support.operatelog.annotation.OperateLog;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -37,6 +42,9 @@ public class HorseController {
 
     @Resource
     private HorseService horseService;
+
+    @Resource
+    private ResourceScheduleService resourceScheduleService;
 
     @Operation(summary = "分页查询马匹")
     @PostMapping("/club/horse/page/query")
@@ -79,5 +87,37 @@ public class HorseController {
     public ResponseDTO<List<HorseListVO>> queryList(@RequestParam(required = false) Long clubId,
                                                     @RequestParam(required = false) Integer horseType) {
         return horseService.queryList(clubId, horseType);
+    }
+
+    // ==================== 马匹时间管理接口 ====================
+
+    @Operation(summary = "查询马匹时间安排")
+    @PostMapping("/club/horse/schedule/query/{horseId}")
+    @SaCheckPermission("horse:schedule:query")
+    public ResponseDTO<List<ResourceScheduleVO>> queryHorseSchedule(@PathVariable Long horseId,
+                                                                    @RequestBody @Valid ResourceScheduleQueryForm queryForm) {
+        return resourceScheduleService.queryByResource(3, horseId, queryForm);
+    }
+
+    @Operation(summary = "创建马匹时间安排")
+    @PostMapping("/club/horse/schedule/create")
+    @SaCheckPermission("horse:schedule:manage")
+    public ResponseDTO<String> createHorseSchedule(@RequestBody @Valid ResourceScheduleCreateForm createForm) {
+        createForm.setResourceType(3); // 设置为马匹类型
+        return resourceScheduleService.create(createForm);
+    }
+
+    @Operation(summary = "更新马匹时间安排")
+    @PostMapping("/club/horse/schedule/update")
+    @SaCheckPermission("horse:schedule:manage")
+    public ResponseDTO<String> updateHorseSchedule(@RequestBody @Valid ResourceScheduleUpdateForm updateForm) {
+        return resourceScheduleService.update(updateForm);
+    }
+
+    @Operation(summary = "删除马匹时间安排")
+    @GetMapping("/club/horse/schedule/delete/{id}")
+    @SaCheckPermission("horse:schedule:manage")
+    public ResponseDTO<String> deleteHorseSchedule(@PathVariable Long id) {
+        return resourceScheduleService.delete(id);
     }
 }

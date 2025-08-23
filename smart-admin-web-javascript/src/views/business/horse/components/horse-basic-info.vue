@@ -7,18 +7,18 @@
           <a-descriptions-item label="马名">{{ horseDetail.horseName }}</a-descriptions-item>
           <a-descriptions-item label="芯片号">{{ horseDetail.chipNo }}</a-descriptions-item>
           <a-descriptions-item label="护照号">{{ horseDetail.passportNo || '-' }}</a-descriptions-item>
-          <a-descriptions-item label="俱乐部">{{ horseDetail.clubName }}</a-descriptions-item>
-          <a-descriptions-item label="马匹类型">
-            <a-tag v-if="horseDetail.horseType === 1" color="blue">俱乐部马</a-tag>
-            <a-tag v-else-if="horseDetail.horseType === 2" color="green">马主马</a-tag>
-            <a-tag v-else-if="horseDetail.horseType === 3" color="orange">教练马</a-tag>
+          <a-descriptions-item label="归属">
+            <span v-if="horseDetail.horseType === 1">{{ horseDetail.clubName }}</span>
+            <span v-else-if="horseDetail.horseType === 2">{{ horseDetail.ownerName || '-' }}</span>
+            <span v-else-if="horseDetail.horseType === 3">{{ horseDetail.responsibleCoachName || '-' }}</span>
+            <span v-else>-</span>
           </a-descriptions-item>
         </a-descriptions>
       </a-col>
       
       <a-col :span="12">
         <a-descriptions title="身体特征" :column="1" bordered>
-          <a-descriptions-item label="品种">{{ horseDetail.breed }}</a-descriptions-item>
+          <a-descriptions-item label="血统">{{ horseDetail.breed }}</a-descriptions-item>
           <a-descriptions-item label="性别">
             <span v-if="horseDetail.gender === 1">公马</span>
             <span v-else-if="horseDetail.gender === 2">母马</span>

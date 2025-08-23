@@ -19,6 +19,10 @@ export const PRODUCT_TYPE_ENUM = {
   ACTIVITY: {
     value: 3,
     desc: '活动'
+  },
+  EXPERIENCE: {
+    value: 4,
+    desc: '体验课'
   }
 };
 

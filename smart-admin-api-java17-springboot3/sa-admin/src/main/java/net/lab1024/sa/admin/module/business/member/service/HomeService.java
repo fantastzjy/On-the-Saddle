@@ -221,6 +221,9 @@ public class HomeService {
         // 骑手等级标签生成
         vo.setRiderLevelTags(buildAllLevelTags(coach));
 
+        // 专长领域处理：字符串转列表
+        vo.setSpecialtiesList(parseSpecialtiesString(coach.getSpecialties()));
+
         // 生成模拟的不可用时间
         vo.setUnavailableTimeSlots(generateMockUnavailableTimeSlots(coach.getCoachId()));
 
@@ -303,6 +306,22 @@ public class HomeService {
         }
 
         return unavailableSlots;
+    }
+
+    /**
+     * 解析专长领域字符串为列表
+     * @param specialties 专长领域字符串（逗号分隔）
+     * @return 专长领域列表
+     */
+    private List<String> parseSpecialtiesString(String specialties) {
+        if (StrUtil.isBlank(specialties)) {
+            return new ArrayList<>();
+        }
+        
+        return Arrays.stream(specialties.split(","))
+            .map(String::trim)
+            .filter(StrUtil::isNotBlank)
+            .collect(Collectors.toList());
     }
 
     /**

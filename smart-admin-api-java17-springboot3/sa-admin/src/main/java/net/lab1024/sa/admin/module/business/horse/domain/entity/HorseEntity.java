@@ -34,7 +34,7 @@ public class HorseEntity {
     @DataTracerFieldLabel("马匹编号")
     private String horseCode;
 
-    @DataTracerFieldLabel("品种")
+    @DataTracerFieldLabel("血统")
     private String breed;
 
     @DataTracerFieldLabel("性别")

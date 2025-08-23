@@ -41,6 +41,9 @@ public class CoachListVO {
     @Schema(description = "教练介绍")
     private String introduction;
 
+    @Schema(description = "专长领域列表")
+    private List<String> specialtiesList;
+
     @Schema(description = "不可用时间列表")
     private List<UnavailableTimeSlotVO> unavailableTimeSlots;
 }

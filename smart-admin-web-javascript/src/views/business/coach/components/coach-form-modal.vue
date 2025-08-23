@@ -74,7 +74,12 @@
       <a-row :gutter="24">
         <a-col :span="24">
           <a-form-item label="专长领域" name="specialties">
-            <a-textarea v-model:value="form.specialties" placeholder="请输入专长领域" :rows="2" />
+            <PresetSelector 
+              v-model:value="form.specialties"
+              preset-type="specialties"
+              mode="multiple"
+              placeholder="请选择专长领域"
+            />
           </a-form-item>
         </a-col>
       </a-row>
@@ -189,6 +194,7 @@ import { clubApi } from '/@/api/business/club/club-api';
 import { employeeApi } from '/@/api/system/employee-api';
 import { smartSentry } from '/@/lib/smart-sentry';
 import Upload from '/@/components/support/file-upload/index.vue';
+import PresetSelector from '/@/components/business/preset-selector/index.vue';
 import dayjs from 'dayjs';
 
 const emit = defineEmits(['refresh']);
@@ -217,7 +223,7 @@ const formState = {
   userId: null,
   coachNo: '',
   entryDate: null,
-  specialties: '',
+  specialties: [],
   introduction: '',
   riderCertNo: '',
   riderLevelShowJumping: '',
@@ -296,6 +302,13 @@ async function loadCoachDetail(coachId) {
       form.entryDate = dayjs(form.entryDate);
     }
 
+    // 处理专长领域字段：字符串转数组
+    if (form.specialties) {
+      form.specialties = form.specialties.split(',').filter(item => item.trim());
+    } else {
+      form.specialties = [];
+    }
+
     // 处理图片字段
     if (form.riderCertImgUrl) {
       try {
@@ -361,6 +374,11 @@ async function onSubmit() {
     // 处理日期字段
     if (formData.entryDate) {
       formData.entryDate = dayjs(formData.entryDate).format('YYYY-MM-DD HH:mm:ss');
+    }
+
+    // 处理专长领域字段：数组转字符串
+    if (Array.isArray(formData.specialties)) {
+      formData.specialties = formData.specialties.join(',');
     }
 
     if (form.coachId) {

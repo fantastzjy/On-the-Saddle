@@ -24,7 +24,7 @@ public class DynamicFormConfigService {
     /**
      * 根据商品类型获取表单配置
      * 
-     * @param productType 商品类型 1-课程 2-课时包 3-活动
+     * @param productType 商品类型 1-课程 2-课时包 3-活动 4-体验课
      * @return 表单配置信息
      */
     public ResponseDTO<Map<String, Object>> getFormConfig(Integer productType) {
@@ -40,6 +40,9 @@ public class DynamicFormConfigService {
                     break;
                 case 3: // 活动
                     formConfig = getActivityFormConfig();
+                    break;
+                case 4: // 体验课
+                    formConfig = getExperienceFormConfig();
                     break;
                 default:
                     return ResponseDTO.userErrorParam("不支持的商品类型");
@@ -57,7 +60,7 @@ public class DynamicFormConfigService {
     /**
      * 根据商品类型和子类型获取详细表单配置
      * 
-     * @param productType 商品类型 1-课程 2-课时包 3-活动
+     * @param productType 商品类型 1-课程 2-课时包 3-活动 4-体验课
      * @param classType 课程分类 1-单人课 2-多人课 (仅课程类型有效)
      * @return 详细表单配置信息
      */
@@ -98,6 +101,8 @@ public class DynamicFormConfigService {
                     return validatePackageData(formData);
                 case 3: // 活动
                     return validateActivityData(formData);
+                case 4: // 体验课
+                    return validateExperienceData(formData);
                 default:
                     return ResponseDTO.userErrorParam("不支持的商品类型");
             }
@@ -153,8 +158,7 @@ public class DynamicFormConfigService {
             )));
         
         // 时长配置
-        fields.add(createNumberField("durationMinutes", "时长（分钟）", true, 30, 300, 60));
-        fields.add(createNumberField("durationPeriods", "时长（鞍时）", true, 0.5, 5.0, 1.0));
+        fields.add(createNumberField("durationPeriods", "鞍时数", true, 0.5, 5.0, 1.0));
         
         if (classType == 1) {
             // 单人课配置 - 严格按照数据库字段 m_product_course
@@ -247,6 +251,31 @@ public class DynamicFormConfigService {
         
         config.put("fields", fields);
         config.put("rules", getActivityValidationRules());
+        
+        return config;
+    }
+
+    /**
+     * 获取体验课表单配置
+     */
+    private Map<String, Object> getExperienceFormConfig() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("title", "体验课配置");
+        config.put("type", "experience");
+        
+        List<Map<String, Object>> fields = new ArrayList<>();
+        
+        // 价格配置（基础单价）
+        fields.add(createNumberField("price", "基础单价", true, 0, 9999, 200));
+        
+        // 时长配置（只显示分钟）
+        fields.add(createNumberField("durationMinutes", "课程时长（分钟）", true, 30, 300, 60));
+        
+        // 人数配置
+        fields.add(createNumberField("maxStudents", "最大人数", true, 1, 10, 1));
+        
+        config.put("fields", fields);
+        config.put("rules", getExperienceValidationRules());
         
         return config;
     }
@@ -415,7 +444,6 @@ public class DynamicFormConfigService {
         
         // 数据库字段验证规则
         rules.put("classType", List.of("required", "number"));
-        rules.put("durationMinutes", List.of("required", "number", "min:30", "max:300"));
         rules.put("durationPeriods", List.of("required", "number", "min:0.5", "max:5"));
         rules.put("maxStudents", List.of("required", "number", "min:1", "max:10"));
         rules.put("coachFee", List.of("required", "number", "min:0"));
@@ -459,21 +487,32 @@ public class DynamicFormConfigService {
     }
 
     /**
+     * 获取体验课验证规则
+     */
+    private Map<String, Object> getExperienceValidationRules() {
+        Map<String, Object> rules = new HashMap<>();
+        rules.put("price", List.of("required", "number", "min:0"));
+        rules.put("durationMinutes", List.of("required", "number", "min:30", "max:300"));
+        rules.put("maxStudents", List.of("required", "number", "min:1", "max:10"));
+        return rules;
+    }
+
+    /**
      * 验证课程数据 - 严格按照数据库表 m_product_course 字段
      */
     private ResponseDTO<String> validateCourseData(Map<String, Object> formData) {
         // 验证必填字段 - 对应数据库字段
-        String[] requiredFields = {"classType", "durationMinutes", "durationPeriods", "maxStudents", "coachFee", "horseFee"};
+        String[] requiredFields = {"classType", "durationPeriods", "maxStudents", "coachFee", "horseFee"};
         for (String field : requiredFields) {
             if (!formData.containsKey(field) || formData.get(field) == null) {
                 return ResponseDTO.userErrorParam(field + " 是必填字段");
             }
         }
         
-        // 验证数值范围
-        Integer durationMinutes = (Integer) formData.get("durationMinutes");
-        if (durationMinutes < 30 || durationMinutes > 300) {
-            return ResponseDTO.userErrorParam("时长必须在30-300分钟之间");
+        // 验证鞍时数范围
+        Double durationPeriods = (Double) formData.get("durationPeriods");
+        if (durationPeriods < 0.5 || durationPeriods > 5.0) {
+            return ResponseDTO.userErrorParam("鞍时数必须在0.5-5.0之间");
         }
         
         // 多人课价格配置为可选项，如果有则验证格式
@@ -527,6 +566,27 @@ public class DynamicFormConfigService {
         String activityName = (String) formData.get("activityName");
         if (activityName.length() > 5) {
             return ResponseDTO.userErrorParam("活动名称最多5个字");
+        }
+        
+        return ResponseDTO.ok("验证通过");
+    }
+
+    /**
+     * 验证体验课数据
+     */
+    private ResponseDTO<String> validateExperienceData(Map<String, Object> formData) {
+        // 验证必填字段
+        String[] requiredFields = {"price", "durationMinutes", "maxStudents"};
+        for (String field : requiredFields) {
+            if (!formData.containsKey(field) || formData.get(field) == null) {
+                return ResponseDTO.userErrorParam(field + " 是必填字段");
+            }
+        }
+        
+        // 验证时长
+        Integer durationMinutes = (Integer) formData.get("durationMinutes");
+        if (durationMinutes < 30 || durationMinutes > 300) {
+            return ResponseDTO.userErrorParam("时长必须在30-300分钟之间");
         }
         
         return ResponseDTO.ok("验证通过");

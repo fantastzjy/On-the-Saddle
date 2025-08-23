@@ -146,13 +146,13 @@ export const TABLE_COLUMNS = [
     align: 'center',
     slots: { customRender: 'gender' }
   },
-  {
-    title: '年龄',
-    dataIndex: 'age',
-    width: 80,
-    align: 'center',
-    slots: { customRender: 'age' }
-  },
+  // {
+  //   title: '年龄',
+  //   dataIndex: 'age',
+  //   width: 80,
+  //   align: 'center',
+  //   slots: { customRender: 'age' }
+  // },
   {
     title: '注册状态',
     dataIndex: 'registrationStatus',

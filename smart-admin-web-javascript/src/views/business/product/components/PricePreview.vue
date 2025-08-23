@@ -62,6 +62,19 @@
           </a-col>
         </template>
         
+        <!-- 体验课类型显示基础单价 -->
+        <template v-else-if="isExperienceClass">
+          <a-col :span="24">
+            <a-statistic
+              title="基础单价"
+              :value="getProductPrice()"
+              :precision="2"
+              prefix="¥"
+              :value-style="{ color: '#1890ff', fontWeight: 'bold' }"
+            />
+          </a-col>
+        </template>
+
         <!-- 其他类型商品 -->
         <template v-else>
           <a-col :span="24">
@@ -112,6 +125,21 @@
             </a-descriptions-item>
             <a-descriptions-item label="价格区间">
               <span style="color: #52c41a; font-weight: bold;">{{ getPriceRange() }}</span>
+            </a-descriptions-item>
+          </a-descriptions>
+        </template>
+        
+        <template v-else-if="isExperienceClass">
+          <!-- 体验课显示基础价格明细 -->
+          <a-descriptions size="small" :column="1" bordered>
+            <a-descriptions-item label="基础单价">
+              <span style="color: #1890ff; font-weight: bold;">¥{{ Number(props.dynamicConfig.price || 0).toFixed(2) }}</span>
+            </a-descriptions-item>
+            <a-descriptions-item label="课时时长">
+              <span style="color: #666;">{{ props.dynamicConfig.durationMinutes || 0 }}分钟 / {{ props.dynamicConfig.durationPeriods || 0 }}鞍时</span>
+            </a-descriptions-item>
+            <a-descriptions-item label="最大人数">
+              <span style="color: #666;">{{ props.dynamicConfig.maxStudents || 0 }}人</span>
             </a-descriptions-item>
           </a-descriptions>
         </template>
@@ -261,11 +289,16 @@ const isMultiClass = computed(() => {
   return props.productData.productType === 1 && props.dynamicConfig.classType === 2;
 });
 
+const isExperienceClass = computed(() => {
+  return props.productData.productType === 4;
+});
+
 const showPriceDetails = computed(() => {
   return props.productData.productType && (
     (props.productData.productType === 1 && props.dynamicConfig.coachFee && props.dynamicConfig.horseFee) ||
     (props.productData.productType === 2 && props.dynamicConfig.price) ||
     (props.productData.productType === 3 && props.dynamicConfig.price) ||
+    (props.productData.productType === 4 && props.dynamicConfig.price) ||
     (priceDetails.value && priceDetails.value.length > 0)
   );
 });
@@ -421,6 +454,9 @@ function getProductPrice() {
   } else if (props.productData.productType === 3) {
     // 活动价格
     return Number(props.dynamicConfig.price || 0);
+  } else if (props.productData.productType === 4) {
+    // 体验课价格
+    return Number(props.dynamicConfig.price || 0);
   }
   return 0;
 }
@@ -430,6 +466,8 @@ function getDetailsTitle() {
     return '价格构成';
   } else if (isMultiClass.value) {
     return '价格区间详情';
+  } else if (isExperienceClass.value) {
+    return '体验课定价';
   }
   return '价格明细';
 }

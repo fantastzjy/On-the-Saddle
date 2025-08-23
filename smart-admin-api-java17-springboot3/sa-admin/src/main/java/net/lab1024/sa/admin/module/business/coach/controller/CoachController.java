@@ -11,6 +11,11 @@ import net.lab1024.sa.admin.module.business.coach.domain.form.CoachUpdateForm;
 import net.lab1024.sa.admin.module.business.coach.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.coach.domain.vo.CoachVO;
 import net.lab1024.sa.admin.module.business.coach.service.CoachService;
+import net.lab1024.sa.admin.module.business.schedule.domain.form.ResourceScheduleCreateForm;
+import net.lab1024.sa.admin.module.business.schedule.domain.form.ResourceScheduleQueryForm;
+import net.lab1024.sa.admin.module.business.schedule.domain.form.ResourceScheduleUpdateForm;
+import net.lab1024.sa.admin.module.business.schedule.domain.vo.ResourceScheduleVO;
+import net.lab1024.sa.admin.module.business.schedule.service.ResourceScheduleService;
 import net.lab1024.sa.base.module.support.operatelog.annotation.OperateLog;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -37,6 +42,9 @@ public class CoachController {
 
     @Resource
     private CoachService coachService;
+
+    @Resource
+    private ResourceScheduleService resourceScheduleService;
 
     @Operation(summary = "分页查询教练")
     @PostMapping("/club/coach/page/query")
@@ -79,5 +87,37 @@ public class CoachController {
     public ResponseDTO<List<CoachListVO>> queryList(@RequestParam(required = false) Integer isValid,
                                                     @RequestParam(required = false) Long clubId) {
         return coachService.queryList(isValid, clubId);
+    }
+
+    // ==================== 教练时间管理接口 ====================
+
+    @Operation(summary = "查询教练时间安排")
+    @PostMapping("/club/coach/schedule/query/{coachId}")
+    @SaCheckPermission("coach:schedule:query")
+    public ResponseDTO<List<ResourceScheduleVO>> queryCoachSchedule(@PathVariable Long coachId,
+                                                                    @RequestBody @Valid ResourceScheduleQueryForm queryForm) {
+        return resourceScheduleService.queryByResource(2, coachId, queryForm);
+    }
+
+    @Operation(summary = "创建教练时间安排")
+    @PostMapping("/club/coach/schedule/create")
+    @SaCheckPermission("coach:schedule:manage")
+    public ResponseDTO<String> createCoachSchedule(@RequestBody @Valid ResourceScheduleCreateForm createForm) {
+        createForm.setResourceType(2); // 设置为教练类型
+        return resourceScheduleService.create(createForm);
+    }
+
+    @Operation(summary = "更新教练时间安排")
+    @PostMapping("/club/coach/schedule/update")
+    @SaCheckPermission("coach:schedule:manage")
+    public ResponseDTO<String> updateCoachSchedule(@RequestBody @Valid ResourceScheduleUpdateForm updateForm) {
+        return resourceScheduleService.update(updateForm);
+    }
+
+    @Operation(summary = "删除教练时间安排")
+    @GetMapping("/club/coach/schedule/delete/{id}")
+    @SaCheckPermission("coach:schedule:manage")
+    public ResponseDTO<String> deleteCoachSchedule(@PathVariable Long id) {
+        return resourceScheduleService.delete(id);
     }
 }

@@ -74,9 +74,6 @@
           <a-descriptions-item label="课程类型">
             {{ productDetail.courseDetails?.classType === 1 ? '单人课' : '多人课' }}
           </a-descriptions-item>
-          <a-descriptions-item label="课程时长">
-            {{ productDetail.courseDetails?.durationMinutes || '-' }} 分钟
-          </a-descriptions-item>
           <a-descriptions-item label="鞍时数">
             {{ productDetail.courseDetails?.durationPeriods || '-' }} 鞍时
           </a-descriptions-item>
@@ -185,6 +182,32 @@
         </a-descriptions>
       </div>
 
+      <div v-else-if="productDetail.productType === 4">
+        <!-- 体验课详情 -->
+        <h4 style="margin-bottom: 16px;">
+          <BookOutlined style="margin-right: 8px;" />
+          体验课详情
+        </h4>
+        <a-descriptions :column="2" bordered>
+          <a-descriptions-item label="课程时长">
+            {{ productDetail.experienceDetails?.durationMinutes || '-' }} 分钟
+          </a-descriptions-item>
+          <a-descriptions-item label="最大学员数">
+            {{ productDetail.experienceDetails?.maxStudents || '-' }} 人
+          </a-descriptions-item>
+          <a-descriptions-item label="体验课价格">
+            <span style="font-size: 16px; color: #1890ff; font-weight: bold;">
+              ¥{{ productDetail.experienceDetails?.price || 0 }}
+            </span>
+          </a-descriptions-item>
+          <a-descriptions-item label="定价说明" :span="2">
+            <span style="color: #666; font-size: 12px;">
+              体验课采用统一定价模式，价格包含教练指导和马匹使用费用
+            </span>
+          </a-descriptions-item>
+        </a-descriptions>
+      </div>
+
       <!-- 操作记录 -->
       <a-divider />
       <a-descriptions title="操作记录" :column="2" bordered>
@@ -287,9 +310,10 @@ const deleteProduct = () => {
 
 const getProductTypeColor = (type) => {
   const colors = {
-    1: 'blue',    // 课程
-    2: 'green',   // 课时包
-    3: 'orange'   // 活动
+    1: 'blue',     // 课程
+    2: 'green',    // 课时包
+    3: 'purple',   // 活动
+    4: 'orange'    // 体验课
   };
   return colors[type] || 'default';
 };
@@ -312,6 +336,8 @@ const getProductPrice = () => {
       return product.packageDetails?.price || 0;
     case 3: // 活动类型
       return product.activityDetails?.price || 0;
+    case 4: // 体验课类型
+      return product.experienceDetails?.price || 0;
     default:
       return 0;
   }
