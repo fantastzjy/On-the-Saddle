@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import net.lab1024.sa.admin.module.business.member.domain.form.HomeQueryForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
 import net.lab1024.sa.admin.module.business.member.service.HomeService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -58,5 +60,15 @@ public class HomeController {
     @Operation(summary = "获取课程列表")
     public ResponseDTO<List<CourseListVO>> getCourseList(@RequestBody @Valid HomeQueryForm form) {
         return homeService.getCourseList(form.getClubCode());
+    }
+
+    /**
+     * 创建订单
+     */
+    @PostMapping("/order/create")
+    @NoNeedLogin
+    @Operation(summary = "创建订单")
+    public ResponseDTO<OrderCreateVO> createOrder(@RequestBody @Valid OrderCreateForm form) {
+        return homeService.createOrder(form);
     }
 }

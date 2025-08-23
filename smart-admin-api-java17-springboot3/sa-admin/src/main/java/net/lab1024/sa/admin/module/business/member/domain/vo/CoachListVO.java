@@ -20,6 +20,9 @@ public class CoachListVO {
     @Schema(description = "头像地址")
     private String avatarUrl;
 
+    @Schema(description = "教练编号")
+    private String coachNo;
+
     @Schema(description = "教练姓名")
     private String actualName;
 

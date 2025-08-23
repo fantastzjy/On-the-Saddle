@@ -14,6 +14,10 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.UnavailableTimeSlotVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
+import net.lab1024.sa.admin.module.business.member.domain.form.OrderCreateForm;
+import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
+import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
@@ -53,6 +57,9 @@ public class HomeService {
 
     @Resource
     private ProductCourseDao productCourseDao;
+
+    @Resource
+    private OrderDao orderDao;
 
     /**
      * 获取俱乐部详细信息
@@ -139,6 +146,7 @@ public class HomeService {
         CoachListVO vo = new CoachListVO();
 
         // 基础信息
+        vo.setCoachNo(coach.getCoachNo());
         vo.setActualName(coach.getActualName());
         vo.setGender(coach.getGender());
 
@@ -296,5 +304,61 @@ public class HomeService {
             log.error("获取课程列表失败", e);
             return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "获取课程列表失败");
         }
+    }
+
+    /**
+     * 创建订单
+     */
+    public ResponseDTO<OrderCreateVO> createOrder(OrderCreateForm form) {
+        try {
+            // TODO: 数据校验（预留位置）
+            // 1. 验证教练编号是否存在
+            // 2. 验证课程编号是否存在
+            // 3. 验证时间段是否可用
+            // 4. 验证金额计算是否正确
+
+            // 生成订单号（格式：yyyyMMddHHmmss + 6位随机数）
+            String orderNo = generateOrderNo();
+
+            // 创建订单
+            // OrderEntity order = new OrderEntity();
+            // order.setOrderNo(orderNo);
+            // order.setCoachNo(form.getCoachNo());
+            // order.setCourseCode(form.getCourseCode());
+            // order.setBookingDate(form.getTimeSlot().getDate());
+            // order.setTimeSlot(String.join(",", form.getTimeSlot().getTimeSlots()));
+            // order.setCoachFee(form.getCoachFee());
+            // order.setBaseFee(form.getBaseFee());
+            // order.setTotalAmount(form.getTotalAmount());
+            // order.setStatus(1); // 待支付状态
+            // order.setExpireTime(LocalDateTime.now().plusMinutes(30)); // 30分钟后过期
+            // order.setCreateTime(LocalDateTime.now());
+            // order.setIsDelete(false);
+
+            // 保存订单
+            // orderDao.insert(order);
+
+            // 构建响应
+            OrderCreateVO vo = new OrderCreateVO();
+            vo.setOrderNo(orderNo);
+            vo.setStatus(1);
+            // vo.setCreateTime(order.getCreateTime());
+            // vo.setExpireTime(order.getExpireTime());
+            vo.setPaymentCountdown(1800L); // 30分钟 = 1800秒
+
+            return ResponseDTO.ok(vo);
+        } catch (Exception e) {
+            log.error("创建订单失败", e);
+            return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "创建订单失败");
+        }
+    }
+
+    /**
+     * 生成订单号
+     */
+    private String generateOrderNo() {
+        String timestamp = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String randomNum = String.format("%06d", new Random().nextInt(1000000));
+        return timestamp + randomNum;
     }
 }
