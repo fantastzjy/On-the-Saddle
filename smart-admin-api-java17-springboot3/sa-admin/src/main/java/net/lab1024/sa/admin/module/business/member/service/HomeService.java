@@ -57,12 +57,12 @@ public class HomeService {
     /**
      * 获取俱乐部详细信息
      */
-    public ResponseDTO<ClubInfoVO> getClubInfo(Long clubId) {
-        if (clubId == null) {
-            return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部ID不能为空");
+    public ResponseDTO<ClubInfoVO> getClubInfo(String clubCode) {
+        if (StrUtil.isBlank(clubCode)) {
+            return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部编码不能为空");
         }
 
-        ClubEntity club = clubDao.selectById(clubId);
+        ClubEntity club = clubDao.selectByClubCode(clubCode);
         if (club == null || club.getIsDelete() || !club.getIsValid()) {
             return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "俱乐部信息不存在");
         }
@@ -97,14 +97,14 @@ public class HomeService {
     /**
      * 获取教练列表
      */
-    public ResponseDTO<List<CoachListVO>> getCoachList(Long clubId) {
+    public ResponseDTO<List<CoachListVO>> getCoachList(String clubCode) {
         try {
-            if (clubId == null) {
-                return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部ID不能为空");
+            if (StrUtil.isBlank(clubCode)) {
+                return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部编码不能为空");
             }
 
             // 验证俱乐部是否存在且有效
-            ClubEntity club = clubDao.selectById(clubId);
+            ClubEntity club = clubDao.selectByClubCode(clubCode);
             if (club == null || club.getIsDelete() || !club.getIsValid()) {
                 return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "俱乐部不存在");
             }
@@ -112,7 +112,7 @@ public class HomeService {
             // 查询该俱乐部的所有有效教练
             List<CoachEntity> coaches = coachDao.selectList(
                 new LambdaQueryWrapper<CoachEntity>()
-                    .eq(CoachEntity::getClubId, clubId)
+                    .eq(CoachEntity::getClubId, club.getClubId())
                     .eq(CoachEntity::getIsValid, 1)
                     .eq(CoachEntity::getIsDelete, 0)
                     .orderBy(true, true, CoachEntity::getSortOrder)
@@ -246,14 +246,14 @@ public class HomeService {
     /**
      * 获取课程列表
      */
-    public ResponseDTO<List<CourseListVO>> getCourseList(Long clubId) {
+    public ResponseDTO<List<CourseListVO>> getCourseList(String clubCode) {
         try {
-            if (clubId == null) {
-                return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部ID不能为空");
+            if (StrUtil.isBlank(clubCode)) {
+                return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部编码不能为空");
             }
 
             // 验证俱乐部是否存在且有效
-            ClubEntity club = clubDao.selectById(clubId);
+            ClubEntity club = clubDao.selectByClubCode(clubCode);
             if (club == null || club.getIsDelete() || !club.getIsValid()) {
                 return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "俱乐部不存在");
             }
@@ -261,7 +261,7 @@ public class HomeService {
             // 查询该俱乐部的商品，过滤课程类型为"课程"(productType=1)，子类型为"单人课"
             List<ProductEntity> products = productDao.selectList(
                 new LambdaQueryWrapper<ProductEntity>()
-                    .eq(ProductEntity::getClubId, clubId)
+                    .eq(ProductEntity::getClubId, club.getClubId())
                     .eq(ProductEntity::getProductType, 1) // 1代表课程
                     .eq(ProductEntity::getSubType, "single_class")
                     .eq(ProductEntity::getIsValid, true)

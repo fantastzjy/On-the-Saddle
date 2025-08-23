@@ -15,7 +15,7 @@ import lombok.Data;
 @Schema(description = "首页查询表单")
 public class HomeQueryForm {
 
-    @Schema(description = "俱乐部ID", required = true)
-    @NotNull(message = "俱乐部ID不能为空")
-    private Long clubId;
+    @Schema(description = "俱乐部编码", required = true)
+    @NotNull(message = "俱乐部编码不能为空")
+    private String clubCode;
 }

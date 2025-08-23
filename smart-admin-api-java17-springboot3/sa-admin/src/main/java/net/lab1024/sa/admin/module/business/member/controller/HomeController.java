@@ -37,7 +37,7 @@ public class HomeController {
     @NoNeedLogin
     @Operation(summary = "获取俱乐部详细信息")
     public ResponseDTO<ClubInfoVO> getClubInfo(@RequestBody @Valid HomeQueryForm form) {
-        return homeService.getClubInfo(form.getClubId());
+        return homeService.getClubInfo(form.getClubCode());
     }
 
     /**
@@ -47,7 +47,7 @@ public class HomeController {
     @NoNeedLogin
     @Operation(summary = "获取教练列表")
     public ResponseDTO<List<CoachListVO>> getCoachList(@RequestBody @Valid HomeQueryForm form) {
-        return homeService.getCoachList(form.getClubId());
+        return homeService.getCoachList(form.getClubCode());
     }
 
     /**
@@ -57,6 +57,6 @@ public class HomeController {
     @NoNeedLogin
     @Operation(summary = "获取课程列表")
     public ResponseDTO<List<CourseListVO>> getCourseList(@RequestBody @Valid HomeQueryForm form) {
-        return homeService.getCourseList(form.getClubId());
+        return homeService.getCourseList(form.getClubCode());
     }
 }
