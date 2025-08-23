@@ -16,6 +16,7 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.UnavailableTimeSlotVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ActivityListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.BookingTimeVO;
 import net.lab1024.sa.admin.module.business.member.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
 import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
@@ -318,32 +319,16 @@ public class HomeService {
     public ResponseDTO<OrderCreateVO> createOrder(OrderCreateForm form) {
         try {
             // TODO: 数据校验（预留位置）
-            // 1. 验证教练编号是否存在
-            // 2. 验证课程编号是否存在
-            // 3. 验证时间段是否可用
-            // 4. 验证金额计算是否正确
+            // 1. 验证俱乐部编码是否存在
+            // 2. 验证教练编号是否存在
+            // 3. 验证课程编号是否存在
+            // 4. 验证时间段是否可用
+            // 5. 验证金额计算是否正确
 
             // 生成订单号（格式：yyyyMMddHHmmss + 6位随机数）
             String orderNo = generateOrderNo();
 
-            // 创建订单
-            // OrderEntity order = new OrderEntity();
-            // order.setOrderNo(orderNo);
-            // order.setCoachNo(form.getCoachNo());
-            // order.setCourseCode(form.getCourseCode());
-            // order.setBookingDate(form.getTimeSlot().getDate());
-            // order.setTimeSlot(String.join(",", form.getTimeSlot().getTimeSlots()));
-            // order.setCoachFee(form.getCoachFee());
-            // order.setBaseFee(form.getBaseFee());
-            // order.setTotalAmount(form.getTotalAmount());
-            // order.setStatus(1); // 待支付状态
-            // order.setExpireTime(LocalDateTime.now().plusMinutes(30)); // 30分钟后过期
-            // order.setCreateTime(LocalDateTime.now());
-            // order.setIsDelete(false);
-
-            // 保存订单
-            // orderDao.insert(order);
-
+            // 暂不保存到数据库，只模拟返回
             // 构建响应
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime expireTime = now.plusMinutes(30);

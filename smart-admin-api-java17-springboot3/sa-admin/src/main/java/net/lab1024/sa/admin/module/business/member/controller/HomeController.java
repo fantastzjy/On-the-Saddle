@@ -38,7 +38,7 @@ public class HomeController {
      */
     @PostMapping("/club/info")
     @NoNeedLogin
-    @Operation(summary = "获取俱乐部详细信息")
+    @Operation(summary = "获取俱乐部信息")
     public ResponseDTO<ClubInfoVO> getClubInfo(@RequestBody @Valid HomeQueryForm form) {
         return homeService.getClubInfo(form.getClubCode());
     }

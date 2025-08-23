@@ -78,33 +78,15 @@
     <a-modal
       v-model:open="previewVisible"
       :footer="null"
-      :width="900"
+      :width="null"
       :centered="true"
       title="图片预览"
-      :styles="{ body: { padding: '20px' } }"
+      :styles="{ body: { padding: '16px' } }"
+      :wrap-class-name="'preview-modal-wrapper'"
     >
       <div class="preview-container">
         <div class="preview-image-wrapper">
           <img :src="previewUrl" :alt="previewAlt" class="preview-image" />
-        </div>
-        <div class="preview-info">
-          <span>第 {{ previewIndex + 1 }} 张 / 共 {{ imageList.length }} 张</span>
-          <div class="preview-navigation" v-if="imageList.length > 1">
-            <a-button 
-              size="small" 
-              :disabled="previewIndex === 0"
-              @click="prevImage"
-            >
-              上一张
-            </a-button>
-            <a-button 
-              size="small" 
-              :disabled="previewIndex === imageList.length - 1"
-              @click="nextImage"
-            >
-              下一张
-            </a-button>
-          </div>
         </div>
       </div>
     </a-modal>
@@ -160,7 +142,6 @@ if (!Array.isArray(imageList.value)) {
 const uploading = ref(false);
 const previewVisible = ref(false);
 const previewUrl = ref('');
-const previewIndex = ref(0);
 const previewAlt = ref('');
 
 // ======================== 计算属性 ========================
@@ -256,75 +237,74 @@ function handleRemove(index) {
  */
 function handlePreview(imageUrl, index) {
   previewUrl.value = imageUrl;
-  previewIndex.value = index;
   previewAlt.value = `详情图片${index + 1}`;
   previewVisible.value = true;
 }
 
-/**
- * 预览上一张图片
- */
-function prevImage() {
-  if (previewIndex.value > 0) {
-    previewIndex.value--;
-    previewUrl.value = imageList.value[previewIndex.value];
-    previewAlt.value = `详情图片${previewIndex.value + 1}`;
-  }
-}
-
-/**
- * 预览下一张图片
- */
-function nextImage() {
-  if (previewIndex.value < imageList.value.length - 1) {
-    previewIndex.value++;
-    previewUrl.value = imageList.value[previewIndex.value];
-    previewAlt.value = `详情图片${previewIndex.value + 1}`;
-  }
-}
-
-/**
- * 清空所有图片
- */
-function clear() {
-  imageList.value = [];
-}
-
 // ======================== 暴露给父组件的方法 ========================
 defineExpose({
-  clear
+  clear: () => {
+    imageList.value = [];
+  }
 });
 </script>
 
 <style lang="less" scoped>
 .activity-detail-image-upload {
+  width: 100%;
+  overflow: visible;
+  
   .image-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 104px);
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
     gap: 12px;
     margin-bottom: 12px;
-    justify-content: start;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    min-width: 300px;
 
     @media (max-width: 768px) {
-      grid-template-columns: repeat(auto-fill, 80px);
       gap: 8px;
-      
-      .image-item {
-        width: 80px !important;
-        height: 80px !important;
-      }
+      min-width: 200px;
+    }
+
+    // 🔧 强制覆盖vuedraggable可能的样式
+    &, 
+    & > *,
+    & > * > *,
+    & .sortable-chosen,
+    & .sortable-ghost {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: wrap !important;
     }
 
     .image-item {
-      position: relative;
-      width: 104px;
-      height: 104px;
+      position: relative !important;
+      width: 104px !important;
+      height: 104px !important;
+      flex: 0 0 104px !important;
+      flex-shrink: 0 !important;
+      flex-grow: 0 !important;
+      flex-basis: 104px !important;
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid #d9d9d9;
       background: #fafafa;
       cursor: move;
       transition: all 0.3s ease;
+      display: inline-block !important;
+      vertical-align: top !important;
+      float: left !important;
+
+      @media (max-width: 768px) {
+        width: 80px !important;
+        height: 80px !important;
+        flex: 0 0 80px !important;
+        flex-basis: 80px !important;
+      }
 
       &:hover {
         border-color: #1890ff;
@@ -455,39 +435,31 @@ defineExpose({
     display: flex;
     flex-direction: column;
     align-items: center;
+    max-height: 80vh;
+    overflow: hidden;
+    width: fit-content;
+    margin: 0 auto;
 
     .preview-image-wrapper {
       display: flex;
       justify-content: center;
       align-items: center;
-      max-height: 60vh;
-      margin-bottom: 16px;
+      max-height: 80vh;
+      max-width: 90vw;
+      width: fit-content;
+      overflow: hidden;
+      box-sizing: border-box;
     }
 
     .preview-image {
-      max-width: 100%;
-      max-height: 60vh;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .preview-info {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 16px;
-      border-top: 1px solid #f0f0f0;
-      color: #666;
-      font-size: 14px;
-
-      .preview-navigation {
-        margin-top: 12px;
-        display: flex;
-        gap: 8px;
-      }
+      max-width: 90vw !important;
+      max-height: 80vh !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+      display: block !important;
     }
   }
 }
@@ -507,5 +479,71 @@ defineExpose({
   background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transform: rotate(3deg);
+}
+</style>
+
+<!-- 🔧 全局强制样式 - 最高优先级 -->
+<style lang="less">
+/* 全局强制修复活动详情图片横向排列 */
+.activity-detail-image-upload .image-list {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+}
+
+.activity-detail-image-upload .image-list .image-item {
+  display: inline-block !important;
+  float: left !important;
+  margin-right: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.activity-detail-image-upload .image-list::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* 🔧 预览模态框自适应宽度 */
+.preview-modal-wrapper .ant-modal {
+  width: fit-content !important;
+  max-width: 95vw !important;
+  margin: 0 auto !important;
+}
+
+.preview-modal-wrapper .ant-modal .ant-modal-content {
+  width: fit-content !important;
+}
+
+.preview-modal-wrapper .ant-modal .ant-modal-body {
+  padding: 16px !important;
+  width: fit-content !important;
+}
+
+/* 🔧 强制修复预览图片尺寸 - 全局最高优先级 */
+.ant-modal .preview-container .preview-image-wrapper .preview-image {
+  max-width: 90vw !important;
+  max-height: 80vh !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+/* 🔧 强制修复预览容器尺寸 */
+.ant-modal .preview-container {
+  max-height: 80vh !important;
+  overflow: hidden !important;
+  width: fit-content !important;
+  margin: 0 auto !important;
+}
+
+.ant-modal .preview-container .preview-image-wrapper {
+  max-height: 80vh !important;
+  max-width: 90vw !important;
+  width: fit-content !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 </style>
