@@ -90,7 +90,7 @@
               v-else-if="field.type === FORM_FIELD_TYPE_ENUM.DATETIME"
               v-model:value="formData[field.key]"
               :placeholder="field.placeholder"
-              :format="field.format || 'YYYY-MM-DD HH:mm:ss'"
+              :format="field.format || 'YYYY-MM-DD HH:mm'"
               :valueFormat="field.valueFormat || 'YYYY-MM-DD HH:mm:ss'"
               :showTime="field.showTime !== false"
               :disabled="field.disabled"

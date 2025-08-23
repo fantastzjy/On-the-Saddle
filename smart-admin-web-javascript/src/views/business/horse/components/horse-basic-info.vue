@@ -39,6 +39,7 @@
         <a-descriptions title="管理信息" :column="1" bordered>
           <a-descriptions-item label="马主">{{ horseDetail.ownerName || '-' }}</a-descriptions-item>
           <a-descriptions-item label="责任教练">{{ horseDetail.responsibleCoachName || '-' }}</a-descriptions-item>
+          <a-descriptions-item label="责任马工">{{ horseDetail.responsibleGroomName || '-' }}</a-descriptions-item>
           <a-descriptions-item label="健康状态">
             <a-tag v-if="horseDetail.healthStatus === 1" color="green">健康</a-tag>
             <a-tag v-else-if="horseDetail.healthStatus === 2" color="orange">观察</a-tag>
@@ -65,6 +66,16 @@
           </a-descriptions-item>
           <a-descriptions-item label="备注">
             <div style="white-space: pre-wrap;">{{ horseDetail.remark || '-' }}</div>
+          </a-descriptions-item>
+        </a-descriptions>
+
+        <!-- 马主马寄养信息 -->
+        <a-descriptions v-if="horseDetail.horseType === 2" title="寄养信息" :column="1" bordered style="margin-top: 16px;">
+          <a-descriptions-item label="寄养开始时间">
+            {{ horseDetail.boardingStartDate ? dayjs(horseDetail.boardingStartDate).format('YYYY-MM-DD HH:mm:ss') : '-' }}
+          </a-descriptions-item>
+          <a-descriptions-item label="寄养结束时间">
+            {{ horseDetail.boardingEndDate ? dayjs(horseDetail.boardingEndDate).format('YYYY-MM-DD HH:mm:ss') : '-' }}
           </a-descriptions-item>
         </a-descriptions>
       </a-col>

@@ -13,19 +13,31 @@ import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.ClubTypeVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.UnavailableTimeSlotVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ActivityListVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.BookingTimeVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.MyHorseListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.CareStatisticsVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.MedicalInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
-import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductActivityDao;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductActivityEntity;
+import net.lab1024.sa.admin.module.business.horse.dao.HorseDao;
+import net.lab1024.sa.admin.module.business.horse.dao.HorseHealthPlanDao;
+import net.lab1024.sa.admin.module.business.horse.dao.HorseHealthRecordDao;
+import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity;
+import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseHealthPlanEntity;
+import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseHealthRecordEntity;
+import net.lab1024.sa.admin.module.business.horse.constant.HealthPlanTypeEnum;
+import net.lab1024.sa.admin.module.system.employee.dao.EmployeeDao;
+import net.lab1024.sa.admin.module.system.employee.domain.vo.EmployeeVO;
+import net.lab1024.sa.admin.util.MemberRequestUtil;
 import net.lab1024.sa.base.common.code.SystemErrorCode;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -35,6 +47,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -66,7 +79,19 @@ public class HomeService {
     private ProductActivityDao productActivityDao;
 
     @Resource
+    private HorseDao horseDao;
+
+    @Resource
+    private HorseHealthPlanDao horseHealthPlanDao;
+
+    @Resource
+    private HorseHealthRecordDao horseHealthRecordDao;
+
+    @Resource
     private OrderDao orderDao;
+
+    @Resource
+    private EmployeeDao employeeDao;
 
     /**
      * 获取俱乐部详细信息
@@ -82,6 +107,8 @@ public class HomeService {
         }
 
         ClubInfoVO clubInfo = SmartBeanUtil.copy(club, ClubInfoVO.class);
+
+        clubInfo.setClubType(1);
 
         // 处理轮播图 - 将JSON字符串解析为List
         if (StrUtil.isNotBlank(club.getCarouselImages())) {
@@ -106,6 +133,26 @@ public class HomeService {
         }
 
         return ResponseDTO.ok(clubInfo);
+    }
+
+    /**
+     * 获取俱乐部类型信息
+     */
+    public ResponseDTO<ClubTypeVO> getClubType(String clubCode) {
+        if (StrUtil.isBlank(clubCode)) {
+            return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部编码不能为空");
+        }
+
+        ClubEntity club = clubDao.selectByClubCode(clubCode);
+        if (club == null || club.getIsDelete() || !club.getIsValid()) {
+            return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "俱乐部信息不存在");
+        }
+
+        ClubTypeVO clubTypeVO = new ClubTypeVO();
+        clubTypeVO.setClubType(1); // 固定设置为1
+        clubTypeVO.setClubName(club.getClubName());
+
+        return ResponseDTO.ok(clubTypeVO);
     }
 
     /**
@@ -332,7 +379,7 @@ public class HomeService {
             // 构建响应
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime expireTime = now.plusMinutes(30);
-            
+
             OrderCreateVO vo = new OrderCreateVO();
             vo.setOrderNo(orderNo);
             vo.setStatus(1);
@@ -389,7 +436,7 @@ public class HomeService {
                     new LambdaQueryWrapper<ProductActivityEntity>()
                         .eq(ProductActivityEntity::getProductId, product.getProductId())
                 );
-                
+
                 if (activityConfig != null) {
                     ActivityListVO vo = new ActivityListVO();
                     vo.setActivityName(activityConfig.getActivityName());
@@ -398,9 +445,9 @@ public class HomeService {
                     vo.setEndTime(activityConfig.getEndTime());
                     vo.setLocation(activityConfig.getActivityLocation());
                     vo.setPrice(activityConfig.getPrice() != null ? activityConfig.getPrice() : BigDecimal.ZERO);
-                    vo.setRefundRule(StrUtil.isNotBlank(activityConfig.getRefundRule()) ? 
+                    vo.setRefundRule(StrUtil.isNotBlank(activityConfig.getRefundRule()) ?
                         activityConfig.getRefundRule() : "退款规则待定");
-                    
+
                     // 解析详情图片JSON为List<String>
                     if (StrUtil.isNotBlank(activityConfig.getDetailImages())) {
                         try {
@@ -414,7 +461,7 @@ public class HomeService {
                     } else {
                         vo.setDetailImages(new ArrayList<>());
                     }
-                    
+
                     result.add(vo);
                 }
             }
@@ -424,5 +471,188 @@ public class HomeService {
             log.error("获取活动列表失败", e);
             return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "获取活动列表失败");
         }
+    }
+
+    /**
+     * 获取我的马匹列表
+     */
+    public ResponseDTO<List<MyHorseListVO>> getMyHorseList() {
+        try {
+            // 获取当前登录会员ID
+            Long currentMemberId = MemberRequestUtil.getRequestMemberId();
+
+            // 验证登录状态
+            if (currentMemberId == null) {
+                return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID, "请先登录");
+            }
+
+            // 查询该会员的马主马列表（不限制俱乐部）
+            List<HorseEntity> horses = horseDao.selectList(
+                new LambdaQueryWrapper<HorseEntity>()
+                    .eq(HorseEntity::getHorseType, 2) // 2-马主马
+                    .eq(HorseEntity::getOwnerId, currentMemberId)
+                    .eq(HorseEntity::getIsValid, 1)
+                    .eq(HorseEntity::getIsDelete, 0)
+                    .orderBy(true, true, HorseEntity::getCreateTime)
+            );
+
+            // 收集所有需要查询的员工ID（责任教练和责任马工）
+            Set<Long> employeeIds = new HashSet<>();
+            for (HorseEntity horse : horses) {
+                if (horse.getResponsibleCoachId() != null) {
+                    employeeIds.add(horse.getResponsibleCoachId());
+                }
+                if (horse.getResponsibleGroomId() != null) {
+                    employeeIds.add(horse.getResponsibleGroomId());
+                }
+            }
+
+            // 批量查询员工信息
+            Map<Long, String> employeeNameMap = new HashMap<>();
+            if (!employeeIds.isEmpty()) {
+                List<EmployeeVO> employees = employeeDao.getEmployeeByIds(employeeIds);
+                for (EmployeeVO employee : employees) {
+                    employeeNameMap.put(employee.getEmployeeId(), employee.getActualName());
+                }
+            }
+
+            // 转换为VO对象
+            List<MyHorseListVO> result = new ArrayList<>();
+            for (HorseEntity horse : horses) {
+                MyHorseListVO vo = buildMyHorseVO(horse, employeeNameMap);
+                result.add(vo);
+            }
+
+            return ResponseDTO.ok(result);
+        } catch (Exception e) {
+            log.error("获取我的马匹列表失败", e);
+            return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "获取我的马匹列表失败");
+        }
+    }
+
+    /**
+     * 构建我的马匹VO对象
+     */
+    private MyHorseListVO buildMyHorseVO(HorseEntity horse, Map<Long, String> employeeNameMap) {
+        MyHorseListVO vo = new MyHorseListVO();
+
+        // 基础信息
+        vo.setHorseName(horse.getHorseName());
+        vo.setChipNo(horse.getChipNo());
+
+        // 生日格式化（yyyy/MM/dd）
+        if (horse.getBirthDate() != null) {
+            vo.setBirthDate(horse.getBirthDate().format(DateTimeFormatter.ofPattern("yyyy/MM/dd")));
+        } else {
+            vo.setBirthDate("");
+        }
+
+        // 责任教练
+        String responsibleCoachName = "";
+        if (horse.getResponsibleCoachId() != null) {
+            responsibleCoachName = employeeNameMap.getOrDefault(horse.getResponsibleCoachId(), "未知教练");
+        }
+        vo.setResponsibleCoach(responsibleCoachName);
+
+        // 责任马工
+        String responsibleGroomName = "";
+        if (horse.getResponsibleGroomId() != null) {
+            responsibleGroomName = employeeNameMap.getOrDefault(horse.getResponsibleGroomId(), "未知马工");
+        }
+        vo.setResponsibleGroom(responsibleGroomName);
+
+        // 寄养时间段格式化
+        vo.setBoardingPeriod(formatBoardingPeriod(horse.getBoardingStartDate(), horse.getBoardingEndDate()));
+
+        // 构建养护统计列表
+        vo.setCareStatistics(buildCareStatistics(horse.getHorseId()));
+
+        // 构建医疗信息列表
+        vo.setMedicalInfo(buildMedicalInfo(horse.getHorseId()));
+
+        return vo;
+    }
+
+    /**
+     * 格式化寄养时间段
+     */
+    private String formatBoardingPeriod(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate == null && endDate == null) {
+            return "";
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy年MM月");
+
+        if (startDate != null && endDate != null) {
+            String startStr = startDate.format(formatter);
+            String endStr = endDate.format(formatter);
+            return startStr + "~" + endStr;
+        } else if (startDate != null) {
+            return startDate.format(formatter) + "~";
+        } else {
+            return "~" + endDate.format(formatter);
+        }
+    }
+
+    /**
+     * 构建养护统计列表
+     */
+    private List<CareStatisticsVO> buildCareStatistics(Long horseId) {
+        List<CareStatisticsVO> careStatistics = new ArrayList<>();
+
+        // 查询该马匹的健康记录，按计划类型分组统计
+        List<HorseHealthRecordEntity> records = horseHealthRecordDao.selectList(
+            new LambdaQueryWrapper<HorseHealthRecordEntity>()
+                .eq(HorseHealthRecordEntity::getHorseId, horseId)
+                .eq(HorseHealthRecordEntity::getIsValid, 1)
+                .eq(HorseHealthRecordEntity::getIsDelete, 0)
+        );
+
+        // 按计划类型分组统计
+        Map<String, Long> statisticsMap = records.stream()
+            .collect(Collectors.groupingBy(HorseHealthRecordEntity::getPlanType, Collectors.counting()));
+
+        // 转换为VO
+        for (Map.Entry<String, Long> entry : statisticsMap.entrySet()) {
+            String planType = entry.getKey();
+            Long count = entry.getValue();
+
+            CareStatisticsVO statistics = new CareStatisticsVO();
+            statistics.setPlanTypeName(HealthPlanTypeEnum.getDescByValue(planType));
+            statistics.setCompletedCount(count.intValue());
+            statistics.setDescription(statistics.getPlanTypeName() + "已完成" + count + "次");
+
+            careStatistics.add(statistics);
+        }
+
+        return careStatistics;
+    }
+
+    /**
+     * 构建医疗信息列表
+     */
+    private List<MedicalInfoVO> buildMedicalInfo(Long horseId) {
+        List<MedicalInfoVO> medicalInfo = new ArrayList<>();
+
+        // 查询该马匹的健康计划
+        List<HorseHealthPlanEntity> plans = horseHealthPlanDao.selectList(
+            new LambdaQueryWrapper<HorseHealthPlanEntity>()
+                .eq(HorseHealthPlanEntity::getHorseId, horseId)
+                .eq(HorseHealthPlanEntity::getIsValid, 1)
+                .eq(HorseHealthPlanEntity::getIsDelete, 0)
+                .isNotNull(HorseHealthPlanEntity::getNextDate)
+                .orderBy(true, true, HorseHealthPlanEntity::getNextDate)
+        );
+
+        // 转换为VO
+        for (HorseHealthPlanEntity plan : plans) {
+            MedicalInfoVO medical = new MedicalInfoVO();
+            medical.setPlanTypeName(HealthPlanTypeEnum.getDescByValue(plan.getPlanType()));
+            medical.setNextExecuteTime(plan.getNextDate());
+
+            medicalInfo.add(medical);
+        }
+
+        return medicalInfo;
     }
 }

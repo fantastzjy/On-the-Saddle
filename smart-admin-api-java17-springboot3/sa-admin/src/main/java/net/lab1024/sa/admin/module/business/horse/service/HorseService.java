@@ -88,6 +88,16 @@ public class HorseService {
             return ResponseDTO.userErrorParam("马主马必须选择马主");
         }
 
+        // 验证马主马寄养时间
+        if (createForm.getHorseType() == 2) {
+            if (createForm.getBoardingStartDate() == null || createForm.getBoardingEndDate() == null) {
+                return ResponseDTO.userErrorParam("马主马必须设置寄养时间");
+            }
+            if (createForm.getBoardingEndDate().isBefore(createForm.getBoardingStartDate())) {
+                return ResponseDTO.userErrorParam("寄养结束时间不能早于开始时间");
+            }
+        }
+
         HorseEntity horseEntity = SmartBeanUtil.copy(createForm, HorseEntity.class);
         horseEntity.setIsValid(1);
         horseEntity.setIsDelete(0);
@@ -129,6 +139,16 @@ public class HorseService {
         // 验证马主马必须选择马主
         if (updateForm.getHorseType() == 2 && updateForm.getOwnerId() == null) {
             return ResponseDTO.userErrorParam("马主马必须选择马主");
+        }
+
+        // 验证马主马寄养时间
+        if (updateForm.getHorseType() == 2) {
+            if (updateForm.getBoardingStartDate() == null || updateForm.getBoardingEndDate() == null) {
+                return ResponseDTO.userErrorParam("马主马必须设置寄养时间");
+            }
+            if (updateForm.getBoardingEndDate().isBefore(updateForm.getBoardingStartDate())) {
+                return ResponseDTO.userErrorParam("寄养结束时间不能早于开始时间");
+            }
         }
 
         HorseEntity horseEntity = SmartBeanUtil.copy(updateForm, HorseEntity.class);

@@ -150,11 +150,19 @@
           活动详情
         </h4>
         <a-descriptions :column="2" bordered>
-          <a-descriptions-item label="活动名称">
+          <a-descriptions-item label="活动名称" :span="2">
             {{ productDetail.activityDetails?.activityName || '-' }}
           </a-descriptions-item>
-          <a-descriptions-item label="活动详情">
+          <a-descriptions-item label="活动详情" :span="2">
             {{ productDetail.activityDetails?.activityDetails || '-' }}
+          </a-descriptions-item>
+          <!-- 活动详情图片 -->
+          <a-descriptions-item label="活动图片" :span="2" v-if="productDetail.activityDetails?.detailImages?.length > 0">
+            <ActivityDetailImageUpload 
+              v-model:value="productDetail.activityDetails.detailImages" 
+              :readonly="true"
+              :show-tips="false"
+            />
           </a-descriptions-item>
           <a-descriptions-item label="开始时间">
             {{ formatDateTime(productDetail.activityDetails?.startTime) }}
@@ -212,6 +220,7 @@ import {
 import { productApi } from '/@/api/business/product/product-api';
 import { smartSentry } from '/@/lib/smart-sentry';
 import dayjs from 'dayjs';
+import ActivityDetailImageUpload from './components/ActivityDetailImageUpload.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -288,7 +297,7 @@ const getProductTypeColor = (type) => {
 
 const formatDateTime = (dateTime) => {
   if (!dateTime) return '-';
-  return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss');
+  return dayjs(dateTime).format('YYYY-MM-DD HH:mm');
 };
 
 const getProductPrice = () => {

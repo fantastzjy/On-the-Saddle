@@ -177,7 +177,7 @@ public class EmployeeService {
         }
 
         // 检查唯一性
-        ResponseDTO<String> checkResponse = checkUniqueness(employeeId, employeeUpdateForm.getLoginName(), employeeUpdateForm.getPhone(), employeeUpdateForm.getEmail());
+        ResponseDTO<String> checkResponse = checkUniqueness(employeeId, employeeUpdateForm.getLoginName(), employeeUpdateForm.getPhone());
         if (!checkResponse.getOk()) {
             return checkResponse;
         }
@@ -207,7 +207,7 @@ public class EmployeeService {
         }
 
         // 检查唯一性 登录账号不能修改则不需要检查
-        ResponseDTO<String> checkResponse = checkUniqueness(employeeId, "", updateCenterForm.getPhone(), updateCenterForm.getEmail());
+        ResponseDTO<String> checkResponse = checkUniqueness(employeeId, "", updateCenterForm.getPhone());
         if (!checkResponse.getOk()) {
             return checkResponse;
         }
@@ -228,7 +228,7 @@ public class EmployeeService {
     /**
      * 检查唯一性
      */
-    private ResponseDTO<String> checkUniqueness(Long employeeId, String loginName, String phone, String email) {
+    private ResponseDTO<String> checkUniqueness(Long employeeId, String loginName, String phone) {
         EmployeeEntity existEntity = employeeDao.getByLoginName(loginName, null);
         if (null != existEntity && !Objects.equals(existEntity.getEmployeeId(), employeeId)) {
             return ResponseDTO.userErrorParam("登录名重复");
@@ -237,11 +237,6 @@ public class EmployeeService {
         existEntity = employeeDao.getByPhone(phone, null);
         if (null != existEntity && !Objects.equals(existEntity.getEmployeeId(), employeeId)) {
             return ResponseDTO.userErrorParam("手机号已存在");
-        }
-
-        existEntity = employeeDao.getByEmail(email, null);
-        if (null != existEntity && !Objects.equals(existEntity.getEmployeeId(), employeeId)) {
-            return ResponseDTO.userErrorParam("邮箱账号已存在");
         }
 
         return ResponseDTO.ok();

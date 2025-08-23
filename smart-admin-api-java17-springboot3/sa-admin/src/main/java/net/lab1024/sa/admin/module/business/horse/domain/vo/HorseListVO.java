@@ -71,6 +71,12 @@ public class HorseListVO {
     @Schema(description = "责任教练姓名")
     private String responsibleCoachName;
 
+    @Schema(description = "责任马工ID")
+    private Long responsibleGroomId;
+
+    @Schema(description = "责任马工姓名")
+    private String responsibleGroomName;
+
     @Schema(description = "健康状态：1-健康 2-观察 3-治疗")
     private Integer healthStatus;
 

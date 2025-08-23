@@ -52,11 +52,6 @@ public class EmployeeAddForm {
     @Pattern(regexp = SmartVerificationUtil.PHONE_REGEXP, message = "手机号格式不正确")
     private String phone;
 
-    @Schema(description = "邮箱账号")
-    @NotNull(message = "邮箱账号不能为空")
-    @Pattern(regexp = SmartVerificationUtil.EMAIL, message = "邮箱账号格式不正确")
-    private String email;
-
     @Schema(description = "生日")
     private LocalDate birthDate;
 

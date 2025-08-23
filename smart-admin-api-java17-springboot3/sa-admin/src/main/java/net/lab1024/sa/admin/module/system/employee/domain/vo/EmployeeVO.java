@@ -65,9 +65,6 @@ public class EmployeeVO {
     @Schema(description = "职务名称")
     private String positionName;
 
-    @Schema(description = "邮箱")
-    private String email;
-
     @Schema(description = "生日")
     private LocalDate birthDate;
 

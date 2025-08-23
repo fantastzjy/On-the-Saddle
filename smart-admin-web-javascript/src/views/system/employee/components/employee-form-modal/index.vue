@@ -54,11 +54,6 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="邮箱" name="email">
-                <a-input v-model:value.trim="form.email" placeholder="请输入邮箱" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
               <a-form-item label="登录名" name="loginName">
                 <a-input v-model:value.trim="form.loginName" placeholder="请输入登录名" />
                 <p class="hint">初始密码默认为：随机</p>
@@ -182,7 +177,6 @@
     phone: undefined,
     roleIdList: undefined,
     positionId: undefined,
-    email: undefined,
     birthDate: undefined,
     idCard: undefined,
     resumeFileKey: undefined, // 最新简历文件key
@@ -214,7 +208,6 @@
     departmentId: [{ required: true, message: '部门不能为空' }],
     disabledFlag: [{ required: true, message: '状态不能为空' }],
     leaveFlag: [{ required: true, message: '在职状态不能为空' }],
-    email: [{ required: true, message: '请输入邮箱' }],
     idCard: [
       { pattern: regular.isIdentityCard, message: '请输入正确的身份证号码', trigger: 'blur' },
     ],

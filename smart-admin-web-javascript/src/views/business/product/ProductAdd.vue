@@ -167,6 +167,11 @@ const isEdit = computed(() => {
 });
 
 const showPricePreview = computed(() => {
+  // 活动类型不显示价格预览
+  if (formData.productType === 3) {
+    return false;
+  }
+  
   return formData.productType && formData.dynamicConfig && Object.keys(formData.dynamicConfig).length > 0;
 });
 

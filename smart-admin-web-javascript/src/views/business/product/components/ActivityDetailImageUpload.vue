@@ -14,7 +14,7 @@
       <draggable
         v-model="imageList"
         :animation="200"
-        :disabled="false"
+        :disabled="readonly"
         ghost-class="sortable-ghost"
         chosen-class="sortable-chosen"
         drag-class="sortable-drag"
@@ -22,7 +22,7 @@
         item-key="index"
       >
         <template #item="{ element: imageUrl, index }">
-          <div class="image-item" :key="`img-${index}`">
+          <div class="image-item" :class="{ readonly }" :key="`img-${index}`">
             <!-- 序号 -->
             <div class="image-index">{{ index + 1 }}</div>
             <!-- 图片 -->
@@ -33,7 +33,7 @@
               </div>
             </div>
             <!-- 删除按钮 -->
-            <div class="image-actions">
+            <div class="image-actions" v-if="!readonly">
               <a-button
                 type="text"
                 danger
@@ -48,7 +48,7 @@
     </div>
 
     <!-- 上传按钮 -->
-    <div class="upload-container" v-if="imageList.length < maxCount">
+    <div class="upload-container" v-if="imageList.length < maxCount && !readonly">
       <a-upload
         :show-upload-list="false"
         :before-upload="beforeUpload"
@@ -67,7 +67,7 @@
     </div>
 
     <!-- 上传提示 -->
-    <div class="upload-tips" v-if="showTips">
+    <div class="upload-tips" v-if="showTips && !readonly">
       <div class="tip-item">最多上传{{ maxCount }}张图片</div>
       <div class="tip-item">单张图片不超过{{ maxSize }}MB</div>
       <div class="tip-item">支持{{ acceptTypes }}格式</div>
@@ -124,6 +124,10 @@ const props = defineProps({
   showTips: {
     type: Boolean,
     default: true
+  },
+  readonly: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -298,6 +302,11 @@ defineExpose({
       display: inline-block !important;
       vertical-align: top !important;
       float: left !important;
+
+      // 只读模式样式
+      &.readonly {
+        cursor: default;
+      }
 
       @media (max-width: 768px) {
         width: 80px !important;

@@ -961,7 +961,23 @@ public class ProductService {
                 activityDetails.put("price", activityEntity.getPrice());
                 activityDetails.put("maxParticipants", activityEntity.getMaxParticipants());
                 activityDetails.put("refundRule", activityEntity.getRefundRule());
-                activityDetails.put("detailImages", activityEntity.getDetailImages());
+                
+                // 🔧 修复：将JSON字符串转换为数组格式
+                String detailImagesJson = activityEntity.getDetailImages();
+                log.info("活动详情图片原始数据 - 商品ID: {}, detailImages: {}", productId, detailImagesJson);
+                if (SmartStringUtil.isNotBlank(detailImagesJson)) {
+                    try {
+                        List<String> detailImagesList = JSON.parseArray(detailImagesJson, String.class);
+                        activityDetails.put("detailImages", detailImagesList);
+                        log.info("活动详情图片解析成功 - 商品ID: {}, 图片数量: {}", productId, detailImagesList.size());
+                    } catch (Exception e) {
+                        log.warn("解析detailImages失败 - 商品ID: {}, 原始数据: {}", productId, detailImagesJson, e);
+                        activityDetails.put("detailImages", new ArrayList<>());
+                    }
+                } else {
+                    log.info("活动详情图片为空 - 商品ID: {}", productId);
+                    activityDetails.put("detailImages", new ArrayList<>());
+                }
             }
             
             return activityDetails;

@@ -145,6 +145,44 @@
             </a-select>
           </a-form-item>
         </a-col>
+      </a-row>
+
+      <a-row :gutter="20">
+        <a-col :span="12">
+          <a-form-item label="责任马工" name="responsibleGroomId">
+            <a-select v-model:value="formState.form.responsibleGroomId" placeholder="请选择责任马工" showSearch allowClear>
+              <a-select-option v-for="groom in groomList" :key="groom.employeeId" :value="groom.employeeId">
+                {{ groom.actualName }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12" v-if="formState.form.horseType === 2">
+          <a-form-item label="寄养开始时间" name="boardingStartDate">
+            <a-date-picker 
+              v-model:value="formState.form.boardingStartDate" 
+              placeholder="请选择寄养开始时间" 
+              style="width: 100%"
+              showTime
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="20" v-if="formState.form.horseType === 2">
+        <a-col :span="12">
+          <a-form-item label="寄养结束时间" name="boardingEndDate">
+            <a-date-picker 
+              v-model:value="formState.form.boardingEndDate" 
+              placeholder="请选择寄养结束时间" 
+              style="width: 100%"
+              showTime
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="20">
         <a-col :span="12">
           <a-form-item label="健康状态" name="healthStatus">
             <a-select v-model:value="formState.form.healthStatus" placeholder="请选择健康状态">
@@ -188,6 +226,7 @@ const formRef = ref();
 const clubList = ref([]);
 const coachList = ref([]);
 const ownerList = ref([]);
+const groomList = ref([]);
 
 const formState = reactive({
   visible: false,
@@ -209,6 +248,9 @@ const formState = reactive({
     weight: undefined,
     ownerId: undefined,
     responsibleCoachId: undefined,
+    responsibleGroomId: undefined,
+    boardingStartDate: undefined,
+    boardingEndDate: undefined,
     healthStatus: 1,
     workStatus: 1,
     remark: '',
@@ -237,6 +279,8 @@ function showModal(isCreate, rowData = {}) {
     Object.assign(formState.form, {
       ...rowData,
       birthDate: rowData.birthDate ? dayjs(rowData.birthDate) : undefined,
+      boardingStartDate: rowData.boardingStartDate ? dayjs(rowData.boardingStartDate) : undefined,
+      boardingEndDate: rowData.boardingEndDate ? dayjs(rowData.boardingEndDate) : undefined,
     });
   }
 }
@@ -258,6 +302,9 @@ function resetForm() {
     weight: undefined,
     ownerId: undefined,
     responsibleCoachId: undefined,
+    responsibleGroomId: undefined,
+    boardingStartDate: undefined,
+    boardingEndDate: undefined,
     healthStatus: 1,
     workStatus: 1,
     remark: '',
@@ -266,6 +313,10 @@ function resetForm() {
 
 function onHorseTypeChange() {
   formState.form.ownerId = undefined;
+  if (formState.form.horseType !== 2) {
+    formState.form.boardingStartDate = undefined;
+    formState.form.boardingEndDate = undefined;
+  }
 }
 
 async function onSubmit() {
@@ -276,6 +327,12 @@ async function onSubmit() {
     const params = { ...formState.form };
     if (params.birthDate) {
       params.birthDate = params.birthDate.format('YYYY-MM-DD 00:00:00');
+    }
+    if (params.boardingStartDate) {
+      params.boardingStartDate = params.boardingStartDate.format('YYYY-MM-DD HH:mm:ss');
+    }
+    if (params.boardingEndDate) {
+      params.boardingEndDate = params.boardingEndDate.format('YYYY-MM-DD HH:mm:ss');
     }
 
     if (formState.isCreate) {
@@ -328,10 +385,20 @@ async function queryOwnerList() {
   }
 }
 
+async function queryGroomList() {
+  try {
+    const res = await employeeApi.queryAll();
+    groomList.value = res.data || [];
+  } catch (error) {
+    smartSentry.captureError(error);
+  }
+}
+
 onMounted(() => {
   queryClubList();
   queryCoachList();
   queryOwnerList();
+  queryGroomList();
 });
 
 defineExpose({

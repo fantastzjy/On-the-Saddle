@@ -166,12 +166,6 @@
       align: 'center',
     },
     {
-      title: '邮箱',
-      dataIndex: 'email',
-      ellipsis: true,
-      align: 'center',
-    },
-    {
       title: '生日',
       dataIndex: 'birthDate',
       align: 'center',

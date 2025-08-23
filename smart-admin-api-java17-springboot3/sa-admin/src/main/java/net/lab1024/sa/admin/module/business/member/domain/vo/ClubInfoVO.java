@@ -16,6 +16,9 @@ import java.util.List;
 @Schema(description = "俱乐部信息")
 public class ClubInfoVO {
 
+    @Schema(description = "俱乐部类型 1-俱乐部 2-竞技马房")
+    private Integer clubType;
+
     @Schema(description = "俱乐部名称")
     private String clubName;
 

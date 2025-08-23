@@ -22,6 +22,8 @@
         owner.actual_name as owner_name,
         h.responsible_coach_id,
         u_coach.actual_name as responsible_coach_name,
+        h.responsible_groom_id,
+        u_groom.actual_name as responsible_groom_name,
         h.health_status,
         h.work_status,
         h.create_time,
@@ -31,6 +33,7 @@
         LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
         LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid =1
         LEFT JOIN t_employee u_coach ON coach.user_id = u_coach.employee_id AND u_coach.deleted_flag = 0
+        LEFT JOIN t_employee u_groom ON h.responsible_groom_id = u_groom.employee_id AND u_groom.deleted_flag = 0
         <where>
             h.is_delete = #{query.isDelete} AND h.is_valid = #{query.isValid}
             <if test="query.keywords != null and query.keywords != ''">
@@ -133,6 +136,8 @@
             owner.actual_name as owner_name,
             h.responsible_coach_id,
             u_coach.actual_name as responsible_coach_name,
+            h.responsible_groom_id,
+            u_groom.actual_name as responsible_groom_name,
             h.health_status,
             h.work_status,
             h.create_time,
@@ -142,6 +147,7 @@
         LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
         LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid = 1
         LEFT JOIN t_employee u_coach ON coach.user_id = u_coach.employee_id AND u_coach.deleted_flag = 0
+        LEFT JOIN t_employee u_groom ON h.responsible_groom_id = u_groom.employee_id AND u_groom.deleted_flag = 0
         WHERE h.is_delete = 0 AND h.is_valid = 1
         <if test="clubId != null">
             AND h.club_id = #{clubId}

@@ -271,7 +271,6 @@ public class CoachService {
         vo.setEmployeeId(coach.getUserId()); // 绑定的员工ID
         vo.setActualName(coach.getActualName());
         vo.setPhone(coach.getPhone());
-        vo.setEmail(coach.getEmail());
         vo.setGender(coach.getGender());
         vo.setBirthDate(coach.getBirthDate());
         vo.setIdCard(coach.getIdCard());

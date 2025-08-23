@@ -9,8 +9,10 @@ import net.lab1024.sa.admin.module.business.member.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.ClubTypeVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ActivityListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.MyHorseListVO;
 import net.lab1024.sa.admin.module.business.member.service.HomeService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -41,6 +43,16 @@ public class HomeController {
     @Operation(summary = "获取俱乐部信息")
     public ResponseDTO<ClubInfoVO> getClubInfo(@RequestBody @Valid HomeQueryForm form) {
         return homeService.getClubInfo(form.getClubCode());
+    }
+
+    /**
+     * 获取俱乐部类型信息
+     */
+    @PostMapping("/club/type")
+    @NoNeedLogin
+    @Operation(summary = "获取俱乐部类型")
+    public ResponseDTO<ClubTypeVO> getClubType(@RequestBody @Valid HomeQueryForm form) {
+        return homeService.getClubType(form.getClubCode());
     }
 
     /**
@@ -81,5 +93,15 @@ public class HomeController {
     @Operation(summary = "获取活动列表")
     public ResponseDTO<List<ActivityListVO>> getActivityList(@RequestBody @Valid HomeQueryForm form) {
         return homeService.getActivityList(form.getClubCode());
+    }
+
+    /**
+     * 获取我的马匹列表
+     */
+    @PostMapping("/horse/my/list")
+    @NoNeedLogin
+    @Operation(summary = "获取我的马匹列表")
+    public ResponseDTO<List<MyHorseListVO>> getMyHorseList() {
+        return homeService.getMyHorseList();
     }
 }

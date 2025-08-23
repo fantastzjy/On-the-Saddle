@@ -189,6 +189,12 @@ const columns = [
     align: 'center'
   },
   {
+    title: '责任马工',
+    dataIndex: 'responsibleGroomName',
+    width: 100,
+    align: 'center'
+  },
+  {
     title: '操作',
     dataIndex: 'action',
     fixed: 'right',
