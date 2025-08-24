@@ -1,6 +1,7 @@
 package net.lab1024.sa.admin.module.business.schedule.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -71,6 +72,12 @@ public class LessonScheduleEntity {
      * 课单状态: 1-待上课 2-进行中 3-已完成 4-已取消
      */
     private Integer lessonStatus;
+
+    /**
+     * 课程时长（分钟）- 通过计算得出，不存储在数据库
+     */
+    @TableField(exist = false)
+    private Integer duration;
 
     /**
      * 是否已发送通知: 0-未发送 1-已发送

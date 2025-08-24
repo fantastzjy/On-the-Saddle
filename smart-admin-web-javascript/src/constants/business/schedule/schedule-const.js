@@ -6,32 +6,56 @@
  * @Copyright: 1024创新实验室 (https://1024lab.net)
  */
 
-// ==================== 预约状态 ====================
-export const BOOKING_STATUS_ENUM = {
-  PENDING: {
+// ==================== 订单状态 ====================
+export const ORDER_STATUS_ENUM = {
+  PENDING_PAYMENT: {
     value: 1,
-    desc: '待确认',
+    desc: '待支付',
     color: 'orange'
   },
-  CONFIRMED: {
+  PAID: {
     value: 2,
-    desc: '已确认',
+    desc: '已支付',
     color: 'green'
   },
-  IN_PROGRESS: {
+  VERIFIED: {
     value: 3,
-    desc: '进行中',
+    desc: '已核销',
     color: 'blue'
   },
-  COMPLETED: {
-    value: 4,
-    desc: '已完成',
-    color: 'purple'
-  },
   CANCELLED: {
-    value: 5,
+    value: 4,
     desc: '已取消',
     color: 'red'
+  },
+  REFUNDED: {
+    value: 5,
+    desc: '已退款',
+    color: 'purple'
+  }
+};
+
+// ==================== 预约状态 ====================
+export const BOOKING_STATUS_ENUM = {
+  BOOKED: {
+    value: 1,
+    desc: '已预约',
+    color: 'green'
+  },
+  VERIFIED: {
+    value: 2,
+    desc: '已核销',
+    color: 'blue'
+  },
+  CANCELLED: {
+    value: 3,
+    desc: '已取消',
+    color: 'red'
+  },
+  EXPIRED: {
+    value: 4,
+    desc: '已过期',
+    color: 'gray'
   }
 };
 
@@ -42,21 +66,80 @@ export const LESSON_STATUS_ENUM = {
     desc: '待上课',
     color: 'orange'
   },
-  IN_PROGRESS: {
-    value: 2,
-    desc: '进行中',
-    color: 'blue'
-  },
   COMPLETED: {
-    value: 3,
-    desc: '已完成',
+    value: 2,
+    desc: '已上课',
     color: 'green'
   },
   CANCELLED: {
-    value: 4,
+    value: 3,
     desc: '已取消',
     color: 'red'
   }
+};
+
+// ==================== 数据兼容性映射函数 ====================
+/**
+ * 预约状态兼容性映射（旧状态 → 新状态）
+ * @param {number} oldStatus 旧状态值
+ * @returns {number} 新状态值
+ */
+export const mapOldBookingStatus = (oldStatus) => {
+  const mapping = {
+    1: 1, // 待确认 → 已预约
+    2: 1, // 已确认 → 已预约  
+    3: 1, // 进行中 → 已预约
+    4: 2, // 已完成 → 已核销
+    5: 3  // 已取消 → 已取消
+  };
+  return mapping[oldStatus] || oldStatus;
+};
+
+/**
+ * 课程状态兼容性映射（旧状态 → 新状态）
+ * @param {number} oldStatus 旧状态值
+ * @returns {number} 新状态值
+ */
+export const mapOldLessonStatus = (oldStatus) => {
+  const mapping = {
+    1: 1, // 待上课 → 待上课
+    2: 1, // 进行中 → 待上课
+    3: 2, // 已完成 → 已上课
+    4: 3  // 已取消 → 已取消
+  };
+  return mapping[oldStatus] || oldStatus;
+};
+
+/**
+ * 根据状态值获取订单状态信息
+ * @param {number} status 状态值
+ * @returns {object} 状态信息对象
+ */
+export const getOrderStatusInfo = (status) => {
+  return Object.values(ORDER_STATUS_ENUM).find(item => item.value === status) || 
+    { value: status, desc: '未知状态', color: 'default' };
+};
+
+/**
+ * 根据状态值获取预约状态信息
+ * @param {number} status 状态值
+ * @returns {object} 状态信息对象
+ */
+export const getBookingStatusInfo = (status) => {
+  const mappedStatus = mapOldBookingStatus(status);
+  return Object.values(BOOKING_STATUS_ENUM).find(item => item.value === mappedStatus) || 
+    { value: mappedStatus, desc: '未知状态', color: 'default' };
+};
+
+/**
+ * 根据状态值获取课程状态信息
+ * @param {number} status 状态值
+ * @returns {object} 状态信息对象
+ */
+export const getLessonStatusInfo = (status) => {
+  const mappedStatus = mapOldLessonStatus(status);
+  return Object.values(LESSON_STATUS_ENUM).find(item => item.value === mappedStatus) || 
+    { value: mappedStatus, desc: '未知状态', color: 'default' };
 };
 
 // ==================== 教练可用状态 ====================

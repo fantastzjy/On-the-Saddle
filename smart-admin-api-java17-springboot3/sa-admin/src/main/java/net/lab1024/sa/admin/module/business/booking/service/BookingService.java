@@ -8,13 +8,16 @@ import net.lab1024.sa.admin.module.business.booking.dao.BookingDao;
 import net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity;
 import net.lab1024.sa.admin.module.business.booking.domain.form.BookingQueryForm;
 import net.lab1024.sa.admin.module.business.booking.domain.form.BookingRescheduleForm;
+import net.lab1024.sa.admin.module.business.booking.domain.form.PackageBookingCreateForm;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingDetailVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingListVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.ConflictCheckResult;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
+import net.lab1024.sa.admin.module.business.order.dao.PackageBalanceDao;
 import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
+import net.lab1024.sa.admin.module.business.order.domain.entity.PackageBalanceEntity;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
 import net.lab1024.sa.admin.module.business.horse.dao.HorseDao;
@@ -59,6 +62,9 @@ public class BookingService {
 
 	@Autowired
 	private OrderDao orderDao;
+
+	@Autowired
+	private PackageBalanceDao packageBalanceDao;
 
 	@Autowired
 	private MemberDao memberDao;
@@ -741,5 +747,117 @@ public class BookingService {
 		}
 
 		return result;
+	}
+
+	/**
+	 * 创建课时包预约
+	 */
+	@Transactional(rollbackFor = Exception.class)
+	public ResponseDTO<Void> createPackageBooking(PackageBookingCreateForm createForm) {
+		try {
+			// 1. 校验订单
+			OrderEntity order = orderDao.selectById(createForm.getOrderId());
+			if (order == null) {
+				return ResponseDTO.userErrorParam("订单不存在");
+			}
+			
+			// 检查订单状态
+			if (order.getOrderStatus() != 2) {
+				return ResponseDTO.userErrorParam("订单未支付，无法创建预约");
+			}
+			
+			// 检查是否为课时包订单
+			if (order.getProductType() != 2) {
+				return ResponseDTO.userErrorParam("非课时包订单，无法使用此功能");
+			}
+			
+			// 2. 校验课时包余额
+			PackageBalanceEntity balance = packageBalanceDao.selectByOrderId(createForm.getOrderId());
+			if (balance == null) {
+				return ResponseDTO.userErrorParam("课时包余额记录不存在");
+			}
+			
+			if (balance.getRemainingCount() < createForm.getPackageConsumeCount()) {
+				return ResponseDTO.userErrorParam("课时包余额不足");
+			}
+			
+			// 3. 校验消费会员
+			MemberEntity consumerMember = memberDao.selectById(createForm.getConsumerMemberId());
+			if (consumerMember == null) {
+				return ResponseDTO.userErrorParam("消费会员不存在");
+			}
+			
+			// 4. 校验教练
+			CoachEntity coach = coachDao.selectById(createForm.getCoachId());
+			if (coach == null) {
+				return ResponseDTO.userErrorParam("教练不存在");
+			}
+			
+			// 5. 校验马匹（如果指定）
+			if (createForm.getHorseId() != null && createForm.getHorseId() > 0) {
+				HorseEntity horse = horseDao.selectById(createForm.getHorseId());
+				if (horse == null) {
+					return ResponseDTO.userErrorParam("马匹不存在");
+				}
+			}
+			
+			// 6. 检查时间冲突
+			ConflictCheckResult conflictResult = checkTimeConflict(
+				createForm.getCoachId(),
+				createForm.getHorseId(),
+				createForm.getStartTime(),
+				createForm.getEndTime(),
+				null
+			);
+			
+			if (conflictResult.hasConflict()) {
+				return ResponseDTO.userErrorParam("存在时间冲突：" + conflictResult.getConflictMessage());
+			}
+			
+			// 7. 创建预约记录
+			BookingEntity booking = new BookingEntity();
+			booking.setOrderId(createForm.getOrderId());
+			booking.setOrderItemId(0L); // 课时包订单无订单明细
+			booking.setClubId(order.getClubId());
+			booking.setMemberId(order.getMemberId()); // 购买会员
+			booking.setConsumerMemberId(createForm.getConsumerMemberId()); // 消费会员
+			booking.setProductId(order.getProductId());
+			booking.setCoachId(createForm.getCoachId());
+			booking.setHorseId(createForm.getHorseId());
+			booking.setStartTime(createForm.getStartTime());
+			booking.setEndTime(createForm.getEndTime());
+			booking.setBookingStatus(1); // 待确认
+			booking.setActualCoachFee(createForm.getActualCoachFee());
+			booking.setActualHorseFee(createForm.getActualHorseFee());
+			booking.setPackageConsumeCount(createForm.getPackageConsumeCount());
+			booking.setRemainingCount(balance.getRemainingCount() - createForm.getPackageConsumeCount());
+			booking.setCreateBy("system");
+			booking.setCreateTime(LocalDateTime.now());
+			booking.setUpdateBy("system");
+			booking.setUpdateTime(LocalDateTime.now());
+			
+			int insertResult = bookingDao.insert(booking);
+			if (insertResult <= 0) {
+				return ResponseDTO.userErrorParam("创建预约失败");
+			}
+			
+			// 8. 更新课时包余额
+			int newUsedCount = balance.getUsedCount() + createForm.getPackageConsumeCount();
+			int newRemainingCount = balance.getRemainingCount() - createForm.getPackageConsumeCount();
+			
+			int updateResult = packageBalanceDao.updateBalance(balance.getId(), newUsedCount, newRemainingCount);
+			if (updateResult <= 0) {
+				throw new RuntimeException("更新课时包余额失败");
+			}
+			
+			log.info("课时包预约创建成功，订单ID：{}，预约ID：{}，消费会员：{}",
+				createForm.getOrderId(), booking.getBookingId(), createForm.getConsumerMemberId());
+			
+			return ResponseDTO.ok();
+			
+		} catch (Exception e) {
+			log.error("创建课时包预约失败", e);
+			return ResponseDTO.userErrorParam("创建预约失败：" + e.getMessage());
+		}
 	}
 }

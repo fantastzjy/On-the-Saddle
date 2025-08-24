@@ -12,6 +12,10 @@ import net.lab1024.sa.admin.module.business.horse.dao.HorseDao;
 import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
+import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
+import net.lab1024.sa.admin.module.business.order.dao.PackageBalanceDao;
+import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
+import net.lab1024.sa.admin.module.business.order.domain.entity.PackageBalanceEntity;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
@@ -22,11 +26,14 @@ import net.lab1024.sa.admin.module.business.schedule.dao.LessonScheduleDao;
 import net.lab1024.sa.admin.module.business.schedule.domain.entity.LessonScheduleEntity;
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ConflictCheckForm;
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleQueryForm;
+import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleCombinedQueryForm;
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleTimeUpdateForm;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.CoachVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ConflictCheckVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleDetailVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleListVO;
+import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleCombinedVO;
+import net.lab1024.sa.admin.module.business.schedule.domain.vo.BookingRecordVO;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.domain.ValidateList;
@@ -81,6 +88,12 @@ public class ScheduleService {
 
     @Autowired
     private EmployeeDao employeeDao;
+
+    @Autowired
+    private OrderDao orderDao;
+
+    @Autowired
+    private PackageBalanceDao packageBalanceDao;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -522,20 +535,6 @@ public class ScheduleService {
     }
 
     /**
-     * 获取课表状态名称
-     */
-    private String getLessonStatusName(Integer lessonStatus) {
-        if (lessonStatus == null) return "未知状态";
-        switch (lessonStatus) {
-            case 1: return "待上课";
-            case 2: return "进行中";
-            case 3: return "已完成";
-            case 4: return "已取消";
-            default: return "未知状态";
-        }
-    }
-
-    /**
      * 补充课表详情关联数据
      */
     private void enhanceScheduleDetailData(ScheduleDetailVO schedule) {
@@ -962,5 +961,338 @@ public class ScheduleService {
         }
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd HH:mm");
         return startTime.format(formatter) + " - " + endTime.format(formatter);
+    }
+
+    /**
+     * 课程表综合查询 (订单+预约+课程)
+     */
+    public ResponseDTO<PageResult<ScheduleCombinedVO>> queryCombinedSchedule(ScheduleCombinedQueryForm queryForm) {
+        try {
+            // 1. 查询订单数据
+            Page<OrderEntity> page = new Page<>(queryForm.getPageNum(), queryForm.getPageSize());
+            LambdaQueryWrapper<OrderEntity> queryWrapper = buildCombinedQueryWrapper(queryForm);
+
+            IPage<OrderEntity> pageResult = orderDao.selectPage(page, queryWrapper);
+            List<OrderEntity> orders = pageResult.getRecords();
+
+            if (orders.isEmpty()) {
+                PageResult<ScheduleCombinedVO> result = new PageResult<>();
+                result.setList(new ArrayList<>());
+                result.setTotal(pageResult.getTotal());
+                result.setPageNum(pageResult.getCurrent());
+                result.setPageSize(pageResult.getSize());
+                result.setPages(pageResult.getPages());
+                result.setEmptyFlag(true);
+                return ResponseDTO.ok(result);
+            }
+
+            // 2. 聚合数据
+            List<ScheduleCombinedVO> combinedList = buildCombinedData(orders);
+
+            PageResult<ScheduleCombinedVO> result = new PageResult<>();
+            result.setList(combinedList);
+            result.setTotal(pageResult.getTotal());
+            result.setPageNum(pageResult.getCurrent());
+            result.setPageSize(pageResult.getSize());
+            result.setPages(pageResult.getPages());
+            result.setEmptyFlag(combinedList.isEmpty());
+            return ResponseDTO.ok(result);
+
+        } catch (Exception e) {
+            log.error("查询课程表综合数据失败", e);
+            return ResponseDTO.userErrorParam("查询失败");
+        }
+    }
+
+    /**
+     * 构建综合查询条件
+     */
+    private LambdaQueryWrapper<OrderEntity> buildCombinedQueryWrapper(ScheduleCombinedQueryForm queryForm) {
+        LambdaQueryWrapper<OrderEntity> wrapper = new LambdaQueryWrapper<>();
+
+        // 基础条件
+        if (queryForm.getClubId() != null) {
+            wrapper.eq(OrderEntity::getClubId, queryForm.getClubId());
+        }
+
+        // 商品类型
+        if (queryForm.getProductType() != null) {
+            wrapper.eq(OrderEntity::getProductType, queryForm.getProductType());
+        }
+
+        // 订单状态
+        if (queryForm.getOrderStatus() != null) {
+            wrapper.eq(OrderEntity::getOrderStatus, queryForm.getOrderStatus());
+        }
+
+        // 购买会员
+        if (queryForm.getBuyerMemberId() != null) {
+            wrapper.eq(OrderEntity::getMemberId, queryForm.getBuyerMemberId());
+        }
+
+        // 关键词搜索
+        if (SmartStringUtil.isNotBlank(queryForm.getKeywords())) {
+            wrapper.and(w -> w.like(OrderEntity::getOrderNo, queryForm.getKeywords())
+                           .or().like(OrderEntity::getProductName, queryForm.getKeywords()));
+        }
+
+        // 时间范围
+        if (queryForm.getCreateTimeStart() != null) {
+            wrapper.ge(OrderEntity::getCreateTime, queryForm.getCreateTimeStart());
+        }
+        if (queryForm.getCreateTimeEnd() != null) {
+            wrapper.le(OrderEntity::getCreateTime, queryForm.getCreateTimeEnd());
+        }
+
+        // 默认排序
+        wrapper.orderByDesc(OrderEntity::getCreateTime);
+
+        return wrapper;
+    }
+
+    /**
+     * 构建综合数据
+     */
+    private List<ScheduleCombinedVO> buildCombinedData(List<OrderEntity> orders) {
+        List<ScheduleCombinedVO> result = new ArrayList<>();
+
+        // 获取订单IDs
+        List<Long> orderIds = orders.stream().map(OrderEntity::getOrderId).collect(Collectors.toList());
+
+        // 批量查询关联数据
+        List<BookingEntity> allBookings = bookingDao.selectByOrderIds(orderIds);
+        List<PackageBalanceEntity> allBalances = packageBalanceDao.selectByOrderIds(orderIds);
+        List<LessonScheduleEntity> allSchedules = getAllSchedulesByBookings(allBookings);
+
+        // 构建映射关系
+        Map<Long, List<BookingEntity>> bookingsByOrderId = allBookings.stream()
+            .collect(Collectors.groupingBy(BookingEntity::getOrderId));
+        Map<Long, PackageBalanceEntity> balancesByOrderId = allBalances.stream()
+            .collect(Collectors.toMap(PackageBalanceEntity::getOrderId, balance -> balance));
+        Map<Long, LessonScheduleEntity> schedulesByBookingId = allSchedules.stream()
+            .collect(Collectors.toMap(LessonScheduleEntity::getBookingId, schedule -> schedule));
+
+        // 批量获取关联的基础数据
+        Map<Long, MemberEntity> memberMap = getMemberMap(orders, allBookings);
+        Map<Long, CoachEntity> coachMap = getCoachMap(orders, allBookings);
+        Map<Long, HorseEntity> horseMap = getHorseMap(allBookings);
+
+        // 构建结果数据
+        for (OrderEntity order : orders) {
+            ScheduleCombinedVO vo = new ScheduleCombinedVO();
+
+            // 订单基础信息
+            SmartBeanUtil.copyProperties(order, vo);
+            vo.setOrderStatusName(getOrderStatusName(order.getOrderStatus()));
+            vo.setProductTypeName(getProductTypeName(order.getProductType()));
+
+            // 购买会员信息
+            MemberEntity buyer = memberMap.get(order.getMemberId());
+            if (buyer != null) {
+                vo.setBuyerMemberName(buyer.getActualName());
+            }
+
+            // 默认教练信息
+            if (order.getCoachId() != null && order.getCoachId() > 0) {
+                CoachEntity coach = coachMap.get(order.getCoachId());
+                if (coach != null) {
+                    vo.setDefaultCoachName(coach.getActualName());
+                }
+            }
+
+            // 课时包余额信息
+            PackageBalanceEntity balance = balancesByOrderId.get(order.getOrderId());
+            if (balance != null) {
+                vo.setTotalCount(balance.getTotalCount());
+                vo.setUsedCount(balance.getUsedCount());
+                vo.setRemainingCount(balance.getRemainingCount());
+                vo.setPackageStatus(balance.getStatus());
+                vo.setExpireDate(balance.getExpireDate());
+            }
+
+            // 预约记录列表
+            List<BookingEntity> bookings = bookingsByOrderId.get(order.getOrderId());
+            if (bookings != null && !bookings.isEmpty()) {
+                List<BookingRecordVO> bookingRecords = buildBookingRecords(bookings, schedulesByBookingId,
+                    memberMap, coachMap, horseMap);
+                vo.setBookings(bookingRecords);
+            } else {
+                vo.setBookings(new ArrayList<>());
+            }
+
+            result.add(vo);
+        }
+
+        return result;
+    }
+
+    /**
+     * 构建预约记录列表
+     */
+    private List<BookingRecordVO> buildBookingRecords(List<BookingEntity> bookings,
+            Map<Long, LessonScheduleEntity> schedulesByBookingId,
+            Map<Long, MemberEntity> memberMap,
+            Map<Long, CoachEntity> coachMap,
+            Map<Long, HorseEntity> horseMap) {
+
+        List<BookingRecordVO> records = new ArrayList<>();
+
+        for (BookingEntity booking : bookings) {
+            BookingRecordVO record = new BookingRecordVO();
+            SmartBeanUtil.copyProperties(booking, record);
+
+            // 消费会员信息
+            Long consumerMemberId = booking.getConsumerMemberId() != null ?
+                booking.getConsumerMemberId() : booking.getMemberId();
+            MemberEntity consumer = memberMap.get(consumerMemberId);
+            if (consumer != null) {
+                record.setConsumerMemberName(consumer.getActualName());
+            }
+
+            // 教练信息
+            CoachEntity coach = coachMap.get(booking.getCoachId());
+            if (coach != null) {
+                record.setCoachName(coach.getActualName());
+            }
+
+            // 马匹信息
+            HorseEntity horse = horseMap.get(booking.getHorseId());
+            if (horse != null) {
+                record.setHorseName(horse.getHorseName());
+            }
+
+            // 状态名称
+            record.setBookingStatusName(getBookingStatusName(booking.getBookingStatus()));
+
+            // 课程信息
+            LessonScheduleEntity schedule = schedulesByBookingId.get(booking.getBookingId());
+            if (schedule != null) {
+                record.setScheduleId(schedule.getScheduleId());
+                record.setScheduleNo(schedule.getScheduleNo());
+                record.setLessonStatus(schedule.getLessonStatus());
+                record.setLessonStatusName(getLessonStatusName(schedule.getLessonStatus()));
+            }
+
+            records.add(record);
+        }
+
+        // 按预约时间倒序排列
+        records.sort((a, b) -> {
+            if (a.getStartTime() == null) return 1;
+            if (b.getStartTime() == null) return -1;
+            return b.getStartTime().compareTo(a.getStartTime());
+        });
+
+        return records;
+    }
+
+    /**
+     * 获取所有相关的课程表记录
+     */
+    private List<LessonScheduleEntity> getAllSchedulesByBookings(List<BookingEntity> bookings) {
+        if (bookings.isEmpty()) return new ArrayList<>();
+
+        List<Long> bookingIds = bookings.stream()
+            .map(BookingEntity::getBookingId)
+            .collect(Collectors.toList());
+
+        LambdaQueryWrapper<LessonScheduleEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(LessonScheduleEntity::getBookingId, bookingIds);
+
+        return lessonScheduleDao.selectList(wrapper);
+    }
+
+    /**
+     * 批量获取会员映射
+     */
+    private Map<Long, MemberEntity> getMemberMap(List<OrderEntity> orders, List<BookingEntity> bookings) {
+        List<Long> memberIds = new ArrayList<>();
+
+        // 购买会员
+        orders.stream().map(OrderEntity::getMemberId).forEach(memberIds::add);
+
+        // 消费会员
+        bookings.stream()
+            .map(booking -> booking.getConsumerMemberId() != null ?
+                booking.getConsumerMemberId() : booking.getMemberId())
+            .forEach(memberIds::add);
+
+        List<Long> uniqueMemberIds = memberIds.stream().distinct().collect(Collectors.toList());
+
+        if (uniqueMemberIds.isEmpty()) return new java.util.HashMap<>();
+
+        List<MemberEntity> members = memberDao.selectBatchIds(uniqueMemberIds);
+        return members.stream().collect(Collectors.toMap(MemberEntity::getMemberId, member -> member));
+    }
+
+    /**
+     * 批量获取教练映射
+     */
+    private Map<Long, CoachEntity> getCoachMap(List<OrderEntity> orders, List<BookingEntity> bookings) {
+        List<Long> coachIds = new ArrayList<>();
+
+        // 默认教练
+        orders.stream()
+            .filter(order -> order.getCoachId() != null && order.getCoachId() > 0)
+            .map(OrderEntity::getCoachId)
+            .forEach(coachIds::add);
+
+        // 预约教练
+        bookings.stream()
+            .filter(booking -> booking.getCoachId() != null && booking.getCoachId() > 0)
+            .map(BookingEntity::getCoachId)
+            .forEach(coachIds::add);
+
+        List<Long> uniqueCoachIds = coachIds.stream().distinct().collect(Collectors.toList());
+
+        if (uniqueCoachIds.isEmpty()) return new java.util.HashMap<>();
+
+        List<CoachEntity> coaches = coachDao.selectBatchIds(uniqueCoachIds);
+        return coaches.stream().collect(Collectors.toMap(CoachEntity::getCoachId, coach -> coach));
+    }
+
+    /**
+     * 批量获取马匹映射
+     */
+    private Map<Long, HorseEntity> getHorseMap(List<BookingEntity> bookings) {
+        List<Long> horseIds = bookings.stream()
+            .filter(booking -> booking.getHorseId() != null && booking.getHorseId() > 0)
+            .map(BookingEntity::getHorseId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        if (horseIds.isEmpty()) return new java.util.HashMap<>();
+
+        List<HorseEntity> horses = horseDao.selectBatchIds(horseIds);
+        return horses.stream().collect(Collectors.toMap(HorseEntity::getHorseId, horse -> horse));
+    }
+
+    /**
+     * 获取订单状态名称
+     */
+    private String getOrderStatusName(Integer orderStatus) {
+        if (orderStatus == null) return "未知状态";
+        switch (orderStatus) {
+            case 1: return "待支付";
+            case 2: return "已支付";
+            case 3: return "已核销";
+            case 4: return "已取消";
+            case 5: return "已退款";
+            default: return "未知状态";
+        }
+    }
+
+    /**
+     * 获取课程状态名称
+     */
+    private String getLessonStatusName(Integer lessonStatus) {
+        if (lessonStatus == null) return "未知状态";
+        switch (lessonStatus) {
+            case 1: return "待上课";
+            case 2: return "进行中";
+            case 3: return "已完成";
+            case 4: return "已取消";
+            default: return "未知状态";
+        }
     }
 }

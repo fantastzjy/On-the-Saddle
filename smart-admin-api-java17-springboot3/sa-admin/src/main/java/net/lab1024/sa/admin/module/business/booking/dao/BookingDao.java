@@ -80,4 +80,9 @@ public interface BookingDao extends BaseMapper<BookingEntity> {
                                              @Param("startTime") LocalDateTime startTime,
                                              @Param("endTime") LocalDateTime endTime,
                                              @Param("excludeBookingId") Long excludeBookingId);
+
+    /**
+     * 根据订单ID列表批量查询预约
+     */
+    List<BookingEntity> selectByOrderIds(@Param("orderIds") List<Long> orderIds);
 }

@@ -4,12 +4,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberQueryForm;
-import net.lab1024.sa.admin.module.business.member.domain.form.MemberUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberDetailVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
 import net.lab1024.sa.admin.module.business.member.service.MemberService;
-import net.lab1024.sa.admin.module.business.member.service.FamilyGroupService;
+import net.lab1024.sa.admin.module.openapi.domain.form.MemberUpdateForm;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.domain.ValidateList;
@@ -79,7 +77,7 @@ public class MemberController {
 
     @Operation(summary = "检查手机号是否存在")
     @GetMapping("/check-phone/{phone}")
-    public ResponseDTO<Boolean> checkPhoneExists(@PathVariable String phone, 
+    public ResponseDTO<Boolean> checkPhoneExists(@PathVariable String phone,
                                                @RequestParam(required = false) Long excludeId) {
         return memberService.checkPhoneExists(phone, excludeId);
     }

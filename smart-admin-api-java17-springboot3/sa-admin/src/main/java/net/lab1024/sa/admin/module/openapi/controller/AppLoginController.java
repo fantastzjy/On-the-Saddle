@@ -1,12 +1,12 @@
-package net.lab1024.sa.admin.module.business.member.controller;
+package net.lab1024.sa.admin.module.openapi.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
-import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppLoginForm;
+import net.lab1024.sa.admin.module.openapi.domain.form.MemberAppLoginForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberAppLoginVO;
-import net.lab1024.sa.admin.module.business.member.service.AppLoginService;
+import net.lab1024.sa.admin.module.openapi.service.AppLoginService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.web.bind.annotation.*;

@@ -35,6 +35,9 @@ public class BookingEntity {
     @DataTracerFieldLabel("会员ID")
     private Long memberId;
 
+    @DataTracerFieldLabel("消费用户ID")
+    private Long consumerMemberId;
+
     @DataTracerFieldLabel("商品ID")
     private Long productId;
 
@@ -67,6 +70,12 @@ public class BookingEntity {
 
     @DataTracerFieldLabel("取消原因")
     private String cancelReason;
+
+    @DataTracerFieldLabel("本次消费课时数")
+    private Integer packageConsumeCount;
+
+    @DataTracerFieldLabel("剩余课时数")
+    private Integer remainingCount;
 
     private String createBy;
 

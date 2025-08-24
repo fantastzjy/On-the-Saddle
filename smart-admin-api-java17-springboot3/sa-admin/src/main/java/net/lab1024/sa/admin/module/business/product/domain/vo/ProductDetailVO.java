@@ -32,7 +32,7 @@ public class ProductDetailVO {
     @Schema(description = "商品编码")
     private String productCode;
 
-    @Schema(description = "商品类型: 1-课程 2-课时包 3-活动 4-体验课")
+    @Schema(description = "商品类型: 1-课程 2-课时包 3-活动 4-体验课 5-理论课")
     private Integer productType;
 
     @Schema(description = "商品类型名称")
@@ -52,6 +52,9 @@ public class ProductDetailVO {
 
     @Schema(description = "体验课配置详情")
     private Map<String, Object> experienceDetails;
+
+    @Schema(description = "理论课配置详情")
+    private Map<String, Object> theoryCourseDetails;
 
     @Schema(description = "价格详情")
     private Map<String, Object> priceDetails;

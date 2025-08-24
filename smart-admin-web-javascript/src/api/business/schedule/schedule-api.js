@@ -54,6 +54,11 @@ export const scheduleApi = {
     return getRequest(`/api/admin/schedule/detail/${scheduleId}`);
   },
 
+  // 课程表综合查询（订单+预约+课程）
+  queryCombinedSchedule: (param) => {
+    return postRequest('/api/admin/schedule/combined/query', param);
+  },
+
   // 获取教练列表
   getCoachList: () => {
     return getRequest('/api/admin/schedule/coaches');
@@ -226,6 +231,11 @@ export const bookingApi = {
   // 创建预约
   createBooking: (param) => {
     return postRequest('/api/admin/booking/create', param);
+  },
+
+  // 创建课时包预约
+  createPackageBooking: (param) => {
+    return postRequest('/api/admin/booking/package/create', param);
   },
 
   // 更新预约信息

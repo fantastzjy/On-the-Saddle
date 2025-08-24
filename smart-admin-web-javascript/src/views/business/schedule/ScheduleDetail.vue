@@ -79,7 +79,7 @@
               {{ scheduleDetail.endTime }}
             </a-descriptions-item>
             <a-descriptions-item label="课程时长">
-              {{ scheduleDetail.duration }} 分钟
+              {{ calculatedDuration }} 分钟
             </a-descriptions-item>
             <a-descriptions-item label="创建时间">
               {{ formatDateTime(scheduleDetail.createTime) }}
@@ -189,7 +189,7 @@
             </a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="课程时长">
-            {{ scheduleDetail.duration }} 分钟
+            {{ calculatedDuration }} 分钟
           </a-descriptions-item>
         </a-descriptions>
       </div>
@@ -332,9 +332,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { message, Modal } from 'ant-design-vue';
+import dayjs from 'dayjs';
 import { 
   ArrowLeftOutlined, 
   EditOutlined, 
@@ -361,6 +362,22 @@ const router = useRouter();
 // 响应式数据
 const loading = ref(false);
 const scheduleDetail = ref({});
+
+// 计算属性
+const calculatedDuration = computed(() => {
+  if (scheduleDetail.value.duration) {
+    return scheduleDetail.value.duration; // 优先使用后端返回的值
+  }
+  
+  if (scheduleDetail.value.startTime && scheduleDetail.value.endTime) {
+    // 前端计算 duration
+    const start = dayjs(scheduleDetail.value.startTime);
+    const end = dayjs(scheduleDetail.value.endTime);
+    return end.diff(start, 'minute');
+  }
+  
+  return 0;
+});
 
 // 生命周期
 onMounted(() => {

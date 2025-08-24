@@ -28,4 +28,14 @@
         )
     </select>
 
+    <!-- 根据订单ID列表批量查询预约 -->
+    <select id="selectByOrderIds" resultType="net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity">
+        SELECT * FROM m_booking 
+        WHERE order_id IN
+        <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+        ORDER BY create_time DESC
+    </select>
+
 </mapper>

@@ -10,10 +10,12 @@ import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductPackageDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductActivityDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductExperienceDao;
+import net.lab1024.sa.admin.module.business.product.dao.ProductTheoryCourseDao;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductPackageEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductActivityEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductExperienceEntity;
+import net.lab1024.sa.admin.module.business.product.domain.entity.ProductTheoryCourseEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
@@ -61,6 +63,9 @@ public class ProductService {
 
     @Autowired
     private ProductExperienceDao productExperienceDao;
+
+    @Autowired
+    private ProductTheoryCourseDao productTheoryCourseDao;
 
     @Autowired
     private FileService fileService;
@@ -296,7 +301,8 @@ public class ProductService {
             Map.of("value", 1, "label", "课程"),
             Map.of("value", 2, "label", "课时包"),
             Map.of("value", 3, "label", "活动"),
-            Map.of("value", 4, "label", "体验课")
+            Map.of("value", 4, "label", "体验课"),
+            Map.of("value", 5, "label", "理论课")
         );
         return ResponseDTO.ok(types);
     }
@@ -441,6 +447,9 @@ public class ProductService {
             case 4:
                 typePrefix = "EXPERIENCE";
                 break;
+            case 5:
+                typePrefix = "THEORY";
+                break;
             default:
                 typePrefix = "PRODUCT";
                 break;
@@ -505,6 +514,9 @@ public class ProductService {
                     break;
                 case 4: // 体验课
                     saveExperienceConfigFromForm(productId, form);
+                    break;
+                case 5: // 理论课
+                    saveTheoryCourseConfigFromForm(productId, form);
                     break;
             }
         } catch (Exception e) {
@@ -704,6 +716,47 @@ public class ProductService {
             }
         } catch (Exception e) {
             log.error("保存体验课配置失败，商品ID: {}", productId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * 从表单保存理论课配置
+     */
+    private void saveTheoryCourseConfigFromForm(Long productId, Object form) {
+        try {
+            // 先删除已存在的配置
+            LambdaQueryWrapper<ProductTheoryCourseEntity> deleteWrapper = new LambdaQueryWrapper<>();
+            deleteWrapper.eq(ProductTheoryCourseEntity::getProductId, productId);
+            productTheoryCourseDao.delete(deleteWrapper);
+            
+            // 创建新的理论课配置
+            ProductTheoryCourseEntity theoryCourseEntity = new ProductTheoryCourseEntity();
+            theoryCourseEntity.setProductId(productId);
+            
+            // 从表单对象提取字段值
+            if (form instanceof ProductAddForm) {
+                ProductAddForm addForm = (ProductAddForm) form;
+                theoryCourseEntity.setDurationPeriods(addForm.getTheoryCourse_durationPeriods());
+                theoryCourseEntity.setBasePrice(addForm.getTheoryCourse_basePrice());
+                theoryCourseEntity.setMaxStudents(addForm.getTheoryCourse_maxStudents());
+            } else if (form instanceof ProductUpdateForm) {
+                ProductUpdateForm updateForm = (ProductUpdateForm) form;
+                theoryCourseEntity.setDurationPeriods(updateForm.getTheoryCourse_durationPeriods());
+                theoryCourseEntity.setBasePrice(updateForm.getTheoryCourse_basePrice());
+                theoryCourseEntity.setMaxStudents(updateForm.getTheoryCourse_maxStudents());
+            }
+            
+            theoryCourseEntity.setCreateTime(LocalDateTime.now());
+            theoryCourseEntity.setUpdateTime(LocalDateTime.now());
+            
+            // 只有当有有效数据时才保存
+            if (theoryCourseEntity.getBasePrice() != null) {
+                productTheoryCourseDao.insert(theoryCourseEntity);
+                log.info("保存理论课配置成功，商品ID: {}", productId);
+            }
+        } catch (Exception e) {
+            log.error("保存理论课配置失败，商品ID: {}", productId, e);
             throw e;
         }
     }
@@ -932,6 +985,9 @@ public class ProductService {
             case 4: // 体验课
                 productDetail.setExperienceDetails(getExperienceDetails(productDetail.getProductId()));
                 break;
+            case 5: // 理论课
+                productDetail.setTheoryCourseDetails(getTheoryCourseDetails(productDetail.getProductId()));
+                break;
         }
     }
 
@@ -944,6 +1000,7 @@ public class ProductService {
             case 2: return "课时包";
             case 3: return "活动";
             case 4: return "体验课";
+            case 5: return "理论课";
             default: return "未知";
         }
     }
@@ -1066,6 +1123,29 @@ public class ProductService {
             return experienceDetails;
         } catch (Exception e) {
             log.error("获取体验课详情失败，商品ID: {}", productId, e);
+            return new HashMap<>();
+        }
+    }
+
+    /**
+     * 获取理论课详情配置
+     */
+    private Map<String, Object> getTheoryCourseDetails(Long productId) {
+        try {
+            LambdaQueryWrapper<ProductTheoryCourseEntity> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(ProductTheoryCourseEntity::getProductId, productId);
+            ProductTheoryCourseEntity theoryCourseEntity = productTheoryCourseDao.selectOne(wrapper);
+            
+            Map<String, Object> theoryCourseDetails = new HashMap<>();
+            if (theoryCourseEntity != null) {
+                theoryCourseDetails.put("durationPeriods", theoryCourseEntity.getDurationPeriods());
+                theoryCourseDetails.put("basePrice", theoryCourseEntity.getBasePrice());
+                theoryCourseDetails.put("maxStudents", theoryCourseEntity.getMaxStudents());
+            }
+            
+            return theoryCourseDetails;
+        } catch (Exception e) {
+            log.error("获取理论课详情失败，商品ID: {}", productId, e);
             return new HashMap<>();
         }
     }

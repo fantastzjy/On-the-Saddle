@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.lab1024.sa.admin.module.business.order.dao.PackageBalanceDao">
+
+    <select id="selectByOrderId" resultType="net.lab1024.sa.admin.module.business.order.domain.entity.PackageBalanceEntity">
+        SELECT * FROM m_package_balance 
+        WHERE order_id = #{orderId}
+    </select>
+
+    <select id="selectValidByMemberId" resultType="net.lab1024.sa.admin.module.business.order.domain.entity.PackageBalanceEntity">
+        SELECT * FROM m_package_balance 
+        WHERE member_id = #{memberId} 
+        AND status = 1 
+        AND remaining_count > 0
+        AND (expire_date IS NULL OR expire_date > NOW())
+        ORDER BY create_time ASC
+    </select>
+
+    <update id="updateBalance">
+        UPDATE m_package_balance 
+        SET used_count = #{usedCount}, 
+            remaining_count = #{remainingCount},
+            status = CASE 
+                WHEN #{remainingCount} = 0 THEN 2 
+                ELSE status 
+            END,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectByOrderIds" resultType="net.lab1024.sa.admin.module.business.order.domain.entity.PackageBalanceEntity">
+        SELECT * FROM m_package_balance 
+        WHERE order_id IN
+        <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </select>
+
+</mapper>

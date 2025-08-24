@@ -5,10 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.dao.FamilyMemberExtraDao;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
-import net.lab1024.sa.admin.module.business.member.domain.entity.FamilyMemberExtraEntity;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberQueryForm;
-import net.lab1024.sa.admin.module.business.member.domain.form.MemberUpdateForm;
+import net.lab1024.sa.admin.module.openapi.domain.form.MemberUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberDetailVO;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -140,7 +139,7 @@ public class MemberService {
 
         // 获取更新前的数据用于审计日志
         MemberEntity oldMember = memberDao.selectById(updateForm.getMemberId());
-        
+
         // 转换实体并更新
         MemberEntity memberEntity = SmartBeanUtil.copy(updateForm, MemberEntity.class);
         memberEntity.setUpdateTime(LocalDateTime.now());
@@ -219,13 +218,13 @@ public class MemberService {
 
         MemberEntity oldMemberEntity = SmartBeanUtil.copy(memberEntity, MemberEntity.class);
         oldMemberEntity.setDisabledFlag(memberEntity.getDisabledFlag());
-        
+
         int result = memberDao.updateMemberStatus(memberId, disabledFlag);
         if (result > 0) {
             // 获取更新后的数据用于审计日志
             MemberEntity updatedMemberEntity = SmartBeanUtil.copy(memberEntity, MemberEntity.class);
             updatedMemberEntity.setDisabledFlag(disabledFlag);
-            
+
             // 记录数据变更日志
             dataTracerService.update(memberId, DataTracerTypeEnum.CLUB_MEMBER, oldMemberEntity, updatedMemberEntity);
             return ResponseDTO.ok();
@@ -242,7 +241,7 @@ public class MemberService {
         if (StringUtils.isBlank(phone)) {
             return ResponseDTO.ok(false);
         }
-        
+
         int count = memberDao.checkPhoneExists(phone, excludeId);
         return ResponseDTO.ok(count > 0);
     }
@@ -263,7 +262,7 @@ public class MemberService {
         if (clubId == null) {
             return ResponseDTO.userErrorParam("俱乐部ID不能为空");
         }
-        
+
         List<MemberVO> memberList = memberDao.queryListByClub(clubId, 1);
         return ResponseDTO.ok(memberList);
     }
@@ -277,14 +276,14 @@ public class MemberService {
         String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String randomStr = String.format("%04d", ThreadLocalRandom.current().nextInt(1000, 9999));
         String memberNo = "M" + dateStr + randomStr;
-        
+
         // 检查是否重复
         int count = memberDao.checkMemberNoExists(memberNo);
         if (count > 0) {
             // 如果重复，递归生成新的编号
             return generateMemberNo();
         }
-        
+
         return memberNo;
     }
 

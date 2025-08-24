@@ -44,6 +44,9 @@ public class MemberAppInfoVO {
     @Schema(description = "所属俱乐部ID")
     private Long clubId;
 
+    @Schema(description = "俱乐部名称")
+    private String clubName;
+
     @Schema(description = "是否为会籍会员：1-是 0-否")
     private Integer isMembership;
 
@@ -70,6 +73,9 @@ public class MemberAppInfoVO {
 
     @Schema(description = "默认课程级别")
     private String defaultCourseLevel;
+
+    @Schema(description = "默认课程级别名称")
+    private String defaultCourseLevelName;
 
     @Schema(description = "最后登录时间")
     private LocalDateTime lastLoginTime;

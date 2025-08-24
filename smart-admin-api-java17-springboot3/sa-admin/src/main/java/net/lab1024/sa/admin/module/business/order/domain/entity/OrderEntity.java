@@ -53,6 +53,33 @@ public class OrderEntity {
     @DataTracerFieldLabel("订单备注")
     private String remark;
 
+    @DataTracerFieldLabel("商品ID")
+    private Long productId;
+
+    @DataTracerFieldLabel("商品名称")
+    private String productName;
+
+    @DataTracerFieldLabel("商品类型")
+    private Integer productType;
+
+    @DataTracerFieldLabel("数量/课时数")
+    private Integer quantity;
+
+    @DataTracerFieldLabel("单价")
+    private BigDecimal unitPrice;
+
+    @DataTracerFieldLabel("默认教练ID")
+    private Long coachId;
+
+    @DataTracerFieldLabel("期望时间列表")
+    private String preferredTimes;
+
+    @DataTracerFieldLabel("支付过期时间")
+    private LocalDateTime paymentExpireTime;
+
+    @DataTracerFieldLabel("自动取消标志")
+    private Integer autoCancelFlag;
+
     private String createBy;
 
     private LocalDateTime createTime;

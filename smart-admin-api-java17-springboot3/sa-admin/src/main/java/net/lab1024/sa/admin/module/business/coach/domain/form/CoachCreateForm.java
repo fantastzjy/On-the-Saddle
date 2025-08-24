@@ -103,4 +103,18 @@ public class CoachCreateForm {
 
     @Schema(description = "排序")
     private Integer sortOrder;
+
+    @Schema(description = "身份证正面照片地址")
+    @Length(max = 500, message = "身份证正面照片地址最多500字符")
+    private String idCardFrontImg;
+
+    @Schema(description = "身份证反面照片地址")
+    @Length(max = 500, message = "身份证反面照片地址最多500字符")
+    private String idCardBackImg;
+
+    @Schema(description = "教练证书列表JSON格式")
+    private String coachCertificates;
+
+    @Schema(description = "骑手证书列表JSON格式")
+    private String riderCertificates;
 }

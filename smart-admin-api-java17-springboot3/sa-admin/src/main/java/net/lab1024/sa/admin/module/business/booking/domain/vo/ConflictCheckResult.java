@@ -22,6 +22,13 @@ public class ConflictCheckResult {
     private String conflictMessage;
     
     /**
+     * 检查是否有冲突
+     */
+    public boolean hasConflict() {
+        return this.hasConflict;
+    }
+    
+    /**
      * 添加冲突信息
      */
     public void addConflict(String resourceType, List<BookingEntity> conflictBookings) {

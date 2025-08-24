@@ -73,7 +73,7 @@
                     <div class="schedule-content">
                       <div class="schedule-title">{{ schedule.memberName }}</div>
                       <div class="schedule-info">
-                        {{ schedule.coachName }} | {{ schedule.duration }}分钟
+                        {{ schedule.coachName }} | {{ getDuration(schedule) }}分钟
                       </div>
                     </div>
                   </div>
@@ -375,6 +375,21 @@ watch(currentDate, (newDate) => {
 });
 
 // ======================== 方法 ========================
+function getDuration(schedule) {
+  if (schedule.duration) {
+    return schedule.duration; // 优先使用后端返回的值
+  }
+  
+  if (schedule.startTime && schedule.endTime) {
+    // 前端计算 duration
+    const start = dayjs(schedule.startTime);
+    const end = dayjs(schedule.endTime);
+    return end.diff(start, 'minute');
+  }
+  
+  return 60; // 默认60分钟
+}
+
 function onViewTypeChange() {
   emit('view-change', currentViewType.value);
 }
@@ -499,7 +514,7 @@ function getSchedulesInTimeSlot(timeSlot) {
     
     return scheduleTime.isSame(slotTime, 'minute') || 
            (scheduleTime.isBefore(slotTime) && 
-            scheduleTime.add(schedule.duration, 'minute').isAfter(slotTime));
+            scheduleTime.add(getDuration(schedule), 'minute').isAfter(slotTime));
   });
 }
 
@@ -511,7 +526,7 @@ function getSchedulesInDayTimeSlot(date, timeSlot) {
     return scheduleTime.isSame(slotTime, 'day') &&
            (scheduleTime.isSame(slotTime, 'minute') || 
             (scheduleTime.isBefore(slotTime) && 
-             scheduleTime.add(schedule.duration, 'minute').isAfter(slotTime)));
+             scheduleTime.add(getDuration(schedule), 'minute').isAfter(slotTime)));
   });
 }
 

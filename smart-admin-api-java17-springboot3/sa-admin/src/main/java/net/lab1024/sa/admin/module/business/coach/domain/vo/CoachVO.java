@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 教练详情VO
@@ -39,6 +40,12 @@ public class CoachVO {
     @Schema(description = "头像照片地址")
     private String avatarUrl;
 
+    @Schema(description = "身份证正面照片地址")
+    private String idCardFrontImg;
+
+    @Schema(description = "身份证反面照片地址") 
+    private String idCardBackImg;
+
     @Schema(description = "入行时间")
     private LocalDateTime entryDate;
 
@@ -69,8 +76,11 @@ public class CoachVO {
     @Schema(description = "教练等级")
     private String coachLevel;
 
-    @Schema(description = "教练证书图片地址JSON格式")
-    private String coachCertImgUrl;
+    @Schema(description = "教练证书信息")
+    private List<CertificateVO> coachCertificates;
+
+    @Schema(description = "骑手证书信息")
+    private List<CertificateVO> riderCertificates;
 
     @Schema(description = "教练费(元/鞍时)")
     private BigDecimal coachFee;

@@ -52,6 +52,12 @@ public class ResourceScheduleEntity {
     @DataTracerFieldLabel("详细描述")
     private String description;
 
+    @DataTracerFieldLabel("关联订单号")
+    private String orderNo;
+
+    @DataTracerFieldLabel("过期时间")
+    private LocalDateTime expireTime;
+
     @DataTracerFieldLabel("创建人")
     private String createdBy;
 

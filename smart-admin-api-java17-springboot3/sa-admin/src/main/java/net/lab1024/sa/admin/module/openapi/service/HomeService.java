@@ -1,15 +1,18 @@
-package net.lab1024.sa.admin.module.business.member.service;
+package net.lab1024.sa.admin.module.openapi.service;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
 import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
+import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
+import net.lab1024.sa.admin.module.business.coach.domain.vo.CertificateVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
@@ -20,8 +23,11 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.ActivityListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MyHorseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CareStatisticsVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MedicalInfoVO;
-import net.lab1024.sa.admin.module.business.member.domain.form.OrderCreateForm;
+import net.lab1024.sa.admin.module.business.member.domain.vo.BookingTimeVO;
+import net.lab1024.sa.admin.module.openapi.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
+import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
+import net.lab1024.sa.admin.module.business.schedule.service.ResourceScheduleService;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductActivityDao;
@@ -43,10 +49,14 @@ import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -92,6 +102,9 @@ public class HomeService {
 
     @Resource
     private EmployeeDao employeeDao;
+
+    @Resource
+    private ResourceScheduleService resourceScheduleService;
 
     /**
      * 获取俱乐部详细信息
@@ -224,6 +237,10 @@ public class HomeService {
         // 专长领域处理：字符串转列表
         vo.setSpecialtiesList(parseSpecialtiesString(coach.getSpecialties()));
 
+        // 证书信息处理（统一结构）
+        vo.setCoachCertificates(parseCoachCertificates(coach.getCoachCertificates()));
+        vo.setRiderCertificates(parseRiderCertificates(coach.getRiderCertificates()));
+
         // 生成模拟的不可用时间
         vo.setUnavailableTimeSlots(generateMockUnavailableTimeSlots(coach.getCoachId()));
 
@@ -317,11 +334,89 @@ public class HomeService {
         if (StrUtil.isBlank(specialties)) {
             return new ArrayList<>();
         }
-        
+
         return Arrays.stream(specialties.split(","))
             .map(String::trim)
             .filter(StrUtil::isNotBlank)
             .collect(Collectors.toList());
+    }
+
+    /**
+     * 解析教练证书JSON为VO列表（统一结构版）
+     * @param certificatesJson 证书JSON字符串
+     * @return 教练证书VO列表
+     */
+    private List<CertificateVO> parseCoachCertificates(String certificatesJson) {
+        if (StrUtil.isBlank(certificatesJson)) {
+            return new ArrayList<>();
+        }
+
+        try {
+            JSONArray array = JSONUtil.parseArray(certificatesJson);
+            List<CertificateVO> result = new ArrayList<>();
+
+            for (Object obj : array) {
+                JSONObject certObj = (JSONObject) obj;
+                CertificateVO vo = new CertificateVO();
+
+                vo.setCategory(certObj.getInt("category"));
+                vo.setCategoryText(CoachCertificateConstant.getCoachCategoryText(vo.getCategory()));
+
+                // 使用统一的level字段
+                Integer level = certObj.getInt("level");
+                vo.setLevel(level);
+                vo.setLevelText(CoachCertificateConstant.getCoachLevelText(level));
+
+                JSONArray imagesArray = certObj.getJSONArray("images");
+                vo.setImages(imagesArray != null ? imagesArray.toList(String.class) : new ArrayList<>());
+
+                result.add(vo);
+            }
+
+            return result;
+        } catch (Exception e) {
+            log.warn("解析教练证书JSON失败: {}", certificatesJson, e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 解析骑手证书JSON为VO列表（统一结构版）
+     * @param certificatesJson 证书JSON字符串
+     * @return 骑手证书VO列表
+     */
+    private List<CertificateVO> parseRiderCertificates(String certificatesJson) {
+        if (StrUtil.isBlank(certificatesJson)) {
+            return new ArrayList<>();
+        }
+
+        try {
+            JSONArray array = JSONUtil.parseArray(certificatesJson);
+            List<CertificateVO> result = new ArrayList<>();
+
+            for (Object obj : array) {
+                JSONObject certObj = (JSONObject) obj;
+                CertificateVO vo = new CertificateVO();
+
+                vo.setCategory(certObj.getInt("category"));
+                vo.setCategoryText(CoachCertificateConstant.getRiderCategoryText(vo.getCategory()));
+
+                // 使用统一的level字段
+                Integer level = certObj.getInt("level");
+                vo.setLevel(level);
+                vo.setLevelText(CoachCertificateConstant.getRiderLevelText(level));
+
+                JSONArray imagesArray = certObj.getJSONArray("images");
+                vo.setImages(imagesArray != null ? imagesArray.toList(String.class) : new ArrayList<>());
+
+                result.add(vo);
+            }
+
+            return result;
+        } catch (Exception e) {
+            log.warn("解析骑手证书JSON失败: {}", certificatesJson, e);
+            return new ArrayList<>();
+        }
     }
 
     /**
@@ -380,37 +475,246 @@ public class HomeService {
     }
 
     /**
-     * 创建订单
+     * 创建订单 - 完整实现
      */
+    @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<OrderCreateVO> createOrder(OrderCreateForm form) {
         try {
-            // TODO: 数据校验（预留位置）
-            // 1. 验证俱乐部编码是否存在
-            // 2. 验证教练编号是否存在
-            // 3. 验证课程编号是否存在
-            // 4. 验证时间段是否可用
-            // 5. 验证金额计算是否正确
+            // 1. 数据校验
+            ResponseDTO<ValidationResult> validationResult = validateOrderCreateForm(form);
+            if (!validationResult.getOk()) {
+                return ResponseDTO.error(UserErrorCode.PARAM_ERROR, validationResult.getMsg());
+            }
 
-            // 生成订单号（格式：yyyyMMddHHmmss + 6位随机数）
+            ValidationResult validation = validationResult.getData();
+            ClubEntity club = validation.getClub();
+            CoachEntity coach = validation.getCoach();
+            ProductEntity product = validation.getProduct();
+
+            // 2. 检查时间段可用性
+            for (BookingTimeVO timeInfo : form.getTimes()) {
+                LocalDate date = LocalDate.parse(timeInfo.getDate());
+
+                for (String timeSlot : timeInfo.getTimeSlots()) {
+                    String[] times = timeSlot.split("-");
+                    LocalTime startTime = LocalTime.parse(times[0]);
+                    LocalTime endTime = LocalTime.parse(times[1]);
+
+                    // 检查教练可用性
+                    ResponseDTO<Boolean> coachAvailable = resourceScheduleService
+                            .checkResourceAvailability(club.getClubId(), 2, coach.getCoachId(),
+                                                     date, startTime, endTime);
+
+                    if (!coachAvailable.getOk() || !Boolean.TRUE.equals(coachAvailable.getData())) {
+                        return ResponseDTO.userErrorParam(
+                                String.format("教练%s在%s %s时间段不可用",
+                                            coach.getActualName(), date, timeSlot));
+                    }
+                }
+            }
+
+            // 3. 生成订单号
             String orderNo = generateOrderNo();
 
-            // 暂不保存到数据库，只模拟返回
-            // 构建响应
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime expireTime = now.plusMinutes(30);
+            // 4. 创建订单记录
+            OrderEntity order = buildOrderEntity(form, validation, orderNo);
+            order.setOrderStatus(1); // 待支付
+            order.setPaymentExpireTime(LocalDateTime.now().plusMinutes(30)); // 30分钟支付期限
+            orderDao.insert(order);
 
-            OrderCreateVO vo = new OrderCreateVO();
-            vo.setOrderNo(orderNo);
-            vo.setStatus(1);
-            vo.setCreateTime(now);
-            vo.setExpireTime(expireTime);
-            vo.setPaymentCountdown(1800L); // 30分钟 = 1800秒
+            // 5. 占用教练时间段
+            LocalDateTime expireTime = LocalDateTime.now().plusMinutes(30);
+            for (BookingTimeVO timeInfo : form.getTimes()) {
+                LocalDate date = LocalDate.parse(timeInfo.getDate());
 
+                for (String timeSlot : timeInfo.getTimeSlots()) {
+                    String[] times = timeSlot.split("-");
+                    LocalTime startTime = LocalTime.parse(times[0]);
+                    LocalTime endTime = LocalTime.parse(times[1]);
+
+                    ResponseDTO<Void> occupyResult = resourceScheduleService.occupyResourceTimeSlot(
+                            orderNo, club.getClubId(), 2, coach.getCoachId(),
+                            date, startTime, endTime, expireTime);
+
+                    if (!occupyResult.getOk()) {
+                        // 如果占用失败，需要回滚之前的操作
+                        throw new RuntimeException("占用教练时间段失败：" + occupyResult.getMsg());
+                    }
+                }
+            }
+
+            // 6. 构建响应
+            OrderCreateVO vo = buildOrderCreateVO(order);
+
+            log.info("订单创建成功，订单号：{}", orderNo);
             return ResponseDTO.ok(vo);
+
         } catch (Exception e) {
             log.error("创建订单失败", e);
-            return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "创建订单失败");
+            return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "创建订单失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 订单数据校验
+     */
+    private ResponseDTO<ValidationResult> validateOrderCreateForm(OrderCreateForm form) {
+        ValidationResult result = new ValidationResult();
+
+        // 1. 校验俱乐部
+        ClubEntity club = clubDao.selectByClubCode(form.getClubCode());
+        if (club == null || club.getIsDelete() || !club.getIsValid()) {
+            return ResponseDTO.userErrorParam("俱乐部不存在");
+        }
+        result.setClub(club);
+
+        // 2. 校验教练
+        CoachEntity coach = coachDao.selectByCoachNo(form.getCoachNo());
+        if (coach == null || Boolean.TRUE.equals(coach.getIsDelete()) || !Boolean.TRUE.equals(coach.getIsValid())) {
+            return ResponseDTO.userErrorParam("教练不存在");
+        }
+        if (!coach.getClubId().equals(club.getClubId())) {
+            return ResponseDTO.userErrorParam("教练不属于该俱乐部");
+        }
+        result.setCoach(coach);
+
+        // 3. 校验课程
+        ProductEntity product = productDao.selectByProductCode(club.getClubId(), form.getCourseCode());
+        if (product == null || product.getIsDelete() || !product.getIsValid()) {
+            return ResponseDTO.userErrorParam("课程不存在");
+        }
+        if (!product.getClubId().equals(club.getClubId())) {
+            return ResponseDTO.userErrorParam("课程不属于该俱乐部");
+        }
+        result.setProduct(product);
+
+        // 4. 校验时间格式
+        for (BookingTimeVO timeInfo : form.getTimes()) {
+            try {
+                LocalDate.parse(timeInfo.getDate());
+                for (String timeSlot : timeInfo.getTimeSlots()) {
+                    if (!timeSlot.matches("\\d{2}:\\d{2}-\\d{2}:\\d{2}")) {
+                        return ResponseDTO.userErrorParam("时间格式错误：" + timeSlot);
+                    }
+                    // 验证时间段的逻辑性
+                    String[] times = timeSlot.split("-");
+                    LocalTime start = LocalTime.parse(times[0]);
+                    LocalTime end = LocalTime.parse(times[1]);
+                    if (!start.isBefore(end)) {
+                        return ResponseDTO.userErrorParam("开始时间必须早于结束时间：" + timeSlot);
+                    }
+                }
+            } catch (Exception e) {
+                return ResponseDTO.userErrorParam("时间格式错误：" + timeInfo.getDate());
+            }
+        }
+
+        // 5. 校验金额计算
+        BigDecimal expectedTotal = form.getCoachFee().add(form.getBaseFee());
+        if (expectedTotal.compareTo(form.getTotalAmount()) != 0) {
+            return ResponseDTO.userErrorParam("金额计算错误");
+        }
+
+        return ResponseDTO.ok(result);
+    }
+
+    /**
+     * 构建订单实体
+     */
+    private OrderEntity buildOrderEntity(OrderCreateForm form, ValidationResult validation, String orderNo) {
+        OrderEntity order = new OrderEntity();
+        order.setOrderNo(orderNo);
+        order.setClubId(validation.getClub().getClubId());
+        order.setMemberId(getCurrentMemberId());
+        order.setOrderType(1); // 课程订单
+        order.setOrderStatus(1); // 待支付
+        order.setTotalAmount(form.getTotalAmount());
+        order.setPaidAmount(BigDecimal.ZERO);
+        order.setPaymentMethod("");
+        order.setRemark(""); // OrderCreateForm中没有remark字段，设为空字符串
+
+        // 设置商品信息（合并后的字段）
+        order.setProductId(validation.getProduct().getProductId());
+        order.setProductName(validation.getProduct().getProductName());
+        order.setProductType(validation.getProduct().getProductType());
+        order.setQuantity(calculateTotalQuantity(form.getTimes()));
+        order.setUnitPrice(calculateUnitPrice(form.getTotalAmount(), order.getQuantity()));
+        order.setCoachId(validation.getCoach().getCoachId());
+        order.setPreferredTimes(JSONUtil.toJsonStr(form.getTimes()));
+
+        order.setCreateBy("member");
+        order.setCreateTime(LocalDateTime.now());
+        return order;
+    }
+
+    /**
+     * 计算总课时数
+     */
+    private Integer calculateTotalQuantity(List<BookingTimeVO> times) {
+        return times.stream()
+                   .mapToInt(timeInfo -> timeInfo.getTimeSlots().size())
+                   .sum();
+    }
+
+    /**
+     * 计算单价
+     */
+    private BigDecimal calculateUnitPrice(BigDecimal totalAmount, Integer quantity) {
+        if (quantity == null || quantity == 0) {
+            return BigDecimal.ZERO;
+        }
+        return totalAmount.divide(BigDecimal.valueOf(quantity), 2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * 构建订单创建响应
+     */
+    private OrderCreateVO buildOrderCreateVO(OrderEntity order) {
+        OrderCreateVO vo = new OrderCreateVO();
+        vo.setOrderNo(order.getOrderNo());
+        vo.setStatus(order.getOrderStatus());
+        vo.setCreateTime(order.getCreateTime());
+        vo.setExpireTime(order.getPaymentExpireTime());
+
+        // 计算支付倒计时
+        if (order.getPaymentExpireTime() != null) {
+            long countdown = Duration.between(LocalDateTime.now(), order.getPaymentExpireTime()).getSeconds();
+            vo.setPaymentCountdown(Math.max(0, countdown));
+        } else {
+            vo.setPaymentCountdown(0L);
+        }
+
+        return vo;
+    }
+
+    /**
+     * 获取当前会员ID（从登录信息中获取）
+     */
+    private Long getCurrentMemberId() {
+        try {
+            return MemberRequestUtil.getRequestMemberId();
+        } catch (Exception e) {
+            log.warn("获取当前会员ID失败，使用默认值", e);
+            return 1L; // 临时默认值
+        }
+    }
+
+    /**
+     * 校验结果内部类
+     */
+    private static class ValidationResult {
+        private ClubEntity club;
+        private CoachEntity coach;
+        private ProductEntity product;
+
+        public ClubEntity getClub() { return club; }
+        public void setClub(ClubEntity club) { this.club = club; }
+
+        public CoachEntity getCoach() { return coach; }
+        public void setCoach(CoachEntity coach) { this.coach = coach; }
+
+        public ProductEntity getProduct() { return product; }
+        public void setProduct(ProductEntity product) { this.product = product; }
     }
 
     /**

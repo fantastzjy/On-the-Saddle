@@ -27,7 +27,7 @@ export const appDefaultConfig = {
   // 菜单展开模式
   flatPattern: false,
   // 标签页
-  pageTagFlag: true,
+  pageTagFlag: false,
   // 标签页样式: default、 antd、chrome
   pageTagStyle: 'chrome',
   // 面包屑
@@ -35,7 +35,7 @@ export const appDefaultConfig = {
   // 页脚
   footerFlag: true,
   // 帮助文档
-  helpDocFlag: true,
+  helpDocFlag: false,
   // 帮助文档默认展开
   helpDocExpandFlag: false,
   // 水印

@@ -185,6 +185,8 @@ const configSectionTitle = computed(() => {
       return '活动配置';
     case 4:
       return '体验课配置';
+    case 5:
+      return '理论课配置';
     default:
       return '商品配置';
   }
@@ -281,6 +283,13 @@ async function loadProductDetail() {
           durationMinutes: product.experienceDetails.durationMinutes,
           durationPeriods: product.experienceDetails.durationPeriods,
           maxStudents: product.experienceDetails.maxStudents
+        };
+      } else if (product.productType === 5 && product.theoryCourseDetails && Object.keys(product.theoryCourseDetails).length > 0) {
+        // 理论课类型：从theoryCourseDetails获取数据
+        dynamicConfig = {
+          theoryCourse_durationPeriods: product.theoryCourseDetails.durationPeriods,
+          theoryCourse_basePrice: product.theoryCourseDetails.basePrice,
+          theoryCourse_maxStudents: product.theoryCourseDetails.maxStudents
         };
       } else {
         // 如果没有详情数据，尝试从旧的dynamicConfig字段获取
@@ -466,6 +475,11 @@ function checkRequiredFields(data) {
     return data.price !== null && data.price !== undefined &&
            data.durationMinutes && 
            data.maxStudents;
+  } else if (formData.productType === 5) {
+    // 理论课类型必填字段检查
+    return data.theoryCourse_durationPeriods !== null && data.theoryCourse_durationPeriods !== undefined &&
+           data.theoryCourse_basePrice !== null && data.theoryCourse_basePrice !== undefined &&
+           data.theoryCourse_maxStudents !== null && data.theoryCourse_maxStudents !== undefined;
   }
   
   return false;
@@ -558,6 +572,13 @@ async function onSubmit() {
         durationMinutes: formData.dynamicConfig.durationMinutes,
         durationPeriods: formData.dynamicConfig.durationPeriods,
         maxStudents: formData.dynamicConfig.maxStudents
+      }),
+
+      // 理论课商品字段 (productType=5)
+      ...(formData.productType === 5 && {
+        theoryCourse_durationPeriods: formData.dynamicConfig.theoryCourse_durationPeriods,
+        theoryCourse_basePrice: formData.dynamicConfig.theoryCourse_basePrice,
+        theoryCourse_maxStudents: formData.dynamicConfig.theoryCourse_maxStudents
       })
     };
 
@@ -623,7 +644,12 @@ function resetForm() {
       price: null,
       maxParticipants: null,
       refundRule: '',
-      detailImages: []
+      detailImages: [],
+
+      // 理论课字段 m_product_theory_course (productType=5)
+      theoryCourse_durationPeriods: null,
+      theoryCourse_basePrice: null,
+      theoryCourse_maxStudents: null
     }
   });
   dynamicFormConfig.value = [];

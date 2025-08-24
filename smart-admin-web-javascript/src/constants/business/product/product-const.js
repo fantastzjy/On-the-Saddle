@@ -23,6 +23,10 @@ export const PRODUCT_TYPE_ENUM = {
   EXPERIENCE: {
     value: 4,
     desc: '体验课'
+  },
+  THEORY_COURSE: {
+    value: 5,
+    desc: '理论课'
   }
 };
 
@@ -167,6 +171,16 @@ export const PRODUCT_DEFAULT_CONFIG = {
   ACTIVITY: {
     NAME_MAX_LENGTH: 5,     // 活动名称最大长度
     MAX_PARTICIPANTS: 1000  // 最大参与人数
+  },
+
+  // 理论课配置
+  THEORY_COURSE: {
+    MIN_PERIODS: 1,       // 最小鞍时
+    MAX_PERIODS: 10.0,      // 最大鞍时
+    MIN_PRICE: 1,           // 最小价格
+    MAX_PRICE: 9999,        // 最大价格
+    MIN_STUDENTS: 1,        // 最小学生数
+    MAX_STUDENTS: 100       // 最大学生数
   }
 };
 

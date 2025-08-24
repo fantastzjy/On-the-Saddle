@@ -1,14 +1,12 @@
-package net.lab1024.sa.admin.module.business.member.controller;
+package net.lab1024.sa.admin.module.openapi.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
-import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppLoginForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberAppInfoVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.MemberAppLoginVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MembershipStatusVO;
 import net.lab1024.sa.admin.module.business.member.service.MemberAppService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
@@ -38,22 +36,10 @@ public class AppMemberController {
         return memberAppService.updateMemberInfo(form);
     }
 
-    @GetMapping("/membership/status")
-    @Operation(summary = "获取会籍状态")
-    public ResponseDTO<MembershipStatusVO> getMembershipStatus() {
-        return memberAppService.getMembershipStatus();
-    }
-
     @GetMapping("/family/info")
     @Operation(summary = "获取家庭组信息")
     public ResponseDTO<FamilyInfoVO> getFamilyInfo() {
         return memberAppService.getFamilyInfo();
     }
 
-    @NoNeedLogin
-    @GetMapping("/check-registration/{unionId}")
-    @Operation(summary = "检查用户注册状态")
-    public ResponseDTO<Boolean> checkRegistration(@PathVariable String unionId) {
-        return memberAppService.checkRegistration(unionId);
-    }
 }

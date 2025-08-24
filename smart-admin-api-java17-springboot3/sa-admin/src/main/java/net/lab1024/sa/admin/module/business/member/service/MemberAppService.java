@@ -1,18 +1,13 @@
 package net.lab1024.sa.admin.module.business.member.service;
 
-import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import net.lab1024.sa.admin.module.business.member.constant.MemberAppConst;
 import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
-import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.RequestMember;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
-import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppLoginForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.*;
 import net.lab1024.sa.admin.util.MemberRequestUtil;
@@ -114,6 +109,31 @@ public class MemberAppService {
 		}
 
 		MemberAppInfoVO infoVO = SmartBeanUtil.copy(member, MemberAppInfoVO.class);
+		
+		// 查询并设置俱乐部名称
+		if (member.getClubId() != null) {
+			try {
+				var club = clubDao.selectById(member.getClubId());
+				if (club != null) {
+					infoVO.setClubName(club.getClubName());
+				}
+			} catch (Exception e) {
+				log.warn("查询俱乐部信息失败: clubId={}", member.getClubId(), e);
+			}
+		}
+
+		// 查询并设置课程级别名称
+		if (StrUtil.isNotBlank(member.getDefaultCourseLevel())) {
+			try {
+				var courseLevelDict = dictService.getDictData("COURSE_LEVEL", member.getDefaultCourseLevel());
+				if (courseLevelDict != null) {
+					infoVO.setDefaultCourseLevelName(courseLevelDict.getDataLabel());
+				}
+			} catch (Exception e) {
+				log.warn("查询课程级别字典失败: courseLevel={}", member.getDefaultCourseLevel(), e);
+			}
+		}
+		
 		return ResponseDTO.ok(infoVO);
 	}
 

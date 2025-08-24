@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.booking.domain.form.BatchBookingForm;
 import net.lab1024.sa.admin.module.business.booking.domain.form.BookingQueryForm;
 import net.lab1024.sa.admin.module.business.booking.domain.form.BookingRescheduleForm;
+import net.lab1024.sa.admin.module.business.booking.domain.form.PackageBookingCreateForm;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingDetailVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingListVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.ConflictCheckResult;
@@ -146,6 +147,12 @@ public class BookingController extends SupportBaseController {
     public ResponseDTO<String> createBooking(@RequestBody Object data) {
         // 手动创建预约的逻辑
         return ResponseDTO.ok("手动创建预约功能待实现");
+    }
+
+    @Operation(summary = "创建课时包预约", description = "基于课时包创建新的预约记录，支持代他人消费")
+    @PostMapping("/package/create")
+    public ResponseDTO<Void> createPackageBooking(@RequestBody @Valid PackageBookingCreateForm createForm) {
+        return bookingService.createPackageBooking(createForm);
     }
 
     @Operation(summary = "更新预约", description = "更新预约信息（暂未实现）")

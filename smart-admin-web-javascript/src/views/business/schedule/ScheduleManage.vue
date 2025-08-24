@@ -101,6 +101,15 @@
               列表视图
             </a-button>
             <a-button 
+              :type="viewType === 'combined' ? 'primary' : 'default'"
+              @click="switchView('combined')"
+            >
+              <template #icon>
+                <AppstoreOutlined />
+              </template>
+              综合视图
+            </a-button>
+            <a-button 
               :type="viewType === 'calendar' ? 'primary' : 'default'"
               @click="switchView('calendar')"
             >
@@ -144,6 +153,41 @@
         </div>
       </a-row>
 
+      <!-- 综合视图 -->
+      <div v-show="viewType === 'combined'">
+        <div class="combined-view-container">
+          <a-spin :spinning="combinedLoading">
+            <div v-if="combinedData.length > 0" class="order-list">
+              <OrderCard
+                v-for="order in combinedData"
+                :key="order.orderId"
+                :order-data="order"
+                @add-booking="handleAddBooking"
+                @view-detail="handleViewOrderDetail"
+                @booking-action="handleBookingAction"
+              />
+            </div>
+            <a-empty v-else description="暂无数据" />
+          </a-spin>
+        </div>
+
+        <div class="smart-query-table-page" v-if="viewType === 'combined'">
+          <a-pagination
+            showSizeChanger
+            showQuickJumper
+            show-less-items
+            :pageSizeOptions="PAGE_SIZE_OPTIONS"
+            :defaultPageSize="combinedQueryForm.pageSize"
+            v-model:current="combinedQueryForm.pageNum"
+            v-model:pageSize="combinedQueryForm.pageSize"
+            :total="combinedTotal"
+            @change="loadCombinedData"
+            @showSizeChange="loadCombinedData"
+            :show-total="(total) => `共${total}条`"
+          />
+        </div>
+      </div>
+
       <!-- 表格视图 -->
       <div v-show="viewType === 'table'">
         <a-table
@@ -177,8 +221,8 @@
             </template>
 
             <template v-if="column.dataIndex === 'lessonStatus'">
-              <a-tag :color="getLessonStatusColor(text)">
-                {{ getLessonStatusDesc(text) }}
+              <a-tag :color="getLessonStatusInfo(text).color">
+                {{ getLessonStatusInfo(text).desc }}
               </a-tag>
             </template>
 
@@ -276,6 +320,13 @@
       :schedule="currentSchedule"
       @ok="onConflictDetectorOk"
     />
+
+    <!-- 课时包预约创建模态框 -->
+    <PackageBookingCreateModal
+      v-model:visible="packageBookingModalVisible"
+      :package-data="currentPackageData"
+      @success="onPackageBookingSuccess"
+    />
     </a-spin>
   </div>
 </template>
@@ -289,15 +340,21 @@ import {
   PlusOutlined,
   TableOutlined,
   CalendarOutlined,
+  AppstoreOutlined,
   DragOutlined
 } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { scheduleApi } from '/@/api/business/schedule/schedule-api';
 import { 
   LESSON_STATUS_ENUM,
+  BOOKING_STATUS_ENUM,
+  ORDER_STATUS_ENUM,
   SCHEDULE_TABLE_COLUMNS, 
   SCHEDULE_SEARCH_FORM,
-  SCHEDULE_VIEW_TYPE_ENUM
+  SCHEDULE_VIEW_TYPE_ENUM,
+  getOrderStatusInfo,
+  getBookingStatusInfo,
+  getLessonStatusInfo
 } from '/@/constants/business/schedule/schedule-const';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
@@ -305,6 +362,8 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
 import CalendarView from './components/CalendarView.vue';
 import DragScheduleModal from './components/DragScheduleModal.vue';
 import ConflictDetectorModal from './components/ConflictDetectorModal.vue';
+import OrderCard from './components/OrderCard.vue';
+import PackageBookingCreateModal from './components/PackageBookingCreateModal.vue';
 import dayjs from 'dayjs';
 
 const router = useRouter();
@@ -334,13 +393,30 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 const coachListLoading = ref(false);
 
 // 视图相关
-const viewType = ref('table'); // table | calendar
+const viewType = ref('combined'); // table | combined | calendar
 const calendarViewType = ref(SCHEDULE_VIEW_TYPE_ENUM.WEEK.value);
+
+// 综合视图相关
+const combinedData = ref([]);
+const combinedLoading = ref(false);
+const combinedTotal = ref(0);
+const combinedQueryForm = reactive({
+  keywords: '',
+  productType: null,
+  orderStatus: null,
+  buyerMemberId: null,
+  consumerMemberId: null, 
+  coachId: null,
+  pageNum: 1,
+  pageSize: 10
+});
 
 // 模态框相关
 const dragScheduleVisible = ref(false);
 const conflictDetectorVisible = ref(false);
+const packageBookingModalVisible = ref(false);
 const currentSchedule = ref(null);
+const currentPackageData = ref(null);
 
 // 加载状态优化
 const loadingStates = reactive({
@@ -359,7 +435,12 @@ const isLoading = computed(() => {
 // ======================== 初始化 ========================
 onMounted(() => {
   loadCoachList();
-  ajaxQuery();
+  // 根据默认视图类型加载相应数据
+  if (viewType.value === 'combined') {
+    loadCombinedData();
+  } else {
+    ajaxQuery();
+  }
 });
 
 // ======================== 缓存工具函数 ========================
@@ -394,10 +475,18 @@ function clearCache() {
 
 // ======================== 查询相关 ========================
 function onSearch() {
-  queryForm.pageNum = 1;
-  // 搜索时清除缓存，确保获取最新数据
-  clearCache();
-  ajaxQuery();
+  if (viewType.value === 'combined') {
+    combinedQueryForm.pageNum = 1;
+    // 将查询表单的条件同步到综合视图查询
+    combinedQueryForm.keywords = queryForm.keywords;
+    combinedQueryForm.coachId = queryForm.coachId;
+    loadCombinedData();
+  } else {
+    queryForm.pageNum = 1;
+    // 搜索时清除缓存，确保获取最新数据
+    clearCache();
+    ajaxQuery();
+  }
 }
 
 function resetQuery() {
@@ -492,6 +581,9 @@ function switchView(type) {
   if (type === 'calendar') {
     // 日历视图需要重新查询当月数据
     ajaxQuery();
+  } else if (type === 'combined') {
+    // 综合视图需要查询订单数据
+    loadCombinedData();
   }
 }
 
@@ -633,13 +725,7 @@ function onConflictDetectorOk() {
 }
 
 // ======================== 辅助方法 ========================
-function getLessonStatusDesc(value) {
-  return Object.values(LESSON_STATUS_ENUM).find(item => item.value === value)?.desc || '-';
-}
-
-function getLessonStatusColor(value) {
-  return Object.values(LESSON_STATUS_ENUM).find(item => item.value === value)?.color || 'default';
-}
+// 使用新的统一状态信息获取函数，移除旧的分散函数
 
 function formatDateTime(dateTime) {
   if (!dateTime) return '-';
@@ -655,11 +741,145 @@ function formatDateTime(dateTime) {
 function filterOption(input, option) {
   return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
 }
+
+// ======================== 综合视图相关方法 ========================
+async function loadCombinedData() {
+  try {
+    combinedLoading.value = true;
+    
+    const params = {
+      ...combinedQueryForm,
+      // 将原有查询条件同步到综合视图查询
+      keywords: queryForm.keywords || combinedQueryForm.keywords,
+      coachId: queryForm.coachId || combinedQueryForm.coachId,
+      createTimeStart: queryForm.dateRange?.[0],
+      createTimeEnd: queryForm.dateRange?.[1]
+    };
+    
+    const response = await scheduleApi.queryCombinedSchedule(params);
+    
+    if (response.code === 0 && response.data) {
+      combinedData.value = response.data.list || [];
+      combinedTotal.value = response.data.total || 0;
+    } else {
+      message.error(response.mesg || '查询失败');
+      combinedData.value = [];
+      combinedTotal.value = 0;
+    }
+  } catch (error) {
+    console.error('加载综合数据失败:', error);
+    message.error('加载数据失败');
+    combinedData.value = [];
+    combinedTotal.value = 0;
+  } finally {
+    combinedLoading.value = false;
+  }
+}
+
+function handleAddBooking(orderData) {
+  currentPackageData.value = orderData;
+  packageBookingModalVisible.value = true;
+}
+
+function handleViewOrderDetail(orderData) {
+  // 跳转到订单详情页面
+  router.push(`/business/order/detail/${orderData.orderId}`);
+}
+
+function handleBookingAction(action, booking, orderData) {
+  switch (action) {
+    case 'view':
+      handleViewBookingDetail(booking);
+      break;
+    case 'confirm':
+      handleConfirmBooking(booking);
+      break;
+    case 'reschedule':
+      handleRescheduleBooking(booking);
+      break;
+    case 'cancel':
+      handleCancelBooking(booking);
+      break;
+    default:
+      console.warn('未知操作:', action);
+  }
+}
+
+function handleViewBookingDetail(booking) {
+  // 跳转到预约详情页面
+  router.push(`/business/booking/detail/${booking.bookingId}`);
+}
+
+async function handleConfirmBooking(booking) {
+  try {
+    Modal.confirm({
+      title: '确认预约',
+      content: '确定要确认这个预约吗？',
+      okText: '确认',
+      cancelText: '取消',
+      onOk: async () => {
+        const response = await bookingApi.confirmBooking(booking.bookingId);
+        if (response.code === 0) {
+          message.success('预约确认成功');
+          loadCombinedData(); // 刷新数据
+        } else {
+          message.error(response.mesg || '确认失败');
+        }
+      }
+    });
+  } catch (error) {
+    console.error('确认预约失败:', error);
+    message.error('操作失败');
+  }
+}
+
+function handleRescheduleBooking(booking) {
+  // 实现预约改期逻辑
+  message.info('预约改期功能开发中');
+}
+
+async function handleCancelBooking(booking) {
+  try {
+    Modal.confirm({
+      title: '取消预约',
+      content: '确定要取消这个预约吗？取消后无法恢复。',
+      okText: '确认取消',
+      cancelText: '保留',
+      okType: 'danger',
+      onOk: async () => {
+        const response = await bookingApi.cancelBooking(booking.bookingId, '用户取消');
+        if (response.code === 0) {
+          message.success('预约取消成功');
+          loadCombinedData(); // 刷新数据
+        } else {
+          message.error(response.mesg || '取消失败');
+        }
+      }
+    });
+  } catch (error) {
+    console.error('取消预约失败:', error);
+    message.error('操作失败');
+  }
+}
+
+function onPackageBookingSuccess() {
+  message.success('预约创建成功');
+  loadCombinedData(); // 刷新综合视图数据
+}
 </script>
 
 <style scoped>
 .schedule-manage {
   padding: 0;
+}
+
+.combined-view-container {
+  padding: 16px 0;
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .ml-16 {

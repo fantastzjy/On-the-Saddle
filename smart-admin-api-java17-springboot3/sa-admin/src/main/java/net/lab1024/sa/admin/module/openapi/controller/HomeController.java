@@ -1,11 +1,11 @@
-package net.lab1024.sa.admin.module.business.member.controller;
+package net.lab1024.sa.admin.module.openapi.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import net.lab1024.sa.admin.module.business.member.domain.form.HomeQueryForm;
-import net.lab1024.sa.admin.module.business.member.domain.form.OrderCreateForm;
+import net.lab1024.sa.admin.module.openapi.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
@@ -13,7 +13,7 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.ClubTypeVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ActivityListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MyHorseListVO;
-import net.lab1024.sa.admin.module.business.member.service.HomeService;
+import net.lab1024.sa.admin.module.openapi.service.HomeService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.web.bind.annotation.*;

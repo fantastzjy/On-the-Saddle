@@ -1,34 +1,28 @@
-package net.lab1024.sa.admin.module.business.member.service;
+package net.lab1024.sa.admin.module.openapi.service;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
 import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.member.constant.MemberAppConst;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
-import net.lab1024.sa.admin.module.business.member.domain.RequestMember;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
-import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppLoginForm;
-import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppUpdateForm;
+import net.lab1024.sa.admin.module.business.member.service.WechatMiniappService;
+import net.lab1024.sa.admin.module.openapi.domain.form.MemberAppLoginForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.*;
-import net.lab1024.sa.admin.util.MemberRequestUtil;
 import net.lab1024.sa.base.module.support.dict.domain.vo.DictDataVO;
 import net.lab1024.sa.base.module.support.dict.service.DictService;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
-import net.lab1024.sa.base.common.util.SmartRequestUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 /**
  * 会员小程序业务服务
@@ -139,41 +133,9 @@ public class AppLoginService {
 			String token = MemberAppConst.MEMBER_TOKEN_PREFIX + StpUtil.getTokenValue();
 
 			// 9. 构建返回结果
-			MemberAppLoginVO loginVO = SmartBeanUtil.copy(member, MemberAppLoginVO.class);
+			MemberAppLoginVO loginVO = new MemberAppLoginVO();
 			loginVO.setToken(token);
-
-			// 如果有更新的头像，返回最新的
-			if (userInfo != null && StrUtil.isNotBlank(userInfo.getAvatarUrl())) {
-				loginVO.setAvatarUrl(userInfo.getAvatarUrl());
-			}
-
-			// 10. 查询并设置俱乐部名称
-			if (member.getClubId() != null) {
-				ClubEntity club = clubDao.selectById(member.getClubId());
-				if (club != null) {
-					loginVO.setClubName(club.getClubName());
-				}
-			}
-
-			// 11. 查询并设置课程级别名称
-			if (StrUtil.isNotBlank(member.getDefaultCourseLevel())) {
-				try {
-					DictDataVO courseLevelDict = dictService.getDictData("COURSE_LEVEL", member.getDefaultCourseLevel());
-					if (courseLevelDict != null) {
-						loginVO.setDefaultCourseLevelName(courseLevelDict.getDataLabel());
-					} else {
-						// 字典数据不存在时的降级处理
-						log.warn("课程级别字典数据不存在: clubId={}, memberId={}, courseLevel={}", 
-							member.getClubId(), member.getMemberId(), member.getDefaultCourseLevel());
-						loginVO.setDefaultCourseLevelName(member.getDefaultCourseLevel()); // 使用原值作为显示名称
-					}
-				} catch (Exception e) {
-					// 查询字典失败时的降级处理
-					log.error("查询课程级别字典失败: clubId={}, memberId={}, courseLevel={}", 
-						member.getClubId(), member.getMemberId(), member.getDefaultCourseLevel(), e);
-					loginVO.setDefaultCourseLevelName(member.getDefaultCourseLevel()); // 使用原值作为显示名称
-				}
-			}
+			loginVO.setMemberNo(member.getMemberNo());
 
 			log.info("会员微信登录成功，memberId: {}, unionId: {}, firstLogin: {} loginVO：{}",
 					member.getMemberId(), unionId, firstLogin, JSON.toJSONString(loginVO));

@@ -34,7 +34,7 @@ public class ProductUpdateForm {
     @Schema(description = "商品编码")
     private String productCode;
 
-    @Schema(description = "商品类型: 1-课程 2-课时包 3-活动 4-体验课")
+    @Schema(description = "商品类型: 1-课程 2-课时包 3-活动 4-体验课 5-理论课")
     @NotNull(message = "商品类型不能为空")
     private Integer productType;
 
@@ -115,6 +115,19 @@ public class ProductUpdateForm {
 
     @Schema(description = "详情图片地址列表JSON格式（最多9张）")
     private String detailImages;
+
+    // ========================================
+    // 理论课商品字段 m_product_theory_course (productType=5时有效)
+    // ========================================
+    
+    @Schema(description = "理论课-鞍时")
+    private BigDecimal theoryCourse_durationPeriods;
+
+    @Schema(description = "理论课-基础单价")
+    private BigDecimal theoryCourse_basePrice;
+
+    @Schema(description = "理论课-最大人数")
+    private Integer theoryCourse_maxStudents;
 
     // ========================================
     // 动态配置字段（兼容旧版本）

@@ -1,4 +1,4 @@
-package net.lab1024.sa.admin.module.business.member.domain.form;
+package net.lab1024.sa.admin.module.openapi.domain.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -67,7 +67,7 @@ public class MemberUpdateForm {
     private LocalDate membershipExpireDate;
 
     @Schema(description = "身份证号")
-    @Pattern(regexp = "^$|^[1-9]\\d{5}(19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])\\d{3}[0-9Xx]$", 
+    @Pattern(regexp = "^$|^[1-9]\\d{5}(19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])\\d{3}[0-9Xx]$",
             message = "身份证号格式不正确")
     private String idCardNo;
 

@@ -5,11 +5,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ConflictCheckForm;
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleQueryForm;
+import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleCombinedQueryForm;
 import net.lab1024.sa.admin.module.business.schedule.domain.form.ScheduleTimeUpdateForm;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.CoachVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ConflictCheckVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleDetailVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleListVO;
+import net.lab1024.sa.admin.module.business.schedule.domain.vo.ScheduleCombinedVO;
 import net.lab1024.sa.admin.module.business.schedule.service.ScheduleService;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -38,6 +40,12 @@ public class ScheduleController {
     @PostMapping("/query")
     public ResponseDTO<PageResult<ScheduleListVO>> queryScheduleList(@RequestBody @Valid ScheduleQueryForm queryForm) {
         return scheduleService.queryScheduleList(queryForm);
+    }
+
+    @Operation(summary = "课程表综合查询", description = "查询订单+预约+课程的综合数据，支持分层展示")
+    @PostMapping("/combined/query")
+    public ResponseDTO<PageResult<ScheduleCombinedVO>> queryCombinedSchedule(@RequestBody @Valid ScheduleCombinedQueryForm queryForm) {
+        return scheduleService.queryCombinedSchedule(queryForm);
     }
 
     @Operation(summary = "获取教练列表")

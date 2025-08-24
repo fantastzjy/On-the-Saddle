@@ -24,7 +24,7 @@ public class DynamicFormConfigService {
     /**
      * 根据商品类型获取表单配置
      * 
-     * @param productType 商品类型 1-课程 2-课时包 3-活动 4-体验课
+     * @param productType 商品类型 1-课程 2-课时包 3-活动 4-体验课 5-理论课
      * @return 表单配置信息
      */
     public ResponseDTO<Map<String, Object>> getFormConfig(Integer productType) {
@@ -43,6 +43,9 @@ public class DynamicFormConfigService {
                     break;
                 case 4: // 体验课
                     formConfig = getExperienceFormConfig();
+                    break;
+                case 5: // 理论课
+                    formConfig = getTheoryCourseFormConfig();
                     break;
                 default:
                     return ResponseDTO.userErrorParam("不支持的商品类型");
@@ -281,6 +284,31 @@ public class DynamicFormConfigService {
     }
 
     /**
+     * 获取理论课表单配置
+     */
+    private Map<String, Object> getTheoryCourseFormConfig() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("title", "理论课配置");
+        config.put("type", "theoryCourse");
+        
+        List<Map<String, Object>> fields = new ArrayList<>();
+        
+        // 鞍时配置
+        fields.add(createNumberField("theoryCourse_durationPeriods", "鞍时", true, 0.5, 10.0, 1.0));
+        
+        // 基础单价配置
+        fields.add(createNumberField("theoryCourse_basePrice", "基础单价", true, 1, 9999, 100));
+        
+        // 人数配置
+        fields.add(createNumberField("theoryCourse_maxStudents", "最大人数", true, 1, 100, 10));
+        
+        config.put("fields", fields);
+        config.put("rules", getTheoryCourseValidationRules());
+        
+        return config;
+    }
+
+    /**
      * 创建文本输入字段
      */
     private Map<String, Object> createTextField(String key, String label, boolean required, String placeholder) {
@@ -494,6 +522,17 @@ public class DynamicFormConfigService {
         rules.put("price", List.of("required", "number", "min:0"));
         rules.put("durationMinutes", List.of("required", "number", "min:30", "max:300"));
         rules.put("maxStudents", List.of("required", "number", "min:1", "max:10"));
+        return rules;
+    }
+
+    /**
+     * 获取理论课验证规则
+     */
+    private Map<String, Object> getTheoryCourseValidationRules() {
+        Map<String, Object> rules = new HashMap<>();
+        rules.put("theoryCourse_durationPeriods", List.of("required", "number", "min:0.5", "max:10"));
+        rules.put("theoryCourse_basePrice", List.of("required", "number", "min:1", "max:9999"));
+        rules.put("theoryCourse_maxStudents", List.of("required", "number", "min:1", "max:100"));
         return rules;
     }
 
