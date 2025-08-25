@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.openapi.domain.form.MemberAppLoginForm;
 import net.lab1024.sa.admin.module.openapi.domain.vo.AppLoginVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.MemberAppLoginVO;
 import net.lab1024.sa.admin.module.openapi.service.AppLoginService;
 import net.lab1024.sa.admin.module.business.coach.domain.RequestCoach;
 import net.lab1024.sa.admin.module.business.member.domain.RequestMember;
@@ -57,7 +56,7 @@ public class AppLoginController {
                 RequestCoach requestCoach = (RequestCoach) requestUser;
                 log.info("教练退出登录, coachId: {}", requestCoach.getCoachId());
             }
-            
+
             StpUtil.logout();
             return ResponseDTO.ok("退出登录成功");
         } catch (Exception e) {

@@ -12,9 +12,11 @@ import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
+import net.lab1024.sa.admin.module.business.coach.domain.RequestCoach;
 import net.lab1024.sa.admin.module.business.coach.domain.vo.CertificateVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.CoachSimpleProfileVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubTypeVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.UnavailableTimeSlotVO;
@@ -48,6 +50,7 @@ import net.lab1024.sa.base.common.code.SystemErrorCode;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
+import net.lab1024.sa.base.common.util.SmartRequestUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -983,5 +986,28 @@ public class HomeService {
         }
 
         return medicalInfo;
+    }
+
+    /**
+     * 获取教练个人简要信息
+     */
+    public ResponseDTO<CoachSimpleProfileVO> getCoachProfile(String coachNo) {
+        if (StrUtil.isBlank(coachNo)) {
+            return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "教练编号不能为空");
+        }
+
+        // 根据教练编号查询教练信息
+        CoachEntity coach = coachDao.selectByCoachNo(coachNo);
+        if (coach == null || Boolean.TRUE.equals(coach.getIsDelete()) || !Boolean.TRUE.equals(coach.getIsValid())) {
+            return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "教练信息不存在");
+        }
+
+        // 构建返回结果
+        CoachSimpleProfileVO profileVO = new CoachSimpleProfileVO();
+        profileVO.setAvatarUrl(coach.getAvatarUrl());
+        profileVO.setActualName(coach.getActualName());
+        profileVO.setGender(coach.getGender());
+
+        return ResponseDTO.ok(profileVO);
     }
 }

@@ -5,9 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import net.lab1024.sa.admin.module.business.member.domain.form.HomeQueryForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.CoachInfoQueryForm;
 import net.lab1024.sa.admin.module.openapi.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.CoachSimpleProfileVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubTypeVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
@@ -102,5 +104,15 @@ public class HomeController {
     @Operation(summary = "获取我的马匹列表")
     public ResponseDTO<List<MyHorseListVO>> getMyHorseList() {
         return homeService.getMyHorseList();
+    }
+
+    /**
+     * 获取教练个人简要信息
+     */
+    @PostMapping("/coach/info")
+    @NoNeedLogin
+    @Operation(summary = "获取教练个人简要信息")
+    public ResponseDTO<CoachSimpleProfileVO> getCoachInfo(@RequestBody @Valid CoachInfoQueryForm form) {
+        return homeService.getCoachProfile(form.getCoachNo());
     }
 }
