@@ -99,7 +99,6 @@ public class HomeController {
      * 获取我的马匹列表
      */
     @PostMapping("/horse/my/list")
-    @NoNeedLogin
     @Operation(summary = "获取我的马匹列表")
     public ResponseDTO<List<MyHorseListVO>> getMyHorseList() {
         return homeService.getMyHorseList();

@@ -52,6 +52,14 @@
               新建
             </a-button>
           </a-form-item>
+          <a-form-item class="smart-query-form-item">
+            <a-button v-privilege="'club:horse:report'" @click="showHealthReport">
+              <template #icon>
+                <FilePdfOutlined />
+              </template>
+              月度健康报告
+            </a-button>
+          </a-form-item>
         </a-row>
       </a-form>
 
@@ -107,17 +115,26 @@
     </div>
 
     <HorseFormModal ref="formModalRef" @reloadList="queryData" />
+    <ReportModal
+      v-model:open="reportModalVisible"
+      :report-data="reportData"
+      :loading="reportLoading"
+      :report-params="reportParams"
+      @refresh="generateHealthReport"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { message, Modal } from 'ant-design-vue';
-import { SearchOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue';
+import { SearchOutlined, PlusOutlined, ReloadOutlined, FilePdfOutlined } from '@ant-design/icons-vue';
 import { horseApi } from '/@/api/business/horse/horse-api';
 import { clubApi } from '/@/api/business/club/club-api';
+import { reportApi } from '/@/api/report';
 import { smartSentry } from '/@/lib/smart-sentry';
 import HorseFormModal from './components/horse-form-modal.vue';
+import ReportModal from '/@/components/business/report/ReportModal.vue';
 import dayjs from 'dayjs';
 import { useRouter } from 'vue-router';
 
@@ -200,7 +217,7 @@ const columns = [
 
 const queryForm = reactive({
   keywords: '',
-  clubId: undefined,
+  clubId: 1, // 默认选择示例马术俱乐部
   horseType: undefined,
   pageNum: 1,
   pageSize: 10,
@@ -212,6 +229,12 @@ const total = ref(0);
 
 const formModalRef = ref();
 const clubList = ref([]);
+
+// 报告相关状态
+const reportModalVisible = ref(false);
+const reportData = ref(null);
+const reportLoading = ref(false);
+const reportParams = ref({});
 
 async function queryData() {
   try {
@@ -232,7 +255,7 @@ async function queryData() {
 function resetQuery() {
   Object.assign(queryForm, {
     keywords: '',
-    clubId: undefined,
+    clubId: 1, // 默认保持示例马术俱乐部
     horseType: undefined,
     pageNum: 1,
     pageSize: 10,
@@ -276,6 +299,52 @@ async function queryClubList() {
     clubList.value = res.data || [];
   } catch (error) {
     smartSentry.captureError(error);
+  }
+}
+
+// 显示月度健康报告
+function showHealthReport() {
+  // 移除俱乐部选择检查，直接使用默认俱乐部ID
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
+
+  reportParams.value = {
+    reportType: 1, // HORSE_HEALTH_MONTHLY
+    params: {
+      year: year,
+      month: month,
+      clubId: queryForm.clubId || 1 // 使用当前选择的俱乐部ID，默认为1
+    }
+  };
+
+  reportModalVisible.value = true;
+  generateHealthReport();
+}
+
+// 生成健康报告
+async function generateHealthReport() {
+  try {
+    reportLoading.value = true;
+    reportData.value = null;
+
+    const res = await reportApi.generateReport({
+      reportType: reportParams.value.reportType,
+      params: reportParams.value.params
+    });
+
+    if (res.ok && res.data) {
+      reportData.value = res.data;
+      message.success('报告生成成功');
+    } else {
+      message.error(res.msg || '报告生成失败');
+    }
+  } catch (error) {
+    console.error('生成报告失败:', error);
+    smartSentry.captureError(error);
+    message.error('生成报告失败');
+  } finally {
+    reportLoading.value = false;
   }
 }
 

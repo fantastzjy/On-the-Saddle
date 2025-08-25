@@ -12,6 +12,7 @@ import net.lab1024.sa.admin.module.business.member.service.MemberAppService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 会员小程序API控制器
@@ -24,9 +25,9 @@ public class AppMemberController {
     @Resource
     private MemberAppService memberAppService;
 
-    @GetMapping("/info")
+    @PostMapping("/info")
     @Operation(summary = "获取会员个人信息")
-    public ResponseDTO<MemberAppInfoVO> getMemberInfo() {
+    public ResponseDTO<MemberAppInfoVO> getMemberInfo(@RequestBody(required = false) Object emptyParam) {
         return memberAppService.getMemberInfo();
     }
 
@@ -36,10 +37,16 @@ public class AppMemberController {
         return memberAppService.updateMemberInfo(form);
     }
 
-    @GetMapping("/family/info")
+    @PostMapping("/family/info")
     @Operation(summary = "获取家庭组信息")
-    public ResponseDTO<FamilyInfoVO> getFamilyInfo() {
+    public ResponseDTO<FamilyInfoVO> getFamilyInfo(@RequestBody(required = false) Object emptyParam) {
         return memberAppService.getFamilyInfo();
+    }
+
+    @PostMapping("/avatar/upload")
+    @Operation(summary = "上传并更新头像")
+    public ResponseDTO<String> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        return memberAppService.uploadAvatar(file);
     }
 
 }

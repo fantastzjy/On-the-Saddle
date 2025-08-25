@@ -239,19 +239,10 @@ import { coachApi } from '/@/api/business/coach/coach-api';
 import { smartSentry } from '/@/lib/smart-sentry';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
+import { BOOKING_STATUS_ENUM } from '/@/constants/business/schedule/schedule-const';
 import TableOperator from '/@/components/support/table-operator/index.vue';
 import BookingRescheduleModal from './components/BookingRescheduleModal.vue';
 import dayjs from 'dayjs';
-
-// 常量定义
-const BOOKING_STATUS_ENUM = {
-  PENDING: { value: 1, desc: '待确认' },
-  CONFIRMED: { value: 2, desc: '已确认' },
-  IN_PROGRESS: { value: 3, desc: '进行中' },
-  COMPLETED: { value: 4, desc: '已完成' },
-  CANCELLED: { value: 5, desc: '已取消' },
-  NO_SHOW: { value: 6, desc: '未到场' }
-};
 
 const router = useRouter();
 

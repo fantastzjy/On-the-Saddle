@@ -12,12 +12,20 @@ import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppUpdateFo
 import net.lab1024.sa.admin.module.business.member.domain.vo.*;
 import net.lab1024.sa.admin.util.MemberRequestUtil;
 import net.lab1024.sa.base.module.support.dict.service.DictService;
+import net.lab1024.sa.base.module.support.file.constant.FileFolderTypeEnum;
+import net.lab1024.sa.base.module.support.file.dao.FileDao;
+import net.lab1024.sa.base.module.support.file.domain.entity.FileEntity;
+import net.lab1024.sa.base.module.support.file.domain.vo.FileUploadVO;
+import net.lab1024.sa.base.module.support.file.service.FileService;
+import net.lab1024.sa.base.module.support.file.service.IFileStorageService;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartRequestUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -47,6 +55,15 @@ public class MemberAppService {
 
 	@Resource
 	private FamilyGroupService familyGroupService;
+
+	@Resource
+	private FileService fileService;
+
+	@Resource
+	private IFileStorageService fileStorageService;
+
+	@Resource
+	private FileDao fileDao;
 
 	@Resource
 	private WechatMiniappService wechatMiniappService;
@@ -109,7 +126,7 @@ public class MemberAppService {
 		}
 
 		MemberAppInfoVO infoVO = SmartBeanUtil.copy(member, MemberAppInfoVO.class);
-		
+
 		// 查询并设置俱乐部名称
 		if (member.getClubId() != null) {
 			try {
@@ -133,7 +150,7 @@ public class MemberAppService {
 				log.warn("查询课程级别字典失败: courseLevel={}", member.getDefaultCourseLevel(), e);
 			}
 		}
-		
+
 		return ResponseDTO.ok(infoVO);
 	}
 
@@ -229,6 +246,104 @@ public class MemberAppService {
 
 		// 调用现有的家庭组服务获取信息
 		return familyGroupService.getFamilyInfoByMemberId(memberId);
+	}
+
+	/**
+	 * 上传并更新头像
+	 */
+	@Transactional(rollbackFor = Exception.class)
+	public ResponseDTO<String> uploadAvatar(MultipartFile file) {
+		Long memberId = MemberRequestUtil.getRequestMemberId();
+		if (memberId == null) {
+			return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID);
+		}
+
+		// 检查会员是否存在
+		MemberEntity member = memberDao.selectById(memberId);
+		if (member == null) {
+			return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST);
+		}
+
+		// 保存旧头像URL用于清理
+		String oldAvatarUrl = member.getAvatarUrl();
+		String oldFileKey = extractFileKeyFromUrl(oldAvatarUrl);
+
+		try {
+			// 创建RequestMember对象用于文件上传
+			RequestMember requestMember = new RequestMember();
+			requestMember.setMemberId(memberId);
+			requestMember.setActualName(member.getActualName());
+
+			// 调用文件服务上传头像
+			ResponseDTO<FileUploadVO> uploadResponse = fileService.fileUpload(file, FileFolderTypeEnum.COMMON.getValue(), requestMember);
+			if (!uploadResponse.getOk()) {
+				return ResponseDTO.userErrorParam(uploadResponse.getMsg());
+			}
+
+			FileUploadVO uploadVO = uploadResponse.getData();
+			String newAvatarUrl = uploadVO.getFileUrl();
+
+			// 更新会员头像URL
+			MemberEntity updateEntity = new MemberEntity();
+			updateEntity.setMemberId(memberId);
+			updateEntity.setAvatarUrl(newAvatarUrl);
+			updateEntity.setUpdateTime(LocalDateTime.now());
+
+			memberDao.updateById(updateEntity);
+
+			// 清理旧头像文件（如果存在）
+			if (StringUtils.isNotBlank(oldFileKey)) {
+				try {
+					// 删除物理文件
+					fileStorageService.delete(oldFileKey);
+
+					// 删除文件记录
+					deleteFileRecord(oldFileKey);
+
+					log.info("成功清理旧头像文件, memberId: {}, oldFileKey: {}", memberId, oldFileKey);
+				} catch (Exception e) {
+					// 清理失败不影响头像更新成功
+					log.warn("清理旧头像文件失败, memberId: {}, oldFileKey: {}", memberId, oldFileKey, e);
+				}
+			}
+
+			log.info("会员头像上传成功, memberId: {}, avatarUrl: {}", memberId, newAvatarUrl);
+			return ResponseDTO.ok(newAvatarUrl);
+
+		} catch (Exception e) {
+			log.error("会员头像上传失败, memberId: {}", memberId, e);
+			return ResponseDTO.userErrorParam("头像上传失败，请重试");
+		}
+	}
+
+	/**
+	 * 从avatarUrl中提取fileKey的工具方法
+	 */
+	private String extractFileKeyFromUrl(String avatarUrl) {
+		if (StringUtils.isBlank(avatarUrl)) {
+			return null;
+		}
+
+		String uploadMapping = "/upload/";
+		int uploadIndex = avatarUrl.indexOf(uploadMapping);
+		if (uploadIndex != -1) {
+			return avatarUrl.substring(uploadIndex + uploadMapping.length());
+		}
+
+		return null;
+	}
+
+	/**
+	 * 删除文件记录的方法
+	 */
+	private void deleteFileRecord(String fileKey) {
+		LambdaQueryWrapper<FileEntity> queryWrapper = new LambdaQueryWrapper<>();
+		queryWrapper.eq(FileEntity::getFileKey, fileKey);
+
+		FileEntity fileEntity = fileDao.selectOne(queryWrapper);
+		if (fileEntity != null) {
+			fileDao.deleteById(fileEntity.getFileId());
+		}
 	}
 
 	/**

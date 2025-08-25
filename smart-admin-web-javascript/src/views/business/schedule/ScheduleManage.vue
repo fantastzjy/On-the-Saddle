@@ -92,15 +92,6 @@
         <div class="smart-table-operate-block">
           <a-button-group>
             <a-button 
-              :type="viewType === 'table' ? 'primary' : 'default'"
-              @click="switchView('table')"
-            >
-              <template #icon>
-                <TableOutlined />
-              </template>
-              列表视图
-            </a-button>
-            <a-button 
               :type="viewType === 'combined' ? 'primary' : 'default'"
               @click="switchView('combined')"
             >
@@ -144,13 +135,6 @@
           </a-button>
         </div>
 
-        <div class="smart-table-setting-block" v-if="viewType === 'table'">
-          <TableOperator 
-            v-model="columns" 
-            :tableId="TABLE_ID_CONST.BUSINESS.SCHEDULE.SCHEDULE" 
-            :refresh="ajaxQuery" 
-          />
-        </div>
       </a-row>
 
       <!-- 综合视图 -->
@@ -183,111 +167,6 @@
             :total="combinedTotal"
             @change="loadCombinedData"
             @showSizeChange="loadCombinedData"
-            :show-total="(total) => `共${total}条`"
-          />
-        </div>
-      </div>
-
-      <!-- 表格视图 -->
-      <div v-show="viewType === 'table'">
-        <a-table
-          :scroll="{ x: 1500 }"
-          size="small"
-          :dataSource="tableData"
-          :columns="columns"
-          rowKey="scheduleId"
-          :pagination="false"
-          :loading="tableLoading"
-          :row-selection="{ selectedRowKeys: selectedRowKeys, onChange: onSelectChange }"
-          bordered
-        >
-          <template #bodyCell="{ column, record, text }">
-            <template v-if="column.dataIndex === 'scheduleNo'">
-              <a-button 
-                type="link" 
-                @click="detail(record.scheduleId)" 
-                :disabled="!$privilege('business:schedule:detail')"
-              >
-                {{ record.scheduleNo }}
-              </a-button>
-            </template>
-
-            <template v-if="column.dataIndex === 'startTime'">
-              {{ formatDateTime(text) }}
-            </template>
-
-            <template v-if="column.dataIndex === 'duration'">
-              {{ text }}分钟
-            </template>
-
-            <template v-if="column.dataIndex === 'lessonStatus'">
-              <a-tag :color="getLessonStatusInfo(text).color">
-                {{ getLessonStatusInfo(text).desc }}
-              </a-tag>
-            </template>
-
-            <template v-if="column.dataIndex === 'action'">
-              <div class="smart-table-operate">
-                <a-button 
-                  @click="detail(record.scheduleId)" 
-                  v-privilege="'business:schedule:detail'" 
-                  size="small" 
-                  type="link"
-                >
-                  详情
-                </a-button>
-                <a-button 
-                  @click="edit(record)" 
-                  v-privilege="'business:schedule:update'" 
-                  size="small" 
-                  type="link"
-                >
-                  编辑
-                </a-button>
-                <a-button 
-                  @click="checkConflict(record)" 
-                  v-privilege="'business:schedule:conflict'" 
-                  size="small" 
-                  type="link"
-                >
-                  冲突检测
-                </a-button>
-                <a-button 
-                  @click="cancelLesson(record)" 
-                  v-privilege="'business:schedule:cancel'" 
-                  size="small" 
-                  type="link"
-                  v-if="record.lessonStatus === LESSON_STATUS_ENUM.PENDING.value"
-                  danger
-                >
-                  取消课程
-                </a-button>
-                <a-button 
-                  @click="remove(record.scheduleId)" 
-                  v-privilege="'business:schedule:delete'" 
-                  size="small" 
-                  type="link" 
-                  danger
-                >
-                  删除
-                </a-button>
-              </div>
-            </template>
-          </template>
-        </a-table>
-
-        <div class="smart-query-table-page">
-          <a-pagination
-            showSizeChanger
-            showQuickJumper
-            show-less-items
-            :pageSizeOptions="PAGE_SIZE_OPTIONS"
-            :defaultPageSize="queryForm.pageSize"
-            v-model:current="queryForm.pageNum"
-            v-model:pageSize="queryForm.pageSize"
-            :total="total"
-            @change="ajaxQuery"
-            @showSizeChange="ajaxQuery"
             :show-total="(total) => `共${total}条`"
           />
         </div>
@@ -338,7 +217,6 @@ import {
   SearchOutlined, 
   ReloadOutlined, 
   PlusOutlined,
-  TableOutlined,
   CalendarOutlined,
   AppstoreOutlined,
   DragOutlined
@@ -349,7 +227,6 @@ import {
   LESSON_STATUS_ENUM,
   BOOKING_STATUS_ENUM,
   ORDER_STATUS_ENUM,
-  SCHEDULE_TABLE_COLUMNS, 
   SCHEDULE_SEARCH_FORM,
   SCHEDULE_VIEW_TYPE_ENUM,
   getOrderStatusInfo,
@@ -357,8 +234,6 @@ import {
   getLessonStatusInfo
 } from '/@/constants/business/schedule/schedule-const';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
-import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
-import TableOperator from '/@/components/support/table-operator/index.vue';
 import CalendarView from './components/CalendarView.vue';
 import DragScheduleModal from './components/DragScheduleModal.vue';
 import ConflictDetectorModal from './components/ConflictDetectorModal.vue';
@@ -382,8 +257,6 @@ const queryForm = reactive({ ...SCHEDULE_SEARCH_FORM, pageNum: 1, pageSize: 10 }
 const tableLoading = ref(false);
 const tableData = ref([]);
 const total = ref(0);
-const columns = ref([...SCHEDULE_TABLE_COLUMNS]);
-const selectedRowKeys = ref([]);
 const coachList = ref([]);
 
 // 缓存相关
@@ -393,7 +266,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 const coachListLoading = ref(false);
 
 // 视图相关
-const viewType = ref('combined'); // table | combined | calendar
+const viewType = ref('combined'); // combined | calendar
 const calendarViewType = ref(SCHEDULE_VIEW_TYPE_ENUM.WEEK.value);
 
 // 综合视图相关
@@ -482,8 +355,8 @@ function onSearch() {
     combinedQueryForm.coachId = queryForm.coachId;
     loadCombinedData();
   } else {
+    // 日历视图也需要查询数据
     queryForm.pageNum = 1;
-    // 搜索时清除缓存，确保获取最新数据
     clearCache();
     ajaxQuery();
   }
@@ -491,8 +364,24 @@ function onSearch() {
 
 function resetQuery() {
   Object.assign(queryForm, { ...SCHEDULE_SEARCH_FORM, pageNum: 1, pageSize: queryForm.pageSize });
-  clearCache();
-  ajaxQuery();
+  if (viewType.value === 'combined') {
+    // 重置综合视图查询
+    Object.assign(combinedQueryForm, {
+      keywords: '',
+      productType: null,
+      orderStatus: null,
+      buyerMemberId: null,
+      consumerMemberId: null, 
+      coachId: null,
+      pageNum: 1,
+      pageSize: 10
+    });
+    loadCombinedData();
+  } else {
+    // 重置日历视图查询
+    clearCache();
+    ajaxQuery();
+  }
 }
 
 async function ajaxQuery(useCache = true) {
@@ -568,11 +457,6 @@ async function loadCoachList() {
     loadingStates.coachList = false;
     coachListLoading.value = false;
   }
-}
-
-// ======================== 表格操作 ========================
-function onSelectChange(newSelectedRowKeys) {
-  selectedRowKeys.value = newSelectedRowKeys;
 }
 
 // ======================== 视图切换 ========================

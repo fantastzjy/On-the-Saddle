@@ -78,38 +78,6 @@ export const LESSON_STATUS_ENUM = {
   }
 };
 
-// ==================== 数据兼容性映射函数 ====================
-/**
- * 预约状态兼容性映射（旧状态 → 新状态）
- * @param {number} oldStatus 旧状态值
- * @returns {number} 新状态值
- */
-export const mapOldBookingStatus = (oldStatus) => {
-  const mapping = {
-    1: 1, // 待确认 → 已预约
-    2: 1, // 已确认 → 已预约  
-    3: 1, // 进行中 → 已预约
-    4: 2, // 已完成 → 已核销
-    5: 3  // 已取消 → 已取消
-  };
-  return mapping[oldStatus] || oldStatus;
-};
-
-/**
- * 课程状态兼容性映射（旧状态 → 新状态）
- * @param {number} oldStatus 旧状态值
- * @returns {number} 新状态值
- */
-export const mapOldLessonStatus = (oldStatus) => {
-  const mapping = {
-    1: 1, // 待上课 → 待上课
-    2: 1, // 进行中 → 待上课
-    3: 2, // 已完成 → 已上课
-    4: 3  // 已取消 → 已取消
-  };
-  return mapping[oldStatus] || oldStatus;
-};
-
 /**
  * 根据状态值获取订单状态信息
  * @param {number} status 状态值
@@ -126,9 +94,8 @@ export const getOrderStatusInfo = (status) => {
  * @returns {object} 状态信息对象
  */
 export const getBookingStatusInfo = (status) => {
-  const mappedStatus = mapOldBookingStatus(status);
-  return Object.values(BOOKING_STATUS_ENUM).find(item => item.value === mappedStatus) || 
-    { value: mappedStatus, desc: '未知状态', color: 'default' };
+  return Object.values(BOOKING_STATUS_ENUM).find(item => item.value === status) || 
+    { value: status, desc: '未知状态', color: 'default' };
 };
 
 /**
@@ -137,9 +104,8 @@ export const getBookingStatusInfo = (status) => {
  * @returns {object} 状态信息对象
  */
 export const getLessonStatusInfo = (status) => {
-  const mappedStatus = mapOldLessonStatus(status);
-  return Object.values(LESSON_STATUS_ENUM).find(item => item.value === mappedStatus) || 
-    { value: mappedStatus, desc: '未知状态', color: 'default' };
+  return Object.values(LESSON_STATUS_ENUM).find(item => item.value === status) || 
+    { value: status, desc: '未知状态', color: 'default' };
 };
 
 // ==================== 教练可用状态 ====================

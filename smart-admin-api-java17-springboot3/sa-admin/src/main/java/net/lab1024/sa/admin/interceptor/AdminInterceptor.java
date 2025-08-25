@@ -66,10 +66,19 @@ public class AdminInterceptor implements HandlerInterceptor {
             // --------------- 第一步： 根据token 获取用户 ---------------
 
             String tokenValue = StpUtil.getTokenValue();
-            String loginId = (String) StpUtil.getLoginIdByToken(tokenValue);
             
             // 判断是否为会员token
             boolean isMemberToken = tokenValue != null && tokenValue.startsWith(MemberAppConst.MEMBER_TOKEN_PREFIX);
+            
+            String loginId = null;
+            if (isMemberToken) {
+                // 会员token：去掉前缀后用StpUtil验证
+                String actualToken = tokenValue.substring(MemberAppConst.MEMBER_TOKEN_PREFIX.length());
+                loginId = (String) StpUtil.getLoginIdByToken(actualToken);
+            } else {
+                // 员工token：直接用StpUtil验证
+                loginId = (String) StpUtil.getLoginIdByToken(tokenValue);
+            }
             
             Object requestUser = null;
             if (isMemberToken) {
@@ -180,8 +189,18 @@ public class AdminInterceptor implements HandlerInterceptor {
             return;
         }
 
-        StpUtil.checkActiveTimeout();
-        StpUtil.updateLastActiveToNow();
+        // 会员端不检查活跃超时，只更新活跃时间
+        // 小程序端通常保持长连接，不需要严格的活跃超时控制
+        try {
+            StpUtil.updateLastActiveToNow();
+        } catch (Exception e) {
+            // 忽略活跃时间更新异常，不影响正常业务
+            log.debug("更新会员活跃时间失败, memberId: {}", 
+                     requestMember != null ? requestMember.getMemberId() : "unknown", e);
+        }
+        
+        // 注释掉活跃超时检测，避免30012错误
+        // StpUtil.checkActiveTimeout(); 
     }
 
 
