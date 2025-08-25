@@ -20,6 +20,7 @@ import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
 import net.lab1024.sa.admin.module.business.order.domain.entity.PackageBalanceEntity;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
+import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
 import net.lab1024.sa.admin.module.business.horse.dao.HorseDao;
 import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
@@ -242,7 +243,7 @@ public class BookingService {
 						}
 						bookingDetailVO.setCoachNo(coach.getCoachNo());
 						bookingDetailVO.setCoachAvatar(coach.getAvatarUrl());
-						bookingDetailVO.setCoachLevel(coach.getCoachLevel());
+						bookingDetailVO.setCoachLevel(CoachCertificateConstant.getCoachStarLevelText(coach.getCoachStarLevel()));
 						bookingDetailVO.setCoachSpecialties(coach.getSpecialties());
 						bookingDetailVO.setCoachIntroduction(coach.getIntroduction());
 					}

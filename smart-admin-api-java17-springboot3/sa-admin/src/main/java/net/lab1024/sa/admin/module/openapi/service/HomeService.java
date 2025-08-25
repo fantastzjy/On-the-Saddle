@@ -237,10 +237,6 @@ public class HomeService {
         // 专长领域处理：字符串转列表
         vo.setSpecialtiesList(parseSpecialtiesString(coach.getSpecialties()));
 
-        // 证书信息处理（统一结构）
-        vo.setCoachCertificates(parseCoachCertificates(coach.getCoachCertificates()));
-        vo.setRiderCertificates(parseRiderCertificates(coach.getRiderCertificates()));
-
         // 生成模拟的不可用时间
         vo.setUnavailableTimeSlots(generateMockUnavailableTimeSlots(coach.getCoachId()));
 
@@ -263,6 +259,12 @@ public class HomeService {
     private List<String> buildAllLevelTags(CoachEntity coach) {
         List<String> tags = new ArrayList<>();
 
+        // 添加教练等级标签
+        if (coach.getCoachStarLevel() != null && coach.getCoachStarLevel() > 0) {
+            String levelText = CoachCertificateConstant.getCoachStarLevelText(coach.getCoachStarLevel());
+            tags.add(levelText + "教练证");
+        }
+
         // 添加骑手等级标签
         if (StrUtil.isNotBlank(coach.getRiderLevelShowJumping())) {
             tags.add(coach.getRiderLevelShowJumping() + "场地障碍");
@@ -274,11 +276,6 @@ public class HomeService {
 
         if (StrUtil.isNotBlank(coach.getRiderLevelEventing())) {
             tags.add(coach.getRiderLevelEventing() + "三项赛");
-        }
-
-        // 添加教练等级标签
-        if (StrUtil.isNotBlank(coach.getCoachLevel())) {
-            tags.add(coach.getCoachLevel() + "教练证");
         }
 
         return tags;
@@ -346,6 +343,7 @@ public class HomeService {
      * @param certificatesJson 证书JSON字符串
      * @return 教练证书VO列表
      */
+    /*
     private List<CertificateVO> parseCoachCertificates(String certificatesJson) {
         if (StrUtil.isBlank(certificatesJson)) {
             return new ArrayList<>();
@@ -379,12 +377,14 @@ public class HomeService {
             return new ArrayList<>();
         }
     }
+    */
 
     /**
      * 解析骑手证书JSON为VO列表（统一结构版）
      * @param certificatesJson 证书JSON字符串
      * @return 骑手证书VO列表
      */
+    /*
     private List<CertificateVO> parseRiderCertificates(String certificatesJson) {
         if (StrUtil.isBlank(certificatesJson)) {
             return new ArrayList<>();
@@ -418,6 +418,7 @@ public class HomeService {
             return new ArrayList<>();
         }
     }
+    */
 
     /**
      * 获取课程列表

@@ -2,7 +2,6 @@ package net.lab1024.sa.admin.module.business.member.domain.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import net.lab1024.sa.admin.module.business.coach.domain.vo.CertificateVO;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -33,6 +32,9 @@ public class CoachListVO {
     @Schema(description = "骑手等级标签列表")
     private List<String> riderLevelTags;
 
+    @Schema(description = "专长领域列表")
+    private List<String> specialtiesList;
+
     @Schema(description = "课时费")
     private BigDecimal coachFee;
 
@@ -41,15 +43,6 @@ public class CoachListVO {
 
     @Schema(description = "教练介绍")
     private String introduction;
-
-    @Schema(description = "专长领域列表")
-    private List<String> specialtiesList;
-
-    @Schema(description = "教练证书信息")
-    private List<CertificateVO> coachCertificates;
-
-    @Schema(description = "骑手证书信息")
-    private List<CertificateVO> riderCertificates;
 
     @Schema(description = "不可用时间列表")
     private List<UnavailableTimeSlotVO> unavailableTimeSlots;

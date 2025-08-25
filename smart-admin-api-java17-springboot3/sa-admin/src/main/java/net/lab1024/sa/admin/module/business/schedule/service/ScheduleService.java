@@ -8,6 +8,7 @@ import net.lab1024.sa.admin.module.business.booking.dao.BookingDao;
 import net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
+import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
 import net.lab1024.sa.admin.module.business.horse.dao.HorseDao;
 import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
@@ -597,7 +598,7 @@ public class ScheduleService {
             if (coach != null) {
                 schedule.setCoachNo(coach.getCoachNo());
                 schedule.setCoachAvatar(coach.getAvatarUrl());
-                schedule.setCoachLevel(coach.getCoachLevel());
+                schedule.setCoachLevel(CoachCertificateConstant.getCoachStarLevelText(coach.getCoachStarLevel()));
                 schedule.setCoachSpecialties(coach.getSpecialties());
                 schedule.setCoachIntroduction(coach.getIntroduction());
 
