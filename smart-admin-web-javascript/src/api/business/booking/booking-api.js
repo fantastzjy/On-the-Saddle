@@ -10,6 +10,13 @@ export const bookingApi = {
   },
 
   /**
+   * 获取简化预约列表 - 用于列表视图
+   */
+  getSimpleBookingList: (data) => {
+    return postRequest('/api/admin/booking/simple-query', data)
+  },
+
+  /**
    * 获取预约详情
    */
   getBookingDetail: (bookingId) => {

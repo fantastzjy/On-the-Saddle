@@ -19,7 +19,7 @@
             </a-button>
             <a-button @click="onResetQuery">
               <ReloadOutlined />
-              重置
+              清空
             </a-button>
           </a-button-group>
         </a-form-item>

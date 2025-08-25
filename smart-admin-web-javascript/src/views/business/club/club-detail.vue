@@ -28,12 +28,12 @@
     <a-row :gutter="24" v-if="clubData">
       <a-col :span="24">
         <a-descriptions :column="2" bordered :label-style="{ width: '140px' }">
-          <a-descriptions-item label="俱乐部名称" :span="1">
+          <a-descriptions-item label="俱乐部名称" :span="2">
             {{ clubData.clubName || '-' }}
           </a-descriptions-item>
-          <a-descriptions-item label="俱乐部编码" :span="1">
+          <!-- <a-descriptions-item label="俱乐部编码" :span="1">
             {{ clubData.clubCode || '-' }}
-          </a-descriptions-item>
+          </a-descriptions-item> -->
           
           <a-descriptions-item label="LOGO" :span="1">
             <img v-if="clubData.logoUrl" :src="clubData.logoUrl" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" />

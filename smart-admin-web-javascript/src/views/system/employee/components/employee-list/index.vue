@@ -31,7 +31,7 @@
           <template #icon>
             <ReloadOutlined />
           </template>
-          重置
+          清空
         </a-button>
       </div>
     </div>

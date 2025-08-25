@@ -79,7 +79,7 @@
               <template #icon>
                 <ReloadOutlined />
               </template>
-              重置
+              清空
             </a-button>
           </a-button-group>
         </a-form-item>
@@ -91,6 +91,15 @@
       <a-row class="smart-table-btn-block">
         <div class="smart-table-operate-block">
           <a-button-group>
+            <a-button 
+              :type="viewType === 'list' ? 'primary' : 'default'"
+              @click="switchView('list')"
+            >
+              <template #icon>
+                <UnorderedListOutlined />
+              </template>
+              列表视图
+            </a-button>
             <a-button 
               :type="viewType === 'combined' ? 'primary' : 'default'"
               @click="switchView('combined')"
@@ -108,6 +117,15 @@
                 <CalendarOutlined />
               </template>
               日历视图
+            </a-button>
+            <a-button 
+              :type="viewType === 'coach' ? 'primary' : 'default'"
+              @click="switchView('coach')"
+            >
+              <template #icon>
+                <TeamOutlined />
+              </template>
+              教练视图
             </a-button>
           </a-button-group>
 
@@ -136,6 +154,19 @@
         </div>
 
       </a-row>
+
+      <!-- 列表视图 -->
+      <div v-show="viewType === 'list'">
+        <SimpleBookingList
+          :booking-list="listData"
+          :loading="listLoading"
+          :total="listTotal"
+          :page-num="listQueryForm.pageNum"
+          :page-size="listQueryForm.pageSize"
+          @query="loadBookingList"
+          @page-change="handleListPageChange"
+        />
+      </div>
 
       <!-- 综合视图 -->
       <div v-show="viewType === 'combined'">
@@ -185,6 +216,65 @@
           @time-slot-click="onTimeSlotClick"
         />
       </div>
+
+      <!-- 教练视图 -->
+      <div v-show="viewType === 'coach'">
+        <div class="coach-view-controls">
+          <a-space>
+            <a-radio-group v-model:value="coachViewType" @change="onCoachViewChange">
+              <a-radio-button value="day">日视图</a-radio-button>
+              <a-radio-button value="week">周视图</a-radio-button>
+              <a-radio-button value="month">月视图</a-radio-button>
+            </a-radio-group>
+            
+            <a-date-picker 
+              v-model:value="coachQueryDate" 
+              @change="onCoachDateChange"
+              :format="getDateFormat()"
+              :picker="getDatePicker()"
+            />
+            
+            <a-button @click="loadCoachViewData" :loading="coachViewLoading">
+              <template #icon>
+                <ReloadOutlined />
+              </template>
+              刷新
+            </a-button>
+          </a-space>
+        </div>
+
+        <!-- 日视图 -->
+        <CoachDayView
+          v-if="coachViewType === 'day'"
+          :loading="coachViewLoading"
+          :coach-data="coachDayData.coaches || []"
+          :query-date="coachDayData.queryDate"
+          @schedule-click="detail"
+          @slot-click="onCoachSlotClick"
+          @create-schedule="onCreateScheduleFromSlot"
+        />
+
+        <!-- 周视图 -->
+        <CoachWeekView
+          v-else-if="coachViewType === 'week'"
+          :loading="coachViewLoading"
+          :coach-data="coachWeekData.coaches || []"
+          :week-start-date="coachWeekData.weekStartDate"
+          :week-end-date="coachWeekData.weekEndDate"
+          @slot-click="onCoachWeekSlotClick"
+        />
+
+        <!-- 月视图 -->
+        <CoachMonthView
+          v-else-if="coachViewType === 'month'"
+          :loading="coachViewLoading"
+          :year="coachMonthData.year"
+          :month="coachMonthData.month"
+          :calendar-days="coachMonthData.calendarDays || []"
+          :coach-stats="coachMonthData.coachStats || []"
+          @day-click="onCoachMonthDayClick"
+        />
+      </div>
     </a-card>
 
     <!-- 拖拽排课模态框 -->
@@ -217,12 +307,16 @@ import {
   SearchOutlined, 
   ReloadOutlined, 
   PlusOutlined,
+  UnorderedListOutlined,
   CalendarOutlined,
   AppstoreOutlined,
-  DragOutlined
+  DragOutlined,
+  TeamOutlined
 } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { scheduleApi } from '/@/api/business/schedule/schedule-api';
+import { bookingApi } from '/@/api/business/booking/booking-api';
+import { coachScheduleApi } from '/@/api/business/schedule/coach-schedule-api';
 import { 
   LESSON_STATUS_ENUM,
   BOOKING_STATUS_ENUM,
@@ -234,11 +328,15 @@ import {
   getLessonStatusInfo
 } from '/@/constants/business/schedule/schedule-const';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
+import SimpleBookingList from './components/SimpleBookingList.vue';
 import CalendarView from './components/CalendarView.vue';
 import DragScheduleModal from './components/DragScheduleModal.vue';
 import ConflictDetectorModal from './components/ConflictDetectorModal.vue';
 import OrderCard from './components/OrderCard.vue';
 import PackageBookingCreateModal from './components/PackageBookingCreateModal.vue';
+import CoachDayView from './components/CoachDayView.vue';
+import CoachWeekView from './components/CoachWeekView.vue';
+import CoachMonthView from './components/CoachMonthView.vue';
 import dayjs from 'dayjs';
 
 const router = useRouter();
@@ -266,8 +364,28 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 const coachListLoading = ref(false);
 
 // 视图相关
-const viewType = ref('combined'); // combined | calendar
+const viewType = ref('list'); // list | combined | calendar | coach
 const calendarViewType = ref(SCHEDULE_VIEW_TYPE_ENUM.WEEK.value);
+
+// 教练视图相关
+const coachViewType = ref('day'); // day | week | month
+const coachQueryDate = ref(dayjs());
+const coachViewLoading = ref(false);
+const coachDayData = ref({});
+const coachWeekData = ref({});
+const coachMonthData = ref({});
+
+// 列表视图相关
+const listData = ref([]);
+const listLoading = ref(false);
+const listTotal = ref(0);
+const listQueryForm = reactive({
+  keywords: '',
+  coachId: null,
+  dateRange: [],
+  pageNum: 1,
+  pageSize: 10
+});
 
 // 综合视图相关
 const combinedData = ref([]);
@@ -309,7 +427,9 @@ const isLoading = computed(() => {
 onMounted(() => {
   loadCoachList();
   // 根据默认视图类型加载相应数据
-  if (viewType.value === 'combined') {
+  if (viewType.value === 'list') {
+    loadBookingList();
+  } else if (viewType.value === 'combined') {
     loadCombinedData();
   } else {
     ajaxQuery();
@@ -348,7 +468,14 @@ function clearCache() {
 
 // ======================== 查询相关 ========================
 function onSearch() {
-  if (viewType.value === 'combined') {
+  if (viewType.value === 'list') {
+    // 列表视图查询
+    listQueryForm.pageNum = 1;
+    listQueryForm.keywords = queryForm.keywords;
+    listQueryForm.coachId = queryForm.coachId;
+    listQueryForm.dateRange = queryForm.dateRange;
+    loadBookingList();
+  } else if (viewType.value === 'combined') {
     combinedQueryForm.pageNum = 1;
     // 将查询表单的条件同步到综合视图查询
     combinedQueryForm.keywords = queryForm.keywords;
@@ -364,7 +491,17 @@ function onSearch() {
 
 function resetQuery() {
   Object.assign(queryForm, { ...SCHEDULE_SEARCH_FORM, pageNum: 1, pageSize: queryForm.pageSize });
-  if (viewType.value === 'combined') {
+  if (viewType.value === 'list') {
+    // 重置列表视图查询
+    Object.assign(listQueryForm, {
+      keywords: '',
+      coachId: null,
+      dateRange: [],
+      pageNum: 1,
+      pageSize: 10
+    });
+    loadBookingList();
+  } else if (viewType.value === 'combined') {
     // 重置综合视图查询
     Object.assign(combinedQueryForm, {
       keywords: '',
@@ -462,12 +599,18 @@ async function loadCoachList() {
 // ======================== 视图切换 ========================
 function switchView(type) {
   viewType.value = type;
-  if (type === 'calendar') {
+  if (type === 'list') {
+    // 列表视图需要查询预约数据
+    loadBookingList();
+  } else if (type === 'calendar') {
     // 日历视图需要重新查询当月数据
     ajaxQuery();
   } else if (type === 'combined') {
     // 综合视图需要查询订单数据
     loadCombinedData();
+  } else if (type === 'coach') {
+    // 教练视图需要查询教练数据
+    loadCoachViewData();
   }
 }
 
@@ -750,6 +893,148 @@ function onPackageBookingSuccess() {
   message.success('预约创建成功');
   loadCombinedData(); // 刷新综合视图数据
 }
+
+// ======================== 列表视图相关方法 ========================
+async function loadBookingList() {
+  try {
+    listLoading.value = true;
+    
+    const params = {
+      ...listQueryForm,
+      startDate: listQueryForm.dateRange?.[0],
+      endDate: listQueryForm.dateRange?.[1],
+      dateRange: undefined
+    };
+    
+    const response = await bookingApi.getSimpleBookingList(params);
+    
+    if (response.ok && response.data) {
+      listData.value = response.data.list || [];
+      listTotal.value = response.data.total || 0;
+    } else {
+      console.error('加载简化预约列表失败:', response.msg || response.mesg);
+      message.error(response.msg || response.mesg || '加载数据失败');
+      listData.value = [];
+      listTotal.value = 0;
+    }
+  } catch (error) {
+    console.error('加载预约列表失败:', error);
+    message.error('加载数据失败');
+    listData.value = [];
+    listTotal.value = 0;
+  } finally {
+    listLoading.value = false;
+  }
+}
+
+function handleListPageChange({ pageNum, pageSize }) {
+  listQueryForm.pageNum = pageNum;
+  listQueryForm.pageSize = pageSize;
+  loadBookingList();
+}
+
+// ======================== 教练视图相关方法 ========================
+async function loadCoachViewData() {
+  try {
+    coachViewLoading.value = true;
+    
+    const params = {
+      queryDate: coachQueryDate.value.format('YYYY-MM-DD'),
+      clubId: 1, // TODO: 从用户信息或选择器中获取clubId
+      coachIds: queryForm.coachId ? [queryForm.coachId] : null,
+      keywords: queryForm.keywords
+    };
+
+    if (coachViewType.value === 'day') {
+      const response = await coachScheduleApi.getDayView(params);
+      if (response.ok && response.data) {
+        coachDayData.value = response.data;
+      } else {
+        message.error(response.msg || '加载教练日视图数据失败');
+      }
+    } else if (coachViewType.value === 'week') {
+      const response = await coachScheduleApi.getWeekView(params);
+      if (response.ok && response.data) {
+        coachWeekData.value = response.data;
+      } else {
+        message.error(response.msg || '加载教练周视图数据失败');
+      }
+    } else if (coachViewType.value === 'month') {
+      const response = await coachScheduleApi.getMonthView(params);
+      if (response.ok && response.data) {
+        coachMonthData.value = response.data;
+      } else {
+        message.error(response.msg || '加载教练月视图数据失败');
+      }
+    }
+  } catch (error) {
+    console.error('加载教练视图数据失败:', error);
+    message.error('加载数据失败');
+  } finally {
+    coachViewLoading.value = false;
+  }
+}
+
+function onCoachViewChange() {
+  loadCoachViewData();
+}
+
+function onCoachDateChange() {
+  loadCoachViewData();
+}
+
+function getDateFormat() {
+  switch (coachViewType.value) {
+    case 'day':
+      return 'YYYY-MM-DD';
+    case 'week':
+      return 'YYYY-MM-DD';
+    case 'month':
+      return 'YYYY-MM';
+    default:
+      return 'YYYY-MM-DD';
+  }
+}
+
+function getDatePicker() {
+  switch (coachViewType.value) {
+    case 'month':
+      return 'month';
+    default:
+      return undefined;
+  }
+}
+
+function onCoachSlotClick({ coachId, slot }) {
+  // 点击教练日视图时段
+  console.log('点击教练时段:', coachId, slot);
+}
+
+function onCreateScheduleFromSlot({ coachId, hourSlot }) {
+  // 从教练视图创建排课
+  const dateTime = `${coachQueryDate.value.format('YYYY-MM-DD')} ${hourSlot}:00`;
+  router.push({
+    path: '/schedule/add',
+    query: {
+      coachId: coachId,
+      startTime: dateTime
+    }
+  });
+}
+
+function onCoachWeekSlotClick({ coachId, date, period }) {
+  // 点击教练周视图时段
+  coachQueryDate.value = dayjs(date);
+  coachViewType.value = 'day';
+  loadCoachViewData();
+}
+
+function onCoachMonthDayClick(day) {
+  // 点击教练月视图日期
+  coachQueryDate.value = dayjs(day.date);
+  coachViewType.value = 'day';
+  loadCoachViewData();
+}
 </script>
 
 <style scoped>
@@ -759,6 +1044,12 @@ function onPackageBookingSuccess() {
 
 .combined-view-container {
   padding: 16px 0;
+}
+
+.coach-view-controls {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 16px;
 }
 
 .order-list {

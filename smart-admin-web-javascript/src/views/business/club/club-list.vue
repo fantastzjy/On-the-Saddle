@@ -26,7 +26,7 @@
             <template #icon>
               <ReloadOutlined />
             </template>
-            重置
+            清空
           </a-button>
         </a-button-group>
       </a-form-item>
@@ -205,13 +205,13 @@ async function ajaxQuery() {
 // ----------------------- 表格 -----------------------
 
 const columns = ref([
-  {
-    title: '俱乐部编码',
-    dataIndex: 'clubCode',
-    width: 140,
-    fixed: 'left',
-    align: 'center'
-  },
+  // {
+  //   title: '俱乐部编码',
+  //   dataIndex: 'clubCode',
+  //   width: 140,
+  //   fixed: 'left',
+  //   align: 'center'
+  // },
   {
     title: '俱乐部名称',
     dataIndex: 'clubName',

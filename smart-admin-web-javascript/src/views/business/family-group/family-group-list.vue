@@ -95,7 +95,7 @@
               </a-button>
               <a-button @click="onReset">
                 <template #icon><ReloadOutlined /></template>
-                重置
+                清空
               </a-button>
             </a-space>
           </a-form-item>

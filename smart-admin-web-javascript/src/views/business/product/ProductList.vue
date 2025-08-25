@@ -54,7 +54,7 @@
             <template #icon>
               <ReloadOutlined />
             </template>
-            重置
+            清空
           </a-button>
         </a-button-group>
       </a-form-item>
@@ -87,12 +87,6 @@
       bordered
     >
       <template #bodyCell="{ column, record, text }">
-        <template v-if="column.dataIndex === 'productCode'">
-          <a-button type="link" @click="detail(record.productId)" :disabled="!$privilege('business:product:detail')">
-            {{ record.productCode }}
-          </a-button>
-        </template>
-
         <template v-if="column.dataIndex === 'productName'">
           <a-button type="link" @click="detail(record.productId)" :disabled="!$privilege('business:product:detail')">
             {{ record.productName }}

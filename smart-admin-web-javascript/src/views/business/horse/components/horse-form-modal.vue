@@ -10,11 +10,11 @@
   >
     <a-form :model="formState.form" :rules="formRules" ref="formRef" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
       <a-row :gutter="20">
-        <a-col :span="12">
+        <!-- <a-col :span="12">
           <a-form-item label="马匹编号" name="horseCode">
             <a-input v-model:value="formState.form.horseCode" placeholder="请输入马匹编号" />
           </a-form-item>
-        </a-col>
+        </a-col> -->
         <a-col :span="12">
           <a-form-item label="马名" name="horseName">
             <a-input v-model:value="formState.form.horseName" placeholder="请输入马名" />
@@ -270,7 +270,7 @@ const formState = reactive({
 });
 
 const formRules = {
-  horseCode: [{ required: true, message: '请输入马匹编号' }],
+  // horseCode: [{ required: true, message: '请输入马匹编号' }],
   horseName: [{ required: true, message: '请输入马名' }],
   clubId: [{ required: true, message: '请选择俱乐部' }],
   horseType: [{ required: true, message: '请选择归属' }],

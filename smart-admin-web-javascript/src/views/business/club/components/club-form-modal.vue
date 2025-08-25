@@ -30,16 +30,16 @@
       </a-divider>
       
       <a-row :gutter="24">
-        <a-col :span="12">
+        <a-col :span="24">
           <a-form-item label="俱乐部名称" name="clubName">
             <a-input v-model:value="form.clubName" placeholder="请输入俱乐部名称" />
           </a-form-item>
         </a-col>
-        <a-col :span="12">
+        <!-- <a-col :span="12">
           <a-form-item label="俱乐部编码" name="clubCode">
             <a-input v-model:value="form.clubCode" placeholder="请输入俱乐部编码" />
           </a-form-item>
-        </a-col>
+        </a-col> -->
       </a-row>
 
       <a-row :gutter="24">
@@ -269,7 +269,7 @@ const form = reactive({ ...formDefault });
 
 const rules = {
   clubName: [{ required: true, message: '请输入俱乐部名称', trigger: 'blur' }],
-  clubCode: [{ required: true, message: '请输入俱乐部编码', trigger: 'blur' }],
+  // clubCode: [{ required: true, message: '请输入俱乐部编码', trigger: 'blur' }],
   phone: [
     {
       pattern: /^[0-9-()\\s]*$/,

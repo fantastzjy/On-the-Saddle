@@ -187,12 +187,6 @@ export const PRODUCT_DEFAULT_CONFIG = {
 // ==================== 表格列配置 ====================
 export const PRODUCT_TABLE_COLUMNS = [
   {
-    title: '课程编码',
-    dataIndex: 'productCode',
-    ellipsis: true,
-    align: 'center'
-  },
-  {
     title: '课程名称',
     dataIndex: 'productName',
     ellipsis: true,

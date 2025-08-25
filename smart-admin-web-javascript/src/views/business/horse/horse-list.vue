@@ -3,17 +3,17 @@
     <div class="common-container">
       <a-form class="smart-query-form" v-privilege="'club:horse:query'">
         <a-row class="smart-query-form-row">
-          <a-form-item label="马名/编号" class="smart-query-form-item">
-            <a-input style="width: 200px" v-model:value="queryForm.keywords" placeholder="请输入马名或编号" />
+          <a-form-item label="马名/芯片号" class="smart-query-form-item">
+            <a-input style="width: 200px" v-model:value="queryForm.keywords" placeholder="请输入马名或芯片号" />
           </a-form-item>
 
-          <a-form-item label="俱乐部" class="smart-query-form-item">
+          <!-- <a-form-item label="俱乐部" class="smart-query-form-item">
             <a-select style="width: 180px" v-model:value="queryForm.clubId" placeholder="请选择俱乐部" allowClear>
               <a-select-option v-for="club in clubList" :key="club.clubId" :value="club.clubId">
                 {{ club.clubName }}
               </a-select-option>
             </a-select>
-          </a-form-item>
+          </a-form-item> -->
 
           <a-form-item label="归属" class="smart-query-form-item">
             <a-select style="width: 120px" v-model:value="queryForm.horseType" placeholder="请选择归属" allowClear>
@@ -37,7 +37,7 @@
                 <template #icon>
                   <ReloadOutlined />
                 </template>
-                重置
+                清空
               </a-button>
             </a-button-group>
           </a-form-item>
@@ -87,12 +87,28 @@
           <template v-else-if="column.dataIndex === 'birthDate'">
             {{ text ? dayjs(text).format('YYYY-MM-DD') : '-' }}
           </template>
-          <template v-else-if="column.dataIndex === 'boardingFee'">
-            {{ text ? '¥' + parseFloat(text).toFixed(2) : '-' }}
+          <template v-else-if="column.dataIndex === 'boarding'">
+            <div v-if="record.horseType === 2 && record.boardingStartDate" class="boarding-info">
+              <div class="boarding-time">
+                {{ formatDateRange(record.boardingStartDate, record.boardingEndDate) }}
+              </div>
+              <div class="boarding-fee">
+                {{ formatFee(record.boardingFee) }}
+              </div>
+              <div v-if="isExpiringSoon(record.boardingEndDate)" class="boarding-warning">
+                ⚠️ {{ getExpiryText(record.boardingEndDate) }}
+              </div>
+            </div>
+            <div v-else-if="record.horseType === 2">
+              <!-- 马主马但无寄养信息时显示空 -->
+            </div>
+            <div v-else>
+              <!-- 非马主马显示 - -->
+              <span class="boarding-none">-</span>
+            </div>
           </template>
           <template v-else-if="column.dataIndex === 'action'">
             <div class="smart-table-operate">
-              <a-button v-privilege="'club:horse:query'" type="link" @click="goDetail(record.horseId)">详情</a-button>
               <a-button v-privilege="'club:horse:health:plan:query'" type="link" @click="goHealthPlan(record.horseId)">健康计划</a-button>
               <a-button v-privilege="'club:horse:update'" type="link" @click="showModal(false, record)">编辑</a-button>
               <a-button v-privilege="'club:horse:delete'" type="link" danger @click="onDelete(record)">删除</a-button>
@@ -149,12 +165,12 @@ const columns = [
   //   dataIndex: 'horseId',
   //   width: 80,
   // },
-  {
-    title: '马匹编号',
-    dataIndex: 'horseCode',
-    width: 120,
-    align: 'center'
-  },
+  // {
+  //   title: '马匹编号',
+  //   dataIndex: 'horseCode',
+  //   width: 120,
+  //   align: 'center'
+  // },
   {
     title: '马名',
     dataIndex: 'horseName',
@@ -164,12 +180,6 @@ const columns = [
   {
     title: '芯片号',
     dataIndex: 'chipNo',
-    width: 150,
-    align: 'center'
-  },
-  {
-    title: '归属',
-    dataIndex: 'ownership',
     width: 150,
     align: 'center'
   },
@@ -192,9 +202,9 @@ const columns = [
     align: 'center'
   },
   {
-    title: '马主',
-    dataIndex: 'ownerName',
-    width: 100,
+    title: '归属',
+    dataIndex: 'ownership',
+    width: 150,
     align: 'center'
   },
   {
@@ -210,9 +220,9 @@ const columns = [
     align: 'center'
   },
   {
-    title: '寄养费(元)',
-    dataIndex: 'boardingFee',
-    width: 100,
+    title: '寄养',
+    dataIndex: 'boarding',
+    width: 180,
     align: 'center'
   },
   {
@@ -302,6 +312,36 @@ function goHealthPlan(horseId) {
   window.open(`#/club/horse/horse-detail?horseId=${horseId}&tab=health-plan`, '_blank');
 }
 
+// 寄养相关格式化函数
+function formatDateRange(startDate, endDate) {
+  const start = dayjs(startDate).format('YYYY-MM-DD');
+  const end = endDate ? dayjs(endDate).format('YYYY-MM-DD') : '长期';
+  return `${start} ~ ${end}`;
+}
+
+function formatFee(fee) {
+  return fee ? `¥${parseFloat(fee).toFixed(2)}/月` : '待定';
+}
+
+function isExpiringSoon(endDate) {
+  if (!endDate) return false;
+  const today = dayjs();
+  const expiry = dayjs(endDate);
+  const diffDays = expiry.diff(today, 'day');
+  return diffDays >= 0 && diffDays <= 14;
+}
+
+function getExpiryText(endDate) {
+  const today = dayjs();
+  const expiry = dayjs(endDate);
+  const diffDays = expiry.diff(today, 'day');
+  
+  if (diffDays === 0) return '今日到期';
+  if (diffDays === 1) return '明日到期';
+  if (diffDays <= 7) return `${diffDays}天后到期`;
+  return '即将到期';
+}
+
 async function queryClubList() {
   try {
     const res = await clubApi.queryList();
@@ -362,3 +402,36 @@ onMounted(() => {
   queryData();
 });
 </script>
+
+<style scoped>
+.boarding-info {
+  text-align: center;
+  line-height: 1.4;
+}
+
+.boarding-time {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.boarding-fee {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.boarding-warning {
+  font-size: 11px;
+  color: #ff4d4f;
+  background: #fff2f0;
+  padding: 1px 4px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.boarding-none {
+  color: #ccc;
+}
+</style>

@@ -3,7 +3,7 @@
     <a-row :gutter="24">
       <a-col :span="12">
         <a-descriptions title="基本信息" :column="1" bordered>
-          <a-descriptions-item label="马匹编号">{{ horseDetail.horseCode }}</a-descriptions-item>
+          <!-- <a-descriptions-item label="马匹编号">{{ horseDetail.horseCode }}</a-descriptions-item> -->
           <a-descriptions-item label="马名">{{ horseDetail.horseName }}</a-descriptions-item>
           <a-descriptions-item label="芯片号">{{ horseDetail.chipNo }}</a-descriptions-item>
           <a-descriptions-item label="护照号">{{ horseDetail.passportNo || '-' }}</a-descriptions-item>
