@@ -40,13 +40,34 @@
 
       <a-row :gutter="24">
         <a-col :span="12">
-          <a-form-item label="教练编号" name="coachNo">
-            <a-input v-model:value="form.coachNo" placeholder="请输入教练编号" />
+          <a-form-item label="教练证号" name="coachCertNo">
+            <a-input v-model:value="form.coachCertNo" placeholder="请输入教练证号" />
           </a-form-item>
         </a-col>
         <a-col :span="12">
+          <a-form-item label="骑手证号" name="riderCertNo">
+            <a-input v-model:value="form.riderCertNo" placeholder="请输入骑手证号" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="24">
+        <a-col :span="12">
           <a-form-item label="从业时间" name="entryDate">
             <a-date-picker v-model:value="form.entryDate" placeholder="请选择从业时间" style="width: 100%" show-time />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="生日" name="birthDate">
+            <a-date-picker v-model:value="form.birthDate" placeholder="请选择生日" style="width: 100%" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="24">
+        <a-col :span="24">
+          <a-form-item label="身份证号" name="idCard">
+            <a-input v-model:value="form.idCard" placeholder="请输入身份证号" />
           </a-form-item>
         </a-col>
       </a-row>
@@ -84,6 +105,14 @@
         </a-col>
       </a-row>
 
+      <a-row :gutter="24">
+        <a-col :span="24">
+          <a-form-item label="个人介绍" name="introduction">
+            <a-textarea v-model:value="form.introduction" placeholder="请输入个人介绍" :rows="3" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
       <!-- 新增身份证信息区域 -->
       <a-divider orientation="left">身份证信息</a-divider>
       <a-row :gutter="24">
@@ -109,29 +138,6 @@
               :defaultFileList="idCardBackFileList"
               @change="idCardBackChange"
             />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <a-row :gutter="24">
-        <a-col :span="24">
-          <a-form-item label="个人介绍" name="introduction">
-            <a-textarea v-model:value="form.introduction" placeholder="请输入个人介绍" :rows="3" />
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <!-- 证号信息模块 -->
-      <a-divider orientation="left">证号信息</a-divider>
-      <a-row :gutter="24">
-        <a-col :span="12">
-          <a-form-item label="教练证号" name="coachCertNo">
-            <a-input v-model:value="form.coachCertNo" placeholder="请输入教练证号" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="骑手证号" name="riderCertNo">
-            <a-input v-model:value="form.riderCertNo" placeholder="请输入骑手证号" />
           </a-form-item>
         </a-col>
       </a-row>
@@ -235,6 +241,8 @@ const formState = {
   userId: null,
   coachNo: '',
   entryDate: null,
+  birthDate: null,
+  idCard: '',
   specialties: [],
   introduction: '',
   coachFee: null,
@@ -353,6 +361,11 @@ async function loadCoachDetail(coachId) {
     if (form.entryDate) {
       form.entryDate = dayjs(form.entryDate);
       console.log('处理后的入行日期:', form.entryDate);
+    }
+    
+    if (form.birthDate) {
+      form.birthDate = dayjs(form.birthDate);
+      console.log('处理后的生日:', form.birthDate);
     }
 
     // 处理专长领域字段：字符串转数组
@@ -476,6 +489,10 @@ async function onSubmit() {
     // 处理日期字段
     if (formData.entryDate) {
       formData.entryDate = dayjs(formData.entryDate).format('YYYY-MM-DD HH:mm:ss');
+    }
+    
+    if (formData.birthDate) {
+      formData.birthDate = dayjs(formData.birthDate).format('YYYY-MM-DD');
     }
 
     // 处理专长领域字段：数组转字符串

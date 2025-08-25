@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -39,6 +40,12 @@ public class CoachListVO {
     @Schema(description = "头像照片地址")
     private String avatarUrl;
 
+    @Schema(description = "生日")
+    private LocalDate birthDate;
+
+    @Schema(description = "身份证号码")
+    private String idCard;
+
     @Schema(description = "入行时间")
     private LocalDateTime entryDate;
 
@@ -50,6 +57,18 @@ public class CoachListVO {
 
     @Schema(description = "星级教练证号码")
     private String coachCertNo;
+
+    @Schema(description = "骑手场地障碍等级")
+    private Integer riderShowJumpingLevel;
+
+    @Schema(description = "骑手盛装舞步等级")
+    private Integer riderDressageLevel;
+
+    @Schema(description = "骑手三项赛等级")
+    private Integer riderEventingLevel;
+
+    @Schema(description = "教练星级")
+    private Integer coachStarLevel;
 
     @Schema(description = "教练等级")
     private String coachLevel;

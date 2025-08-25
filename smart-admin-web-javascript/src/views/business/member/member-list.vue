@@ -7,7 +7,7 @@
           <a-input
             style="width: 300px"
             v-model:value="queryForm.keywords"
-            placeholder="会员编号/姓名/手机号/骑手证号"
+            placeholder="姓名/手机号/骑手证号"
             allow-clear
           />
         </a-form-item>

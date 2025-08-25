@@ -7,6 +7,7 @@ import org.hibernate.validator.constraints.Length;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -40,6 +41,13 @@ public class CoachUpdateForm {
     @Schema(description = "头像照片地址")
     @Length(max = 500, message = "头像照片地址最多500字符")
     private String avatarUrl;
+
+
+    @Schema(description ="生日")
+    private LocalDate birthDate;
+
+    @Schema(description ="身份证号码")
+    private String idCard;
 
     @Schema(description = "入行时间")
     private LocalDateTime entryDate;

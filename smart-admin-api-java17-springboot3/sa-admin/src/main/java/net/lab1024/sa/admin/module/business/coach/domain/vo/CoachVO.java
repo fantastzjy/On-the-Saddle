@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,6 +40,12 @@ public class CoachVO {
 
     @Schema(description = "头像照片地址")
     private String avatarUrl;
+
+    @Schema(description = "生日")
+    private LocalDate birthDate;
+
+    @Schema(description = "身份证号码")
+    private String idCard;
 
     @Schema(description = "身份证正面照片地址")
     private String idCardFrontImg;

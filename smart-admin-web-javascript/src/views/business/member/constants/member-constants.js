@@ -120,12 +120,12 @@ export const TABLE_COLUMNS = [
   //   dataIndex: 'memberId',
   //   width: 80
   // },
-  {
-    title: '会员编号',
-    dataIndex: 'memberNo',
-    width: 150,
-    align: 'center'
-  },
+  // {
+  //   title: '会员编号',
+  //   dataIndex: 'memberNo',
+  //   width: 150,
+  //   align: 'center'
+  // },
   {
     title: '会员姓名',
     dataIndex: 'actualName',
@@ -207,18 +207,18 @@ export const TABLE_COLUMNS = [
     align: 'center',
     slots: { customRender: 'defaultCourseLevel' }
   },
-  {
-    title: 'Union ID',
-    dataIndex: 'unionId',
-    width: 150,
-    align: 'center'
-  },
-  {
-    title: 'Open ID',
-    dataIndex: 'openId',
-    width: 150,
-    align: 'center'
-  },
+  // {
+  //   title: 'Union ID',
+  //   dataIndex: 'unionId',
+  //   width: 150,
+  //   align: 'center'
+  // },
+  // {
+  //   title: 'Open ID',
+  //   dataIndex: 'openId',
+  //   width: 150,
+  //   align: 'center'
+  // },
   {
     title: '创建方式',
     dataIndex: 'createdByGuardian',

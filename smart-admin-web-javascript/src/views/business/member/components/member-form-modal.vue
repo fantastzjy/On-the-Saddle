@@ -15,7 +15,7 @@
       :label-col="{ span: 6 }"
       :wrapper-col="{ span: 16 }"
     >
-      <a-row :gutter="24">
+      <!-- <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="Union ID" name="unionId">
             <a-input v-model:value="form.unionId" placeholder="请输入Union ID" />
@@ -26,7 +26,7 @@
             <a-input v-model:value="form.openId" placeholder="请输入Open ID" />
           </a-form-item>
         </a-col>
-      </a-row>
+      </a-row> -->
 
       <a-row :gutter="24">
         <a-col :span="12">
