@@ -8,6 +8,9 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.admin.module.business.coach.constant.CoachAppConst;
+import net.lab1024.sa.admin.module.business.coach.domain.RequestCoach;
+import net.lab1024.sa.admin.module.business.coach.service.CoachAppService;
 import net.lab1024.sa.admin.module.business.member.constant.MemberAppConst;
 import net.lab1024.sa.admin.module.business.member.domain.RequestMember;
 import net.lab1024.sa.admin.module.business.member.service.MemberAppService;
@@ -48,6 +51,9 @@ public class AdminInterceptor implements HandlerInterceptor {
     @Resource
     private MemberAppService memberAppService;
 
+    @Resource
+    private CoachAppService coachAppService;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
@@ -66,24 +72,32 @@ public class AdminInterceptor implements HandlerInterceptor {
             // --------------- 第一步： 根据token 获取用户 ---------------
 
             String tokenValue = StpUtil.getTokenValue();
-            
-            // 判断是否为会员token
+
+            // 判断是否为会员或教练token
             boolean isMemberToken = tokenValue != null && tokenValue.startsWith(MemberAppConst.MEMBER_TOKEN_PREFIX);
-            
+            boolean isCoachToken = tokenValue != null && tokenValue.startsWith(CoachAppConst.COACH_TOKEN_PREFIX);
+
             String loginId = null;
             if (isMemberToken) {
                 // 会员token：去掉前缀后用StpUtil验证
                 String actualToken = tokenValue.substring(MemberAppConst.MEMBER_TOKEN_PREFIX.length());
                 loginId = (String) StpUtil.getLoginIdByToken(actualToken);
+            } else if (isCoachToken) {
+                // 教练token：去掉前缀后用StpUtil验证
+                String actualToken = tokenValue.substring(CoachAppConst.COACH_TOKEN_PREFIX.length());
+                loginId = (String) StpUtil.getLoginIdByToken(actualToken);
             } else {
                 // 员工token：直接用StpUtil验证
                 loginId = (String) StpUtil.getLoginIdByToken(tokenValue);
             }
-            
+
             Object requestUser = null;
             if (isMemberToken) {
                 // 会员登录逻辑
                 requestUser = memberAppService.getLoginMember(loginId, request);
+            } else if (isCoachToken) {
+                // 教练登录逻辑
+                requestUser = coachAppService.getLoginCoach(loginId, request);
             } else {
                 // 员工登录逻辑
                 requestUser = loginService.getLoginEmployee(loginId, request);
@@ -96,6 +110,8 @@ public class AdminInterceptor implements HandlerInterceptor {
             if (noNeedLogin != null) {
                 if (isMemberToken) {
                     checkMemberActiveTimeout((RequestMember) requestUser);
+                } else if (isCoachToken) {
+                    checkCoachActiveTimeout((RequestCoach) requestUser);
                 } else {
                     checkActiveTimeout((RequestEmployee) requestUser);
                 }
@@ -110,6 +126,8 @@ public class AdminInterceptor implements HandlerInterceptor {
             // 检测token 活跃频率
             if (isMemberToken) {
                 checkMemberActiveTimeout((RequestMember) requestUser);
+            } else if (isCoachToken) {
+                checkCoachActiveTimeout((RequestCoach) requestUser);
             } else {
                 checkActiveTimeout((RequestEmployee) requestUser);
             }
@@ -121,11 +139,21 @@ public class AdminInterceptor implements HandlerInterceptor {
                 return true;
             }
 
-            // 会员请求不需要复杂的权限校验，只检查基本状态
+            // 会员和教练请求不需要复杂的权限校验，只检查基本状态
             if (isMemberToken) {
                 RequestMember requestMember = (RequestMember) requestUser;
                 // 检查会员状态
                 if (requestMember.getDisabledFlag() != null && requestMember.getDisabledFlag() == 1) {
+                    SmartResponseUtil.write(response, ResponseDTO.error(UserErrorCode.NO_PERMISSION));
+                    return false;
+                }
+                return true;
+            }
+
+            if (isCoachToken) {
+                RequestCoach requestCoach = (RequestCoach) requestUser;
+                // 检查教练状态
+                if (requestCoach.getDisabledFlag() != null && requestCoach.getDisabledFlag() == 1) {
                     SmartResponseUtil.write(response, ResponseDTO.error(UserErrorCode.NO_PERMISSION));
                     return false;
                 }
@@ -195,12 +223,35 @@ public class AdminInterceptor implements HandlerInterceptor {
             StpUtil.updateLastActiveToNow();
         } catch (Exception e) {
             // 忽略活跃时间更新异常，不影响正常业务
-            log.debug("更新会员活跃时间失败, memberId: {}", 
+            log.debug("更新会员活跃时间失败, memberId: {}",
                      requestMember != null ? requestMember.getMemberId() : "unknown", e);
         }
-        
+
         // 注释掉活跃超时检测，避免30012错误
-        // StpUtil.checkActiveTimeout(); 
+        // StpUtil.checkActiveTimeout();
+    }
+
+    /**
+     * 检测教练token活跃频率
+     */
+    private void checkCoachActiveTimeout(RequestCoach requestCoach) {
+        // 教练不在线，也不用检测
+        if (requestCoach == null) {
+            return;
+        }
+
+        // 教练端不检查活跃超时，只更新活跃时间
+        // 小程序端通常保持长连接，不需要严格的活跃超时控制
+        try {
+            StpUtil.updateLastActiveToNow();
+        } catch (Exception e) {
+            // 忽略活跃时间更新异常，不影响正常业务
+            log.debug("更新教练活跃时间失败, coachId: {}",
+                     requestCoach != null ? requestCoach.getCoachId() : "unknown", e);
+        }
+
+        // 注释掉活跃超时检测，避免30012错误
+        // StpUtil.checkActiveTimeout();
     }
 
 

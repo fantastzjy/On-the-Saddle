@@ -71,6 +71,6 @@ public class RequestMember implements RequestUser, Serializable {
 
     @Override
     public UserTypeEnum getUserType() {
-        return UserTypeEnum.ADMIN_EMPLOYEE; // 复用现有枚举，或者需要扩展
+        return UserTypeEnum.MEMBER;
     }
 }

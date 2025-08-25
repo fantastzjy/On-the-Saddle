@@ -87,40 +87,49 @@ public class CoachService {
     }
 
     /**
-     * 查询教练详情
+     * 查询教练详情（扁平化结构版）
      */
     public ResponseDTO<CoachVO> getDetail(Long coachId) {
         log.info("=== 查询教练详情开始 === coachId={}", coachId);
-        
+
         CoachVO coachVO = coachDao.getDetail(coachId);
         if (coachVO == null) {
             return ResponseDTO.userErrorParam("教练不存在");
         }
-        
-        // 获取完整的教练实体信息（包含证书字段）
+
+        // 获取完整的教练实体信息（包含扁平化证书字段）
         CoachEntity coachEntity = coachDao.selectById(coachId);
         if (coachEntity != null) {
-            log.info("从数据库查询到的原始证书数据: coachCertificates={}, riderCertificates={}", 
-                    coachEntity.getCoachCertificates(), coachEntity.getRiderCertificates());
-            
-            // 解析证书信息
-            List<CertificateVO> coachCerts = parseCoachCertificates(coachEntity.getCoachCertificates());
-            List<CertificateVO> riderCerts = parseRiderCertificates(coachEntity.getRiderCertificates());
-            
-            log.info("解析后的证书数据: coachCerts.size={}, riderCerts.size={}", 
-                    coachCerts.size(), riderCerts.size());
-                    
-            coachVO.setCoachCertificates(coachCerts);
-            coachVO.setRiderCertificates(riderCerts);
+            log.info("从数据库查询到的扁平化证书数据: coachStarLevel={}, riderShowJumpingLevel={}",
+                    coachEntity.getCoachStarLevel(), coachEntity.getRiderShowJumpingLevel());
+
+            coachVO.setCoachStarLevel(coachEntity.getCoachStarLevel());
+            coachVO.setCoachStarCertImages(coachEntity.getCoachStarCertImages());
+            coachVO.setCoachShowJumpingLevel(coachEntity.getCoachShowJumpingLevel());
+            coachVO.setCoachShowJumpingImages(coachEntity.getCoachShowJumpingImages());
+            coachVO.setCoachDressageLevel(coachEntity.getCoachDressageLevel());
+            coachVO.setCoachDressageImages(coachEntity.getCoachDressageImages());
+            coachVO.setCoachEventingLevel(coachEntity.getCoachEventingLevel());
+            coachVO.setCoachEventingImages(coachEntity.getCoachEventingImages());
+
+            coachVO.setRiderShowJumpingLevel(coachEntity.getRiderShowJumpingLevel());
+            coachVO.setRiderShowJumpingImages(coachEntity.getRiderShowJumpingImages());
+            coachVO.setRiderDressageLevel(coachEntity.getRiderDressageLevel());
+            coachVO.setRiderDressageImages(coachEntity.getRiderDressageImages());
+            coachVO.setRiderEventingLevel(coachEntity.getRiderEventingLevel());
+            coachVO.setRiderEventingImages(coachEntity.getRiderEventingImages());
+
             // 设置身份证照片
             coachVO.setIdCardFrontImg(coachEntity.getIdCardFrontImg());
             coachVO.setIdCardBackImg(coachEntity.getIdCardBackImg());
+
+            // 设置证号
+            coachVO.setCoachCertNo(coachEntity.getCoachCertNo());
+            coachVO.setRiderCertNo(coachEntity.getRiderCertNo());
         }
-        
-        log.info("最终返回的coachVO证书数据: coachCertificates.size={}, riderCertificates.size={}", 
-                coachVO.getCoachCertificates() != null ? coachVO.getCoachCertificates().size() : 0,
-                coachVO.getRiderCertificates() != null ? coachVO.getRiderCertificates().size() : 0);
-        
+
+        log.info("最终返回的coachVO扁平化证书数据设置完成");
+
         return ResponseDTO.ok(coachVO);
     }
 
@@ -188,15 +197,15 @@ public class CoachService {
     }
 
     /**
-     * 更新教练
+     * 更新教练（扁平化结构版）
      */
     @Transactional(rollbackFor = Exception.class)
     @OperateLog
     public ResponseDTO<String> update(CoachUpdateForm updateForm) {
-        log.info("=== 教练更新开始 ===");
-        log.info("更新表单数据: coachId={}, coachCertificates={}, riderCertificates={}", 
-                updateForm.getCoachId(), updateForm.getCoachCertificates(), updateForm.getRiderCertificates());
-        
+        log.info("=== 教练更新开始（扁平化结构版） ===");
+        log.info("更新表单数据: coachId={}, coachStarLevel={}, riderShowJumpingLevel={}",
+                updateForm.getCoachId(), updateForm.getCoachStarLevel(), updateForm.getRiderShowJumpingLevel());
+
         CoachEntity oldCoachEntity = coachDao.selectById(updateForm.getCoachId());
         if (oldCoachEntity == null || oldCoachEntity.getIsDelete().equals(1)) {
             return ResponseDTO.userErrorParam("教练不存在");
@@ -218,16 +227,17 @@ public class CoachService {
 
         CoachEntity coachEntity = SmartBeanUtil.copy(updateForm, CoachEntity.class);
         coachEntity.setUpdateTime(LocalDateTime.now());
-        
-        log.info("复制后的实体数据: coachCertificates={}, riderCertificates={}", 
-                coachEntity.getCoachCertificates(), coachEntity.getRiderCertificates());
+
+        log.info("复制后的扁平化证书数据: coachStarLevel={}, coachStarCertImages={}, riderShowJumpingLevel={}, riderShowJumpingImages={}",
+                coachEntity.getCoachStarLevel(), coachEntity.getCoachStarCertImages(),
+                coachEntity.getRiderShowJumpingLevel(), coachEntity.getRiderShowJumpingImages());
 
         coachDao.updateById(coachEntity);
-        
+
         // 验证更新后的数据
         CoachEntity updatedEntity = coachDao.selectById(updateForm.getCoachId());
-        log.info("数据库更新后的数据: coachCertificates={}, riderCertificates={}", 
-                updatedEntity.getCoachCertificates(), updatedEntity.getRiderCertificates());
+        log.info("数据库更新后的扁平化数据: coachStarLevel={}, riderShowJumpingLevel={}",
+                updatedEntity.getCoachStarLevel(), updatedEntity.getRiderShowJumpingLevel());
 
         // 记录数据变动
         dataTracerService.update(coachEntity.getCoachId(), DataTracerTypeEnum.CLUB_COACH, oldCoachEntity, coachEntity);
@@ -325,17 +335,17 @@ public class CoachService {
         // 教练专业信息 - 扩展字段
         vo.setCoachId(coach.getCoachId());
         vo.setCoachNo(coach.getCoachNo());
-        vo.setCoachLevel(coach.getCoachLevel());
+        // vo.setCoachLevel(coach.getCoachLevel());//todo
         vo.setSpecialties(coach.getSpecialties());
 
         // 角色信息
         vo.setRoleNameList(Arrays.asList("教练"));
 
         // 备注显示教练专业信息
-        StringBuilder remark = new StringBuilder();
-        if (SmartStringUtil.isNotBlank(coach.getCoachLevel())) {
-            remark.append("等级: ").append(coach.getCoachLevel());
-        }
+        StringBuilder remark = new StringBuilder(); //todo
+        // if (SmartStringUtil.isNotBlank(coach.getCoachLevel())) {
+        //     remark.append("等级: ").append(coach.getCoachLevel());
+        // }
         if (SmartStringUtil.isNotBlank(coach.getSpecialties())) {
             if (remark.length() > 0) remark.append(" | ");
             remark.append("专长: ").append(coach.getSpecialties());
@@ -368,83 +378,5 @@ public class CoachService {
         employee.setAdministratorFlag(false);
 
         return employee;
-    }
-
-    /**
-     * 解析教练证书JSON为VO列表（统一结构版）
-     * @param certificatesJson 证书JSON字符串
-     * @return 教练证书VO列表
-     */
-    private List<CertificateVO> parseCoachCertificates(String certificatesJson) {
-        if (StrUtil.isBlank(certificatesJson)) {
-            return new ArrayList<>();
-        }
-        
-        try {
-            JSONArray array = JSONUtil.parseArray(certificatesJson);
-            List<CertificateVO> result = new ArrayList<>();
-            
-            for (Object obj : array) {
-                JSONObject certObj = (JSONObject) obj;
-                CertificateVO vo = new CertificateVO();
-                
-                vo.setCategory(certObj.getInt("category"));
-                vo.setCategoryText(CoachCertificateConstant.getCoachCategoryText(vo.getCategory()));
-                
-                // 使用统一的level字段
-                Integer level = certObj.getInt("level");
-                vo.setLevel(level);
-                vo.setLevelText(CoachCertificateConstant.getCoachLevelText(level));
-                
-                JSONArray imagesArray = certObj.getJSONArray("images");
-                vo.setImages(imagesArray != null ? imagesArray.toList(String.class) : new ArrayList<>());
-                
-                result.add(vo);
-            }
-            
-            return result;
-        } catch (Exception e) {
-            log.warn("解析教练证书JSON失败: {}", certificatesJson, e);
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * 解析骑手证书JSON为VO列表（统一结构版）
-     * @param certificatesJson 证书JSON字符串
-     * @return 骑手证书VO列表
-     */
-    private List<CertificateVO> parseRiderCertificates(String certificatesJson) {
-        if (StrUtil.isBlank(certificatesJson)) {
-            return new ArrayList<>();
-        }
-        
-        try {
-            JSONArray array = JSONUtil.parseArray(certificatesJson);
-            List<CertificateVO> result = new ArrayList<>();
-            
-            for (Object obj : array) {
-                JSONObject certObj = (JSONObject) obj;
-                CertificateVO vo = new CertificateVO();
-                
-                vo.setCategory(certObj.getInt("category"));
-                vo.setCategoryText(CoachCertificateConstant.getRiderCategoryText(vo.getCategory()));
-                
-                // 使用统一的level字段
-                Integer level = certObj.getInt("level");
-                vo.setLevel(level);
-                vo.setLevelText(CoachCertificateConstant.getRiderLevelText(level));
-                
-                JSONArray imagesArray = certObj.getJSONArray("images");
-                vo.setImages(imagesArray != null ? imagesArray.toList(String.class) : new ArrayList<>());
-                
-                result.add(vo);
-            }
-            
-            return result;
-        } catch (Exception e) {
-            log.warn("解析骑手证书JSON失败: {}", certificatesJson, e);
-            return new ArrayList<>();
-        }
     }
 }

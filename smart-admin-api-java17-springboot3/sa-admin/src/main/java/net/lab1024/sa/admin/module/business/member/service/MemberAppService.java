@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
+import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
+import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.RequestMember;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
@@ -49,6 +51,9 @@ public class MemberAppService {
 
 	@Resource
 	private ClubDao clubDao;
+
+	@Resource
+	private CoachDao coachDao;
 
 	@Resource
 	private DictService dictService;
@@ -127,15 +132,29 @@ public class MemberAppService {
 
 		MemberAppInfoVO infoVO = SmartBeanUtil.copy(member, MemberAppInfoVO.class);
 
-		// 查询并设置俱乐部名称
+		// 查询并设置俱乐部编号和名称
 		if (member.getClubId() != null) {
 			try {
 				var club = clubDao.selectById(member.getClubId());
 				if (club != null) {
 					infoVO.setClubName(club.getClubName());
+					infoVO.setClubCode(club.getClubCode());
 				}
 			} catch (Exception e) {
 				log.warn("查询俱乐部信息失败: clubId={}", member.getClubId(), e);
+			}
+		}
+
+		// 查询并设置默认教练编号和姓名
+		if (member.getDefaultCoachId() != null) {
+			try {
+				CoachEntity coach = coachDao.selectById(member.getDefaultCoachId());
+				if (coach != null) {
+					infoVO.setDefaultCoachNo(coach.getCoachNo());
+					infoVO.setDefaultCoachName(coach.getActualName());
+				}
+			} catch (Exception e) {
+				log.warn("查询教练信息失败: coachId={}", member.getDefaultCoachId(), e);
 			}
 		}
 

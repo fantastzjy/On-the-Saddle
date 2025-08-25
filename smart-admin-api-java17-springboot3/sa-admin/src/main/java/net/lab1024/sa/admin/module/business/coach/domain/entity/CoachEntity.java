@@ -91,14 +91,54 @@ public class CoachEntity {
     @DataTracerFieldLabel("星级教练证号码")
     private String coachCertNo;
 
-    @DataTracerFieldLabel("教练等级")
-    private String coachLevel;
+    // 新增教练证书扫平化字段（4个类别）
+    @DataTracerFieldLabel("教练星级")
+    private Integer coachStarLevel;
+    @DataTracerFieldLabel("教练星级证书图片")
+    private String coachStarCertImages;
+    
+    @DataTracerFieldLabel("教练场地障碍星级")
+    private Integer coachShowJumpingLevel;
+    @DataTracerFieldLabel("教练场地障碍证书图片")
+    private String coachShowJumpingImages;
+    
+    @DataTracerFieldLabel("教练盛装舞步星级")
+    private Integer coachDressageLevel;
+    @DataTracerFieldLabel("教练盛装舞步证书图片")
+    private String coachDressageImages;
+    
+    @DataTracerFieldLabel("教练三项赛星级")
+    private Integer coachEventingLevel;
+    @DataTracerFieldLabel("教练三项赛证书图片")
+    private String coachEventingImages;
 
-    @DataTracerFieldLabel("教练证书列表JSON格式")
-    private String coachCertificates;
+    // 新增骑手证书扫平化字段（3个类别）
+    @DataTracerFieldLabel("骑手场地障碍等级")
+    private Integer riderShowJumpingLevel;
+    @DataTracerFieldLabel("骑手场地障碍证书图片")
+    private String riderShowJumpingImages;
+    
+    @DataTracerFieldLabel("骑手盛装舞步等级")
+    private Integer riderDressageLevel;
+    @DataTracerFieldLabel("骑手盛装舞步证书图片")
+    private String riderDressageImages;
+    
+    @DataTracerFieldLabel("骑手三项赛等级")
+    private Integer riderEventingLevel;
+    @DataTracerFieldLabel("骑手三项赛证书图片")
+    private String riderEventingImages;
 
-    @DataTracerFieldLabel("骑手证书列表JSON格式")  
-    private String riderCertificates;
+    @DataTracerFieldLabel("微信unionId")
+    private String unionId;
+
+    @DataTracerFieldLabel("微信openId")
+    private String openId;
+
+    @DataTracerFieldLabel("最后登录时间")
+    private LocalDateTime lastLoginTime;
+
+    @DataTracerFieldLabel("是否禁用")
+    private Integer disabledFlag;
 
     @DataTracerFieldLabel("教练费")
     private java.math.BigDecimal coachFee;

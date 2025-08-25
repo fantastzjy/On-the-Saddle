@@ -17,9 +17,6 @@ import java.time.LocalDateTime;
 @Schema(description = "会员信息")
 public class MemberAppInfoVO {
 
-    @Schema(description = "会员ID")
-    private Long memberId;
-
     @Schema(description = "会员编号")
     private String memberNo;
 
@@ -41,8 +38,8 @@ public class MemberAppInfoVO {
     @Schema(description = "出生日期")
     private LocalDate birthDate;
 
-    @Schema(description = "所属俱乐部ID")
-    private Long clubId;
+    @Schema(description = "俱乐部编号")
+    private String clubCode;
 
     @Schema(description = "俱乐部名称")
     private String clubName;
@@ -68,8 +65,11 @@ public class MemberAppInfoVO {
     @Schema(description = "是否由监护人创建：1-是 0-否")
     private Integer createdByGuardian;
 
-    @Schema(description = "默认教练ID")
-    private Long defaultCoachId;
+    @Schema(description = "默认教练编号")
+    private String defaultCoachNo;
+
+    @Schema(description = "默认教练姓名")
+    private String defaultCoachName;
 
     @Schema(description = "默认课程级别")
     private String defaultCourseLevel;

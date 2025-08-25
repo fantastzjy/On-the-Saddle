@@ -43,7 +43,7 @@ public class CoachVO {
     @Schema(description = "身份证正面照片地址")
     private String idCardFrontImg;
 
-    @Schema(description = "身份证反面照片地址") 
+    @Schema(description = "身份证反面照片地址")
     private String idCardBackImg;
 
     @Schema(description = "入行时间")
@@ -67,20 +67,45 @@ public class CoachVO {
     @Schema(description = "三项赛等级")
     private String riderLevelEventing;
 
-    @Schema(description = "骑手证书图片地址JSON格式")
-    private String riderCertImgUrl;
-
     @Schema(description = "星级教练证号码")
     private String coachCertNo;
 
-    @Schema(description = "教练等级")
-    private String coachLevel;
+    // 教练证书扫平化字段（4个类别）
+    @Schema(description = "教练星级")
+    private Integer coachStarLevel;
+    @Schema(description = "教练星级证书图片JSON")
+    private String coachStarCertImages;
 
-    @Schema(description = "教练证书信息")
-    private List<CertificateVO> coachCertificates;
+    @Schema(description = "教练场地障碍星级")
+    private Integer coachShowJumpingLevel;
+    @Schema(description = "教练场地障碍证书图片JSON")
+    private String coachShowJumpingImages;
 
-    @Schema(description = "骑手证书信息")
-    private List<CertificateVO> riderCertificates;
+    @Schema(description = "教练盛装舞步星级")
+    private Integer coachDressageLevel;
+    @Schema(description = "教练盛装舞步证书图片JSON")
+    private String coachDressageImages;
+
+    @Schema(description = "教练三项赛星级")
+    private Integer coachEventingLevel;
+    @Schema(description = "教练三项赛证书图片JSON")
+    private String coachEventingImages;
+
+    // 骑手证书扫平化字段（3个类别）
+    @Schema(description = "骑手场地障碍等级")
+    private Integer riderShowJumpingLevel;
+    @Schema(description = "骑手场地障碍证书图片JSON")
+    private String riderShowJumpingImages;
+
+    @Schema(description = "骑手盛装舞步等级")
+    private Integer riderDressageLevel;
+    @Schema(description = "骑手盛装舞步证书图片JSON")
+    private String riderDressageImages;
+
+    @Schema(description = "骑手三项赛等级")
+    private Integer riderEventingLevel;
+    @Schema(description = "骑手三项赛证书图片JSON")
+    private String riderEventingImages;
 
     @Schema(description = "教练费(元/鞍时)")
     private BigDecimal coachFee;
