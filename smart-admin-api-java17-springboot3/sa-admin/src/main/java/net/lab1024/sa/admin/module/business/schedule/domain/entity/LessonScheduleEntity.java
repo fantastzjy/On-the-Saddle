@@ -80,6 +80,36 @@ public class LessonScheduleEntity {
     private Integer duration;
 
     /**
+     * 会员名称 - 关联查询字段，不存储在数据库
+     */
+    @TableField(exist = false)
+    private String memberName;
+
+    /**
+     * 教练名称 - 关联查询字段，不存储在数据库
+     */
+    @TableField(exist = false)
+    private String coachName;
+
+    /**
+     * 马匹名称 - 关联查询字段，不存储在数据库
+     */
+    @TableField(exist = false)
+    private String horseName;
+
+    /**
+     * 课程名称 - 关联查询字段，不存储在数据库
+     */
+    @TableField(exist = false)
+    private String productName;
+
+    /**
+     * 商品类型 - 关联查询字段，不存储在数据库
+     */
+    @TableField(exist = false)
+    private Integer productType;
+
+    /**
      * 是否已发送通知: 0-未发送 1-已发送
      */
     private Integer notificationSent;

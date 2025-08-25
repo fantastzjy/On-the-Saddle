@@ -9,4 +9,127 @@
         LIMIT 1
     </select>
 
+    <!-- 查询教练日视图数据 -->
+    <select id="selectCoachDaySchedules" resultType="net.lab1024.sa.admin.module.business.schedule.domain.entity.LessonScheduleEntity">
+        SELECT 
+            ls.schedule_id,
+            ls.booking_id,
+            ls.schedule_no,
+            ls.club_id,
+            ls.member_id,
+            ls.coach_id,
+            ls.horse_id,
+            ls.lesson_date,
+            ls.start_time,
+            ls.end_time,
+            ls.lesson_status,
+            ls.notification_sent,
+            ls.reminder_sent,
+            ls.create_time,
+            ls.update_time,
+            m.actual_name as member_name,
+            c.actual_name as coach_name,
+            h.horse_name,
+            p.product_name,
+            p.product_type
+        FROM m_lesson_schedule ls
+        LEFT JOIN m_member m ON ls.member_id = m.member_id
+        LEFT JOIN m_coach c ON ls.coach_id = c.coach_id  
+        LEFT JOIN m_horse h ON ls.horse_id = h.horse_id
+        LEFT JOIN m_booking b ON ls.booking_id = b.booking_id
+        LEFT JOIN m_product p ON b.product_id = p.product_id
+        WHERE ls.lesson_date = #{lessonDate}
+          AND ls.club_id = #{clubId}
+          AND ls.lesson_status IN (1,2,3)
+          <if test="coachIds != null and coachIds.size() > 0">
+              AND ls.coach_id IN 
+              <foreach collection="coachIds" item="coachId" open="(" close=")" separator=",">
+                  #{coachId}
+              </foreach>
+          </if>
+        ORDER BY ls.start_time
+    </select>
+
+    <!-- 查询教练周视图数据 -->
+    <select id="selectCoachWeekSchedules" resultType="net.lab1024.sa.admin.module.business.schedule.domain.entity.LessonScheduleEntity">
+        SELECT 
+            ls.schedule_id,
+            ls.booking_id,
+            ls.schedule_no,
+            ls.club_id,
+            ls.member_id,
+            ls.coach_id,
+            ls.horse_id,
+            ls.lesson_date,
+            ls.start_time,
+            ls.end_time,
+            ls.lesson_status,
+            ls.notification_sent,
+            ls.reminder_sent,
+            ls.create_time,
+            ls.update_time,
+            m.actual_name as member_name,
+            c.actual_name as coach_name,
+            h.horse_name,
+            p.product_name,
+            p.product_type
+        FROM m_lesson_schedule ls
+        LEFT JOIN m_member m ON ls.member_id = m.member_id
+        LEFT JOIN m_coach c ON ls.coach_id = c.coach_id  
+        LEFT JOIN m_horse h ON ls.horse_id = h.horse_id
+        LEFT JOIN m_booking b ON ls.booking_id = b.booking_id
+        LEFT JOIN m_product p ON b.product_id = p.product_id
+        WHERE ls.lesson_date BETWEEN #{startDate} AND #{endDate}
+          AND ls.club_id = #{clubId}
+          AND ls.lesson_status IN (1,2,3)
+          <if test="coachIds != null and coachIds.size() > 0">
+              AND ls.coach_id IN 
+              <foreach collection="coachIds" item="coachId" open="(" close=")" separator=",">
+                  #{coachId}
+              </foreach>
+          </if>
+        ORDER BY ls.lesson_date, ls.start_time
+    </select>
+
+    <!-- 查询教练月视图数据 -->
+    <select id="selectCoachMonthSchedules" resultType="net.lab1024.sa.admin.module.business.schedule.domain.entity.LessonScheduleEntity">
+        SELECT 
+            ls.schedule_id,
+            ls.booking_id,
+            ls.schedule_no,
+            ls.club_id,
+            ls.member_id,
+            ls.coach_id,
+            ls.horse_id,
+            ls.lesson_date,
+            ls.start_time,
+            ls.end_time,
+            ls.lesson_status,
+            ls.notification_sent,
+            ls.reminder_sent,
+            ls.create_time,
+            ls.update_time,
+            m.actual_name as member_name,
+            c.actual_name as coach_name,
+            h.horse_name,
+            p.product_name,
+            p.product_type
+        FROM m_lesson_schedule ls
+        LEFT JOIN m_member m ON ls.member_id = m.member_id
+        LEFT JOIN m_coach c ON ls.coach_id = c.coach_id  
+        LEFT JOIN m_horse h ON ls.horse_id = h.horse_id
+        LEFT JOIN m_booking b ON ls.booking_id = b.booking_id
+        LEFT JOIN m_product p ON b.product_id = p.product_id
+        WHERE ls.lesson_date BETWEEN #{startDate} AND #{endDate}
+          AND ls.club_id = #{clubId}
+          AND ls.lesson_status IN (1,2,3)
+          <if test="coachIds != null and coachIds.size() > 0">
+              AND ls.coach_id IN 
+              <foreach collection="coachIds" item="coachId" open="(" close=")" separator=",">
+                  #{coachId}
+              </foreach>
+          </if>
+        ORDER BY ls.lesson_date, ls.start_time
+    </select>
+
 </mapper>

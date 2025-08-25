@@ -865,6 +865,8 @@ public class HomeService {
 
         // 基础信息
         vo.setHorseName(horse.getHorseName());
+        vo.setBreed(horse.getBreed());
+        vo.setColor(horse.getColor());
         vo.setChipNo(horse.getChipNo());
 
         // 生日格式化（yyyy/MM/dd）

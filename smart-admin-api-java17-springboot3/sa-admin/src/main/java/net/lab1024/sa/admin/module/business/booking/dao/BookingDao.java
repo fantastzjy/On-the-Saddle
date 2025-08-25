@@ -1,7 +1,11 @@
 package net.lab1024.sa.admin.module.business.booking.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity;
+import net.lab1024.sa.admin.module.business.booking.domain.form.BookingQueryForm;
+import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingSimpleListVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -85,4 +89,10 @@ public interface BookingDao extends BaseMapper<BookingEntity> {
      * 根据订单ID列表批量查询预约
      */
     List<BookingEntity> selectByOrderIds(@Param("orderIds") List<Long> orderIds);
+
+    /**
+     * 简化查询预约列表 - 用于列表视图
+     * 只返回必要字段：会员名、教练名、马匹名、预约时间、预约状态、更新人、更新时间
+     */
+    IPage<BookingSimpleListVO> selectSimpleBookingList(Page<BookingSimpleListVO> page, @Param("queryForm") BookingQueryForm queryForm);
 }

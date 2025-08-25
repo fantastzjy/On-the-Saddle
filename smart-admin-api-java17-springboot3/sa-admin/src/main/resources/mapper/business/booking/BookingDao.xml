@@ -38,4 +38,52 @@
         ORDER BY create_time DESC
     </select>
 
+    <!-- 简化查询预约列表 - 用于列表视图 -->
+    <select id="selectSimpleBookingList" resultType="net.lab1024.sa.admin.module.business.booking.domain.vo.BookingSimpleListVO">
+        SELECT 
+            b.booking_id as bookingId,
+            p.product_name as courseName,
+            m.actual_name as memberName,
+            c.actual_name as coachName,
+            h.horse_name as horseName,
+            b.actual_coach_fee as coachFee,
+            b.actual_horse_fee as horseFee,
+            (b.actual_coach_fee + b.actual_horse_fee) as totalFee,
+            b.start_time as startTime,
+            b.booking_status as bookingStatus,
+            b.update_by as updateBy,
+            b.update_time as updateTime
+        FROM m_booking b
+        LEFT JOIN m_member m ON b.member_id = m.member_id
+        LEFT JOIN m_coach c ON b.coach_id = c.coach_id
+        LEFT JOIN m_horse h ON b.horse_id = h.horse_id
+        LEFT JOIN m_product p ON b.product_id = p.product_id
+        <where>
+            1=1
+            <if test="queryForm.keywords != null and queryForm.keywords != ''">
+                AND (
+                    m.actual_name LIKE CONCAT('%', #{queryForm.keywords}, '%') OR
+                    c.actual_name LIKE CONCAT('%', #{queryForm.keywords}, '%') OR
+                    p.product_name LIKE CONCAT('%', #{queryForm.keywords}, '%')
+                )
+            </if>
+            <if test="queryForm.bookingStatus != null">
+                AND b.booking_status = #{queryForm.bookingStatus}
+            </if>
+            <if test="queryForm.coachId != null">
+                AND b.coach_id = #{queryForm.coachId}
+            </if>
+            <if test="queryForm.memberId != null">
+                AND b.member_id = #{queryForm.memberId}
+            </if>
+            <if test="queryForm.startDate != null">
+                AND b.start_time >= #{queryForm.startDate}
+            </if>
+            <if test="queryForm.endDate != null">
+                AND b.end_time &lt;= #{queryForm.endDate}
+            </if>
+        </where>
+        ORDER BY b.create_time DESC
+    </select>
+
 </mapper>

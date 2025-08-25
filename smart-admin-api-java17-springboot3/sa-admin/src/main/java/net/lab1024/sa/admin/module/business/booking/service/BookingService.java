@@ -11,6 +11,7 @@ import net.lab1024.sa.admin.module.business.booking.domain.form.BookingReschedul
 import net.lab1024.sa.admin.module.business.booking.domain.form.PackageBookingCreateForm;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingDetailVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingListVO;
+import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingSimpleListVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.ConflictCheckResult;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
@@ -121,6 +122,31 @@ public class BookingService {
 		} catch (Exception e) {
 			log.error("查询预约列表失败", e);
 			return ResponseDTO.userErrorParam("查询预约列表失败");
+		}
+	}
+
+	/**
+	 * 简化查询预约列表 - 用于列表视图
+	 * 只返回必要字段：会员名、教练名、马匹名、预约时间、预约状态、更新人、更新时间
+	 */
+	public ResponseDTO<PageResult<BookingSimpleListVO>> querySimpleBookingList(BookingQueryForm queryForm) {
+		try {
+			Page<BookingSimpleListVO> page = new Page<>(queryForm.getPageNum(), queryForm.getPageSize());
+			IPage<BookingSimpleListVO> pageResult = bookingDao.selectSimpleBookingList(page, queryForm);
+
+			// 构建分页结果
+			PageResult<BookingSimpleListVO> result = new PageResult<>();
+			result.setList(pageResult.getRecords());
+			result.setTotal(pageResult.getTotal());
+			result.setPageNum(pageResult.getCurrent());
+			result.setPageSize(pageResult.getSize());
+
+			log.info("查询简化预约列表成功，共{}条记录", result.getTotal());
+			return ResponseDTO.ok(result);
+
+		} catch (Exception e) {
+			log.error("查询简化预约列表失败", e);
+			return ResponseDTO.userErrorParam("查询简化预约列表失败");
 		}
 	}
 

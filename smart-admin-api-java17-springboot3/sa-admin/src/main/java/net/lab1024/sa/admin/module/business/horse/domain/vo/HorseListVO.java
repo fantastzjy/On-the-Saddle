@@ -78,6 +78,12 @@ public class HorseListVO {
     @Schema(description = "责任马工姓名")
     private String responsibleGroomName;
 
+    @Schema(description = "寄养开始日期")
+    private LocalDateTime boardingStartDate;
+
+    @Schema(description = "寄养结束日期")
+    private LocalDateTime boardingEndDate;
+
     @Schema(description = "寄养费(元)")
     private BigDecimal boardingFee;
 

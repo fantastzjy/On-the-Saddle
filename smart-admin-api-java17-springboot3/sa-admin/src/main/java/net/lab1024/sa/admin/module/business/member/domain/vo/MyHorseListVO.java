@@ -19,6 +19,12 @@ public class MyHorseListVO {
     @Schema(description = "马匹名字")
     private String horseName;
 
+    @Schema(description = "血统/品种")
+    private String breed;
+
+    @Schema(description = "毛色")
+    private String color;
+
     @Schema(description = "生日", example = "2020/03/15")
     private String birthDate;
 

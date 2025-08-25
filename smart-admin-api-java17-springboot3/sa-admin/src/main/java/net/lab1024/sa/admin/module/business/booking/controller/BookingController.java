@@ -9,6 +9,7 @@ import net.lab1024.sa.admin.module.business.booking.domain.form.BookingReschedul
 import net.lab1024.sa.admin.module.business.booking.domain.form.PackageBookingCreateForm;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingDetailVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingListVO;
+import net.lab1024.sa.admin.module.business.booking.domain.vo.BookingSimpleListVO;
 import net.lab1024.sa.admin.module.business.booking.domain.vo.ConflictCheckResult;
 import net.lab1024.sa.admin.module.business.booking.service.BookingService;
 import net.lab1024.sa.base.common.controller.SupportBaseController;
@@ -43,6 +44,12 @@ public class BookingController extends SupportBaseController {
     @PostMapping("/query")
     public ResponseDTO<PageResult<BookingListVO>> queryBookingList(@RequestBody @Valid BookingQueryForm queryForm) {
         return bookingService.queryBookingList(queryForm);
+    }
+
+    @Operation(summary = "预约简化列表查询", description = "分页查询预约简化列表，用于列表视图快速显示")
+    @PostMapping("/simple-query")
+    public ResponseDTO<PageResult<BookingSimpleListVO>> querySimpleBookingList(@RequestBody @Valid BookingQueryForm queryForm) {
+        return bookingService.querySimpleBookingList(queryForm);
     }
 
     @Operation(summary = "预约详情", description = "获取预约详细信息")
