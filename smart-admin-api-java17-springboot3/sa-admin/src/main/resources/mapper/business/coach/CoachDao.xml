@@ -15,11 +15,11 @@
             c.entry_date,
             c.specialties,
             c.rider_cert_no,
-            c.rider_level_show_jumping,
-            c.rider_level_dressage,
-            c.rider_level_eventing,
+            c.rider_show_jumping_level,
+            c.rider_dressage_level,
+            c.rider_eventing_level,
             c.coach_cert_no,
-            c.coach_level,
+            c.coach_star_level,
             c.coach_fee,
             c.sort_order,
             c.create_by,
@@ -42,16 +42,7 @@
                 AND c.user_id = #{queryForm.userId}
             </if>
             <if test="queryForm.coachLevel != null and queryForm.coachLevel != ''">
-                AND c.coach_level = #{queryForm.coachLevel}
-            </if>
-            <if test="queryForm.riderLevelShowJumping != null and queryForm.riderLevelShowJumping != ''">
-                AND c.rider_level_show_jumping = #{queryForm.riderLevelShowJumping}
-            </if>
-            <if test="queryForm.riderLevelDressage != null and queryForm.riderLevelDressage != ''">
-                AND c.rider_level_dressage = #{queryForm.riderLevelDressage}
-            </if>
-            <if test="queryForm.riderLevelEventing != null and queryForm.riderLevelEventing != ''">
-                AND c.rider_level_eventing = #{queryForm.riderLevelEventing}
+                AND c.coach_star_level = #{queryForm.coachLevel}
             </if>
             <if test="queryForm.startDate != null and queryForm.startDate != ''">
                 AND DATE_FORMAT(c.create_time, '%Y-%m-%d') &gt;= #{queryForm.startDate}
@@ -96,13 +87,21 @@
             c.specialties,
             c.introduction,
             c.rider_cert_no,
-            c.rider_level_show_jumping,
-            c.rider_level_dressage,
-            c.rider_level_eventing,
-            c.rider_cert_img_url,
+            c.rider_show_jumping_level,
+            c.rider_dressage_level,
+            c.rider_eventing_level,
+            c.rider_show_jumping_images,
+            c.rider_dressage_images,
+            c.rider_eventing_images,
             c.coach_cert_no,
-            c.coach_level,
-            c.coach_cert_img_url,
+            c.coach_star_level,
+            c.coach_star_cert_images,
+            c.coach_show_jumping_level,
+            c.coach_show_jumping_images,
+            c.coach_dressage_level,
+            c.coach_dressage_images,
+            c.coach_eventing_level,
+            c.coach_eventing_images,
             c.coach_fee,
             c.sort_order,
             c.create_by,
@@ -130,11 +129,11 @@
             c.entry_date,
             c.specialties,
             c.rider_cert_no,
-            c.rider_level_show_jumping,
-            c.rider_level_dressage,
-            c.rider_level_eventing,
+            c.rider_show_jumping_level,
+            c.rider_dressage_level,
+            c.rider_eventing_level,
             c.coach_cert_no,
-            c.coach_level,
+            c.coach_star_level,
             c.coach_fee,
             c.sort_order,
             c.create_by,

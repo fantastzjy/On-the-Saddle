@@ -91,13 +91,13 @@
               {{ coach.riderCertNo || '-' }}
             </a-descriptions-item>
             <a-descriptions-item label="场地障碍等级">
-              {{ coach.riderLevelShowJumping || '-' }}
+              {{ getRiderLevelText(coach.riderShowJumpingLevel) }}
             </a-descriptions-item>
             <a-descriptions-item label="盛装舞步等级">
-              {{ coach.riderLevelDressage || '-' }}
+              {{ getRiderLevelText(coach.riderDressageLevel) }}
             </a-descriptions-item>
             <a-descriptions-item label="三项赛等级">
-              {{ coach.riderLevelEventing || '-' }}
+              {{ getRiderLevelText(coach.riderEventingLevel) }}
             </a-descriptions-item>
           </a-descriptions>
         </a-card>
@@ -277,6 +277,13 @@ function getRiderCategoryColor(category) {
     3: 'orange'    // 三项赛
   };
   return colorMap[category] || 'default';
+}
+
+// 获取骑手等级文本
+function getRiderLevelText(level) {
+  if (!level || level === 0) return '-';
+  const levelTexts = ['初三', '初二', '初一', '中三', '中二', '中一', '国三', '国二', '国一', '健将级'];
+  return levelTexts[level - 1] || '未知等级';
 }
 
 // 判断是否为有效的JSON字符串

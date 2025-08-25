@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import net.lab1024.sa.base.module.support.datatracer.annoation.DataTracerFieldLabel;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -78,6 +79,9 @@ public class HorseEntity {
 
     @DataTracerFieldLabel("寄养结束日期")
     private LocalDateTime boardingEndDate;
+
+    @DataTracerFieldLabel("寄养费")
+    private BigDecimal boardingFee;
 
     @DataTracerFieldLabel("健康状态")
     private Integer healthStatus;

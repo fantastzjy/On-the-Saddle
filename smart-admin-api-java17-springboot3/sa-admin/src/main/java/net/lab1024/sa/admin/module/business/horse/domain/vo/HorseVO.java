@@ -3,6 +3,7 @@ package net.lab1024.sa.admin.module.business.horse.domain.vo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -85,6 +86,9 @@ public class HorseVO {
 
     @Schema(description = "寄养结束日期")
     private LocalDateTime boardingEndDate;
+
+    @Schema(description = "寄养费(元)")
+    private BigDecimal boardingFee;
 
     @Schema(description = "健康状态：1-健康 2-观察 3-治疗")
     private Integer healthStatus;

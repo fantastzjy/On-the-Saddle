@@ -76,18 +76,6 @@ public class CoachEntity {
     @DataTracerFieldLabel("骑手证号码")
     private String riderCertNo;
 
-    @DataTracerFieldLabel("场地障碍等级")
-    private String riderLevelShowJumping;
-
-    @DataTracerFieldLabel("盛装舞步等级")
-    private String riderLevelDressage;
-
-    @DataTracerFieldLabel("三项赛等级")
-    private String riderLevelEventing;
-
-    @DataTracerFieldLabel("骑手证书图片地址JSON格式")
-    private String riderCertImgUrl;
-
     @DataTracerFieldLabel("星级教练证号码")
     private String coachCertNo;
 

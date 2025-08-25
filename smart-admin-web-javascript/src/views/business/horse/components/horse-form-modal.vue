@@ -180,6 +180,17 @@
             />
           </a-form-item>
         </a-col>
+        <a-col :span="12">
+          <a-form-item label="寄养费(元)" name="boardingFee">
+            <a-input-number
+              v-model:value="formState.form.boardingFee"
+              placeholder="请输入寄养费"
+              :min="0"
+              :precision="2"
+              style="width: 100%"
+            />
+          </a-form-item>
+        </a-col>
       </a-row>
 
       <a-row :gutter="20">
@@ -251,6 +262,7 @@ const formState = reactive({
     responsibleGroomId: undefined,
     boardingStartDate: undefined,
     boardingEndDate: undefined,
+    boardingFee: undefined,
     healthStatus: 1,
     workStatus: 1,
     remark: '',
@@ -305,6 +317,7 @@ function resetForm() {
     responsibleGroomId: undefined,
     boardingStartDate: undefined,
     boardingEndDate: undefined,
+    boardingFee: undefined,
     healthStatus: 1,
     workStatus: 1,
     remark: '',
@@ -316,6 +329,7 @@ function onHorseTypeChange() {
   if (formState.form.horseType !== 2) {
     formState.form.boardingStartDate = undefined;
     formState.form.boardingEndDate = undefined;
+    formState.form.boardingFee = undefined;
   }
 }
 

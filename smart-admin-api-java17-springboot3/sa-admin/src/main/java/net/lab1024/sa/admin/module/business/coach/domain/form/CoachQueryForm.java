@@ -28,15 +28,6 @@ public class CoachQueryForm extends PageParam {
     @Schema(description = "教练等级")
     private String coachLevel;
 
-    @Schema(description = "场地障碍等级")
-    private String riderLevelShowJumping;
-
-    @Schema(description = "盛装舞步等级")
-    private String riderLevelDressage;
-
-    @Schema(description = "三项赛等级")
-    private String riderLevelEventing;
-
     @Schema(description = "创建开始日期")
     private String startDate;
 

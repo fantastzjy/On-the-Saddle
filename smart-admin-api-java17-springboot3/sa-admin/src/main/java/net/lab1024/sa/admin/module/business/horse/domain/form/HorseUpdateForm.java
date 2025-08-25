@@ -3,8 +3,10 @@ package net.lab1024.sa.admin.module.business.horse.domain.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -79,6 +81,10 @@ public class HorseUpdateForm {
 
     @Schema(description = "寄养结束日期")
     private LocalDateTime boardingEndDate;
+
+    @Schema(description = "寄养费(元)")
+    @DecimalMin(value = "0.00", message = "寄养费不能小于0")
+    private BigDecimal boardingFee;
 
     @Schema(description = "健康状态：1-健康 2-观察 3-治疗")
     private Integer healthStatus;

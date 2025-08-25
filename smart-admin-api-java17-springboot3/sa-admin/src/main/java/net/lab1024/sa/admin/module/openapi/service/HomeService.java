@@ -266,16 +266,19 @@ public class HomeService {
         }
 
         // 添加骑手等级标签
-        if (StrUtil.isNotBlank(coach.getRiderLevelShowJumping())) {
-            tags.add(coach.getRiderLevelShowJumping() + "场地障碍");
+        if (coach.getRiderShowJumpingLevel() != null && coach.getRiderShowJumpingLevel() > 0) {
+            String levelText = CoachCertificateConstant.getRiderLevelText(coach.getRiderShowJumpingLevel());
+            tags.add(levelText + "场地障碍");
         }
 
-        if (StrUtil.isNotBlank(coach.getRiderLevelDressage())) {
-            tags.add(coach.getRiderLevelDressage() + "盛装舞步");
+        if (coach.getRiderDressageLevel() != null && coach.getRiderDressageLevel() > 0) {
+            String levelText = CoachCertificateConstant.getRiderLevelText(coach.getRiderDressageLevel());
+            tags.add(levelText + "盛装舞步");
         }
 
-        if (StrUtil.isNotBlank(coach.getRiderLevelEventing())) {
-            tags.add(coach.getRiderLevelEventing() + "三项赛");
+        if (coach.getRiderEventingLevel() != null && coach.getRiderEventingLevel() > 0) {
+            String levelText = CoachCertificateConstant.getRiderLevelText(coach.getRiderEventingLevel());
+            tags.add(levelText + "三项赛");
         }
 
         return tags;

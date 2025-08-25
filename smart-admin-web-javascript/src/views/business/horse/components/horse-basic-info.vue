@@ -77,6 +77,9 @@
           <a-descriptions-item label="寄养结束时间">
             {{ horseDetail.boardingEndDate ? dayjs(horseDetail.boardingEndDate).format('YYYY-MM-DD HH:mm:ss') : '-' }}
           </a-descriptions-item>
+          <a-descriptions-item label="寄养费">
+            {{ horseDetail.boardingFee ? '¥' + parseFloat(horseDetail.boardingFee).toFixed(2) : '-' }}
+          </a-descriptions-item>
         </a-descriptions>
       </a-col>
     </a-row>

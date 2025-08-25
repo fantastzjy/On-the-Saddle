@@ -55,21 +55,6 @@ public class CoachUpdateForm {
     @Length(max = 100, message = "骑手证号码最多100字符")
     private String riderCertNo;
 
-    @Schema(description = "场地障碍等级：初三,初二,初一,中三,中二,中一,国三,国二,国一,健将级")
-    @Length(max = 20, message = "场地障碍等级最多20字符")
-    private String riderLevelShowJumping;
-
-    @Schema(description = "盛装舞步等级：初三,初二,初一,中三,中二,中一,国三,国二,国一,健将级")
-    @Length(max = 20, message = "盛装舞步等级最多20字符")
-    private String riderLevelDressage;
-
-    @Schema(description = "三项赛等级：初三,初二,初一,中三,中二,中一,国三,国二,国一,健将级")
-    @Length(max = 20, message = "三项赛等级最多20字符")
-    private String riderLevelEventing;
-
-    @Schema(description = "骑手证书图片地址JSON格式")
-    private String riderCertImgUrl;
-
     @Schema(description = "星级教练证号码")
     @Length(max = 100, message = "星级教练证号码最多100字符")
     private String coachCertNo;

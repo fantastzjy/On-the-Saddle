@@ -58,15 +58,6 @@ public class CoachVO {
     @Schema(description = "骑手证号码")
     private String riderCertNo;
 
-    @Schema(description = "场地障碍等级")
-    private String riderLevelShowJumping;
-
-    @Schema(description = "盛装舞步等级")
-    private String riderLevelDressage;
-
-    @Schema(description = "三项赛等级")
-    private String riderLevelEventing;
-
     @Schema(description = "星级教练证号码")
     private String coachCertNo;
 

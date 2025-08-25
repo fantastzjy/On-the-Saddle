@@ -220,21 +220,24 @@ const columns = ref([
   },
   {
     title: '场地障碍等级',
-    dataIndex: 'riderLevelShowJumping',
+    dataIndex: 'riderShowJumpingLevel',
     width: 120,
-    align: 'center'
+    align: 'center',
+    customRender: ({ text }) => getRiderLevelText(text)
   },
   {
     title: '盛装舞步等级',
-    dataIndex: 'riderLevelDressage',
+    dataIndex: 'riderDressageLevel',
     width: 120,
-    align: 'center'
+    align: 'center',
+    customRender: ({ text }) => getRiderLevelText(text)
   },
   {
     title: '三项赛等级',
-    dataIndex: 'riderLevelEventing',
+    dataIndex: 'riderEventingLevel',
     width: 120,
-    align: 'center'
+    align: 'center',
+    customRender: ({ text }) => getRiderLevelText(text)
   },
   {
     title: '教练证号',
@@ -289,6 +292,13 @@ function update(coachId) {
 
 function detail(coachId) {
   window.open(`#/club/coach/coach-detail?coachId=${coachId}`, '_blank');
+}
+
+// 获取骑手等级文本
+function getRiderLevelText(level) {
+  if (!level || level === 0) return '-';
+  const levelTexts = ['初三', '初二', '初一', '中三', '中二', '中一', '国三', '国二', '国一', '健将级'];
+  return levelTexts[level - 1] || '未知等级';
 }
 
 async function confirmDelete(coachId) {

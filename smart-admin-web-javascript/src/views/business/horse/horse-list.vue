@@ -87,6 +87,9 @@
           <template v-else-if="column.dataIndex === 'birthDate'">
             {{ text ? dayjs(text).format('YYYY-MM-DD') : '-' }}
           </template>
+          <template v-else-if="column.dataIndex === 'boardingFee'">
+            {{ text ? '¥' + parseFloat(text).toFixed(2) : '-' }}
+          </template>
           <template v-else-if="column.dataIndex === 'action'">
             <div class="smart-table-operate">
               <a-button v-privilege="'club:horse:query'" type="link" @click="goDetail(record.horseId)">详情</a-button>
@@ -203,6 +206,12 @@ const columns = [
   {
     title: '责任马工',
     dataIndex: 'responsibleGroomName',
+    width: 100,
+    align: 'center'
+  },
+  {
+    title: '寄养费(元)',
+    dataIndex: 'boardingFee',
     width: 100,
     align: 'center'
   },
