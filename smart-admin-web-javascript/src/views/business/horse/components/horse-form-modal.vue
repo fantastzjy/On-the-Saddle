@@ -111,30 +111,7 @@
         </a-col> -->
       </a-row>
 
-      <a-row :gutter="20" v-if="formState.form.horseType === 2">
-        <a-col :span="12">
-          <a-form-item label="马主" name="ownerId">
-            <a-select v-model:value="formState.form.ownerId" placeholder="请选择马主" showSearch>
-              <a-select-option v-for="owner in ownerList" :key="owner.employeeId" :value="owner.employeeId">
-                {{ owner.actualName }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <a-row :gutter="20" v-if="formState.form.horseType === 3">
-        <a-col :span="12">
-          <a-form-item label="所属教练" name="coachId">
-            <a-select v-model:value="formState.form.coachId" placeholder="请选择教练" showSearch>
-              <a-select-option v-for="coach in coachList" :key="coach.coachId" :value="coach.coachId">
-                {{ coach.userName }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
-        </a-col>
-      </a-row>
-
+      <!-- 第一行：责任教练 + 责任马工 -->
       <a-row :gutter="20">
         <a-col :span="12">
           <a-form-item label="责任教练" name="responsibleCoachId">
@@ -145,9 +122,6 @@
             </a-select>
           </a-form-item>
         </a-col>
-      </a-row>
-
-      <a-row :gutter="20">
         <a-col :span="12">
           <a-form-item label="责任马工" name="responsibleGroomId">
             <a-select v-model:value="formState.form.responsibleGroomId" placeholder="请选择责任马工" showSearch allowClear>
@@ -157,7 +131,32 @@
             </a-select>
           </a-form-item>
         </a-col>
-        <a-col :span="12" v-if="formState.form.horseType === 2">
+      </a-row>
+
+      <!-- 第二行：所属教练 + 马主 -->
+      <a-row :gutter="20">
+        <a-col :span="12">
+          <a-form-item label="所属教练" name="coachId">
+            <a-select v-model:value="formState.form.coachId" placeholder="请选择教练" showSearch allowClear>
+              <a-select-option v-for="coach in coachList" :key="coach.coachId" :value="coach.coachId">
+                {{ coach.userName }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="马主" name="ownerId">
+            <a-select v-model:value="formState.form.ownerId" placeholder="请选择马主" showSearch allowClear>
+              <a-select-option v-for="owner in ownerList" :key="owner.employeeId" :value="owner.employeeId">
+                {{ owner.actualName }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <a-row :gutter="20" v-if="formState.form.horseType === 2">
+        <a-col :span="12">
           <a-form-item label="寄养开始时间" name="boardingStartDate">
             <a-date-picker 
               v-model:value="formState.form.boardingStartDate" 
@@ -167,9 +166,6 @@
             />
           </a-form-item>
         </a-col>
-      </a-row>
-
-      <a-row :gutter="20" v-if="formState.form.horseType === 2">
         <a-col :span="12">
           <a-form-item label="寄养结束时间" name="boardingEndDate">
             <a-date-picker 
@@ -257,6 +253,7 @@ const formState = reactive({
     birthDate: undefined,
     height: undefined,
     weight: undefined,
+    coachId: undefined,
     ownerId: undefined,
     responsibleCoachId: undefined,
     responsibleGroomId: undefined,
@@ -312,6 +309,7 @@ function resetForm() {
     birthDate: undefined,
     height: undefined,
     weight: undefined,
+    coachId: undefined,
     ownerId: undefined,
     responsibleCoachId: undefined,
     responsibleGroomId: undefined,
@@ -325,7 +323,10 @@ function resetForm() {
 }
 
 function onHorseTypeChange() {
+  // 归属类型改变时，清空相关字段
+  formState.form.coachId = undefined;
   formState.form.ownerId = undefined;
+  
   if (formState.form.horseType !== 2) {
     formState.form.boardingStartDate = undefined;
     formState.form.boardingEndDate = undefined;

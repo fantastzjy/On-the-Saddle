@@ -16,6 +16,7 @@ import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
 import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
+import net.lab1024.sa.admin.module.business.order.constant.OrderQueryStatusEnum;
 import net.lab1024.sa.admin.module.business.order.constant.OrderStatusEnum;
 import net.lab1024.sa.admin.module.business.order.constant.OrderTypeEnum;
 import net.lab1024.sa.admin.module.business.order.constant.ProductTypeEnum;
@@ -90,6 +91,18 @@ public class AppOrderService {
 
 			// 2. 构建查询条件
 			List<Integer> statusList = getStatusByGroup(form.getStatus());
+
+			// 特殊处理：课程预约状态返回空结果
+			if (form.getStatus() != null && form.getStatus() == 1) {
+				PageResult<OrderListVO> emptyResult = new PageResult<>();
+				emptyResult.setList(new ArrayList<>());
+				emptyResult.setTotal(0L);
+				emptyResult.setPageNum((long) form.getPageNum());
+				emptyResult.setPageSize((long) form.getPageSize());
+				emptyResult.setPages(0L);
+				emptyResult.setEmptyFlag(true);
+				return ResponseDTO.ok(emptyResult);
+			}
 
 			// 3. 分页查询订单
 			Page<OrderEntity> page = new Page<>(form.getPageNum(), form.getPageSize());
@@ -168,23 +181,24 @@ public class AppOrderService {
 	}
 
 	/**
-	 * 根据状态分组获取状态列表
+	 * 根据状态获取状态列表
 	 */
-	private List<Integer> getStatusByGroup(String statusGroup) {
-		if (StrUtil.isBlank(statusGroup)) {
+	private List<Integer> getStatusByGroup(Integer status) {
+		if (status == null) {
 			return Arrays.asList(1, 2, 3, 4, 5); // 全部状态
 		}
 
-		switch (statusGroup) {
-			case "pending":   // 待完成
-				return Arrays.asList(1, 2); // 待支付、已支付
-			case "completed": // 已完成
-				return Arrays.asList(3);     // 已核销
-			case "after_sale": // 退款/售后
-				return Arrays.asList(4, 5);  // 已取消、已退款
-			default:
-				return Arrays.asList(1, 2, 3, 4, 5); // 全部
+		// 特殊处理：课程预约状态暂时返回空列表
+		if (status == 1) {
+			return new ArrayList<>(); // 空实现，返回空结果
 		}
+
+		OrderQueryStatusEnum statusEnum = OrderQueryStatusEnum.getByCode(status);
+		if (statusEnum == null) {
+			return Arrays.asList(1, 2, 3, 4, 5); // 默认全部
+		}
+
+		return statusEnum.getOrderStatusList();
 	}
 
 	/**

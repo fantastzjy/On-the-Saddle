@@ -68,7 +68,7 @@
           <template #icon>
             <PlusOutlined />
           </template>
-          新增课程
+          新增
         </a-button>
       </div>
       <div class="smart-table-setting-block">

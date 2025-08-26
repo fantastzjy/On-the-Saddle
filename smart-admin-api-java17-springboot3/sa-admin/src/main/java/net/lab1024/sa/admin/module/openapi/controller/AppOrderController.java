@@ -37,7 +37,7 @@ public class AppOrderController {
      */
     @PostMapping("/list")
     @NoNeedLogin
-    @Operation(summary = "获取订单列表", description = "支持按状态分组查询：pending-待完成, completed-已完成, afterSale-退款/售后")
+    @Operation(summary = "获取订单列表", description = "支持按状态查询：1-课程预约(预留), 2-待完成, 3-已完成, 4-退款/售后")
     public ResponseDTO<PageResult<OrderListVO>> getOrderList(@RequestBody @Valid OrderQueryForm form) {
         return appOrderService.getOrderList(form);
     }

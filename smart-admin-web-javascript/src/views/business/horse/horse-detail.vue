@@ -1,9 +1,8 @@
 <template>
   <a-page-header
     :ghost="false"
-    :title="`马匹详情 - ${horseDetail.horseName || ''}`"
+    :title="`马匹健康计划 - ${horseDetail.horseName || ''}`"
     @back="goBack"
-    @click="() => console.log('page header clicked')"
   >
     <template #extra>
       <a-button v-privilege="'club:horse:update'" type="primary" @click="showEditModal">
@@ -16,14 +15,7 @@
   </a-page-header>
 
   <a-card :loading="loading">
-    <a-tabs v-model:activeKey="activeTab">
-      <a-tab-pane key="basic" tab="基本信息">
-        <HorseBasicInfo :horse-detail="horseDetail" />
-      </a-tab-pane>
-      <a-tab-pane key="health-plan" tab="健康计划">
-        <HorseHealthPlan :horse-id="horseId" />
-      </a-tab-pane>
-    </a-tabs>
+    <HorseHealthPlan :horse-id="horseId" />
   </a-card>
 
   <HorseFormModal ref="formModalRef" @reloadList="loadHorseDetail" />
@@ -32,38 +24,22 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons-vue';
+import { EditOutlined } from '@ant-design/icons-vue';
 import { horseApi } from '/@/api/business/horse/horse-api';
 import { smartSentry } from '/@/lib/smart-sentry';
 import HorseFormModal from './components/horse-form-modal.vue';
-import HorseBasicInfo from './components/horse-basic-info.vue';
 import HorseHealthPlan from './components/horse-health-plan.vue';
 
 const route = useRoute();
 const router = useRouter();
 
 const horseId = ref(route.query.horseId);
-const activeTab = ref(route.query.tab || 'basic');
 const loading = ref(false);
 const formModalRef = ref();
 
 const horseDetail = reactive({
   horseId: undefined,
-  horseCode: '',
   horseName: '',
-  clubName: '',
-  horseType: 1,
-  chipNo: '',
-  passportNo: '',
-  breed: '',
-  gender: 1,
-  color: '',
-  birthDate: '',
-  ownerName: '',
-  responsibleCoachName: '',
-  healthStatus: 1,
-  workStatus: 1,
-  createTime: '',
 });
 
 async function loadHorseDetail() {

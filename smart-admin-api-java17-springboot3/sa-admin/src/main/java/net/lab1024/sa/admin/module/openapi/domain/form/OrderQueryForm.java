@@ -16,8 +16,10 @@ import lombok.Data;
 @Schema(description = "订单查询表单")
 public class OrderQueryForm {
 
-    @Schema(description = "订单状态: pending-待完成, completed-已完成, afterSale-退款/售后")
-    private String status;
+    @Schema(description = "订单状态：1-课程预约, 2-待完成, 3-已完成, 4-退款/售后")
+    @Min(value = 1, message = "状态值必须大于等于1")
+    @Max(value = 4, message = "状态值必须小于等于4")
+    private Integer status;
 
     @Schema(description = "页码，默认1")
     @Min(value = 1, message = "页码必须大于0")
