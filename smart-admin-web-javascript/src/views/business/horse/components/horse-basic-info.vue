@@ -29,7 +29,7 @@
             {{ horseDetail.birthDate ? dayjs(horseDetail.birthDate).format('YYYY-MM-DD') : '-' }}
           </a-descriptions-item>
           <a-descriptions-item label="身高">{{ horseDetail.height ? `${horseDetail.height}cm` : '-' }}</a-descriptions-item>
-          <a-descriptions-item label="体重">{{ horseDetail.weight ? `${horseDetail.weight}kg` : '-' }}</a-descriptions-item>
+          <!-- <a-descriptions-item label="体重">{{ horseDetail.weight ? `${horseDetail.weight}kg` : '-' }}</a-descriptions-item> -->
         </a-descriptions>
       </a-col>
     </a-row>

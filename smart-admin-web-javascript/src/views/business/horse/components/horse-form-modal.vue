@@ -87,7 +87,7 @@
       </a-row>
 
       <a-row :gutter="20">
-        <a-col :span="12">
+        <a-col :span="24">
           <a-form-item label="身高(cm)" name="height">
             <a-input-number
               v-model:value="formState.form.height"
@@ -98,7 +98,7 @@
             />
           </a-form-item>
         </a-col>
-        <a-col :span="12">
+        <!-- <a-col :span="12">
           <a-form-item label="体重(kg)" name="weight">
             <a-input-number
               v-model:value="formState.form.weight"
@@ -108,7 +108,7 @@
               style="width: 100%"
             />
           </a-form-item>
-        </a-col>
+        </a-col> -->
       </a-row>
 
       <a-row :gutter="20" v-if="formState.form.horseType === 2">
