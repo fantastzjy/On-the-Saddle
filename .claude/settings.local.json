@@ -16,7 +16,8 @@
       "Bash(\"/Users/mm/Desktop/鞍境/On-the-Saddle/check_files.sh\")",
       "Bash(npm run:*)",
       "Bash(timeout 10s npm run dev)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": []
   }

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语音识别WebSocket测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005a87;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        #messages {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <h1>语音识别WebSocket测试页面</h1>
+    
+    <div class="container">
+        <h3>连接状态</h3>
+        <div id="status" class="disconnected">未连接</div>
+        <button id="connectBtn" onclick="connect()">连接</button>
+        <button id="disconnectBtn" onclick="disconnect()" disabled>断开连接</button>
+    </div>
+
+    <div class="container">
+        <h3>控制命令</h3>
+        <button id="startRecordingBtn" onclick="startRecording()" disabled>开始录音</button>
+        <button id="stopRecordingBtn" onclick="stopRecording()" disabled>停止录音</button>
+        <button id="clearBufferBtn" onclick="clearBuffer()" disabled>清空缓冲区</button>
+        <button id="sendTestAudioBtn" onclick="sendTestAudio()" disabled>发送测试音频</button>
+    </div>
+
+    <div class="container">
+        <h3>消息日志</h3>
+        <button onclick="clearMessages()">清空日志</button>
+        <div id="messages"></div>
+    </div>
+
+    <div class="container">
+        <h3>使用说明</h3>
+        <ul>
+            <li>点击"连接"按钮建立WebSocket连接</li>
+            <li>点击"开始录音"准备接收音频数据</li>
+            <li>点击"发送测试音频"模拟发送音频数据</li>
+            <li>点击"停止录音"结束录音并开始识别</li>
+            <li>查看消息日志了解处理结果</li>
+        </ul>
+    </div>
+
+    <script>
+        let socket = null;
+        let isRecording = false;
+
+        function connect() {
+            const wsUrl = `ws://${window.location.host}/openapi/speech/recognition`;
+            console.log('连接到:', wsUrl);
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function(event) {
+                console.log('WebSocket连接已建立');
+                updateStatus('connected', '已连接');
+                updateButtons(true);
+                addMessage('success', '连接成功');
+            };
+            
+            socket.onmessage = function(event) {
+                console.log('收到消息:', event.data);
+                try {
+                    const response = JSON.parse(event.data);
+                    handleMessage(response);
+                } catch (e) {
+                    console.error('解析消息失败:', e);
+                    addMessage('error', '消息解析失败: ' + event.data);
+                }
+            };
+            
+            socket.onerror = function(error) {
+                console.error('WebSocket错误:', error);
+                addMessage('error', 'WebSocket错误');
+            };
+            
+            socket.onclose = function(event) {
+                console.log('WebSocket连接已关闭:', event);
+                updateStatus('disconnected', '连接已关闭');
+                updateButtons(false);
+                addMessage('info', '连接已关闭');
+                socket = null;
+            };
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.close();
+            }
+        }
+
+        function startRecording() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const command = {action: 'start_recording'};
+                socket.send(JSON.stringify(command));
+                isRecording = true;
+                updateRecordingButtons();
+                addMessage('info', '发送开始录音命令');
+            }
+        }
+
+        function stopRecording() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const command = {action: 'stop_recording'};
+                socket.send(JSON.stringify(command));
+                isRecording = false;
+                updateRecordingButtons();
+                addMessage('info', '发送停止录音命令');
+            }
+        }
+
+        function clearBuffer() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const command = {action: 'clear_buffer'};
+                socket.send(JSON.stringify(command));
+                addMessage('info', '发送清空缓冲区命令');
+            }
+        }
+
+        function sendTestAudio() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                // 创建模拟音频数据 (1KB的随机数据)
+                const audioData = new ArrayBuffer(1024);
+                const view = new Uint8Array(audioData);
+                for (let i = 0; i < view.length; i++) {
+                    view[i] = Math.floor(Math.random() * 256);
+                }
+                
+                socket.send(audioData);
+                addMessage('info', '发送测试音频数据 (1KB)');
+            }
+        }
+
+        function handleMessage(response) {
+            const { type, message, data } = response;
+            
+            switch (type) {
+                case 'connected':
+                    addMessage('success', message);
+                    break;
+                case 'recording_started':
+                    addMessage('success', message);
+                    break;
+                case 'recognizing':
+                    addMessage('info', message);
+                    break;
+                case 'recognition_result':
+                    addMessage('success', `识别结果: ${data.text} (置信度: ${data.confidence})`);
+                    break;
+                case 'buffer_cleared':
+                    addMessage('info', message);
+                    break;
+                case 'error':
+                    addMessage('error', message);
+                    break;
+                default:
+                    addMessage('info', `${type}: ${message}`);
+            }
+        }
+
+        function updateStatus(status, text) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = text;
+            statusEl.className = status;
+        }
+
+        function updateButtons(connected) {
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+            document.getElementById('startRecordingBtn').disabled = !connected;
+            document.getElementById('stopRecordingBtn').disabled = !connected || !isRecording;
+            document.getElementById('clearBufferBtn').disabled = !connected;
+            document.getElementById('sendTestAudioBtn').disabled = !connected;
+        }
+
+        function updateRecordingButtons() {
+            document.getElementById('stopRecordingBtn').disabled = !isRecording;
+        }
+
+        function addMessage(type, message) {
+            const messagesEl = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${type}`;
+            messageEl.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
