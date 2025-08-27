@@ -315,13 +315,13 @@ function goHealthPlan(horseId) {
 
 // 寄养相关格式化函数
 function formatDateRange(startDate, endDate) {
-  const start = dayjs(startDate).format('YYYY-MM-DD');
-  const end = endDate ? dayjs(endDate).format('YYYY-MM-DD') : '长期';
+  const start = dayjs(startDate).format('YYYY/MM/DD');
+  const end = endDate ? dayjs(endDate).format('YYYY/MM/DD') : '长期';
   return `${start} ~ ${end}`;
 }
 
 function formatFee(fee) {
-  return fee ? `¥${parseFloat(fee).toFixed(2)}/月` : '待定';
+  return fee ? `¥${parseFloat(fee).toFixed(2)}` : '待定';
 }
 
 function isExpiringSoon(endDate) {

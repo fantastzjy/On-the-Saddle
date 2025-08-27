@@ -15,12 +15,14 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.ClubTypeVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ActivityListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MyHorseListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyMembersVO;
 import net.lab1024.sa.admin.module.openapi.service.HomeService;
 import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 小程序首页控制器
@@ -32,7 +34,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/app/home")
 @Tag(name = "首页", description = "小程序首页业务信息查询接口")
-public class HomeController {
+public class AppHomeController {
 
     @Resource
     private HomeService homeService;
@@ -114,5 +116,14 @@ public class HomeController {
     @Operation(summary = "获取教练个人简要信息")
     public ResponseDTO<CoachSimpleProfileVO> getCoachInfo(@RequestBody @Valid CoachInfoQueryForm form) {
         return homeService.getCoachProfile(form.getCoachNo());
+    }
+
+    /**
+     * 获取家庭成员列表
+     */
+    @PostMapping("/family/members")
+    @Operation(summary = "获取家庭成员列表")
+    public ResponseDTO<FamilyMembersVO> getFamilyMembers(@RequestBody Map<String, Object> emptyBody) {
+        return homeService.getFamilyMembers();
     }
 }

@@ -11,6 +11,7 @@ import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
+import net.lab1024.sa.admin.module.business.member.domain.entity.FamilyGroupEntity;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachSimpleProfileVO;
@@ -23,6 +24,10 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.MyHorseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CareStatisticsVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MedicalInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.BookingTimeVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyMembersVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
+import net.lab1024.sa.admin.module.business.member.service.FamilyGroupService;
+import net.lab1024.sa.admin.module.business.member.dao.FamilyGroupDao;
 import net.lab1024.sa.admin.module.business.order.constant.OrderStatusEnum;
 import net.lab1024.sa.admin.module.business.order.constant.OrderTypeEnum;
 import net.lab1024.sa.admin.module.business.schedule.constant.ResourceTypeEnum;
@@ -54,6 +59,7 @@ import net.lab1024.sa.base.enums.BusinessTimeConst;
 import net.lab1024.sa.base.enums.ClubTypeEnum;
 import net.lab1024.sa.base.enums.CourseSubTypeEnum;
 import net.lab1024.sa.base.enums.HorseTypeEnum;
+import net.lab1024.sa.base.common.enumeration.GenderEnum;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,6 +120,12 @@ public class HomeService {
 
     @Resource
     private ResourceScheduleService resourceScheduleService;
+
+    @Resource
+    private FamilyGroupService familyGroupService;
+    
+    @Resource
+    private FamilyGroupDao familyGroupDao;
 
     /**
      * 获取俱乐部详细信息
@@ -446,7 +458,15 @@ public class HomeService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<OrderCreateVO> createOrder(OrderCreateForm form) {
         try {
-            // 1. 数据校验
+            // 1. 获取当前登录会员ID
+            Long currentMemberId = MemberRequestUtil.getRequestMemberId();
+
+            // 验证登录状态
+            if (currentMemberId == null) {
+                return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID, "请先登录");
+            }
+
+            // 2. 数据校验
             ResponseDTO<ValidationResult> validationResult = validateOrderCreateForm(form);
             if (!validationResult.getOk()) {
                 return ResponseDTO.error(UserErrorCode.PARAM_ERROR, validationResult.getMsg());
@@ -493,7 +513,7 @@ public class HomeService {
             String orderNo = generateOrderNo();
 
             // 4. 创建订单记录
-            OrderEntity order = buildOrderEntity(form, validation, orderNo);
+            OrderEntity order = buildOrderEntity(form, validation, orderNo, currentMemberId);
             order.setOrderStatus(OrderStatusEnum.PENDING_PAYMENT.getCode());
             order.setPaymentExpireTime(LocalDateTime.now().plusMinutes(BusinessTimeConst.ORDER_PAYMENT_EXPIRE_MINUTES));
             orderDao.insert(order);
@@ -735,11 +755,11 @@ public class HomeService {
     /**
      * 构建订单实体
      */
-    private OrderEntity buildOrderEntity(OrderCreateForm form, ValidationResult validation, String orderNo) {
+    private OrderEntity buildOrderEntity(OrderCreateForm form, ValidationResult validation, String orderNo, Long memberId) {
         OrderEntity order = new OrderEntity();
         order.setOrderNo(orderNo);
         order.setClubId(validation.getClub().getClubId());
-        order.setMemberId(getCurrentMemberId());
+        order.setMemberId(memberId);
         order.setOrderType(OrderTypeEnum.COURSE.getCode());
         order.setOrderStatus(OrderStatusEnum.PENDING_PAYMENT.getCode());
         order.setTotalAmount(form.getTotalAmount());
@@ -799,18 +819,6 @@ public class HomeService {
         }
 
         return vo;
-    }
-
-    /**
-     * 获取当前会员ID（从登录信息中获取）
-     */
-    private Long getCurrentMemberId() {
-        try {
-            return MemberRequestUtil.getRequestMemberId();
-        } catch (Exception e) {
-            log.warn("获取当前会员ID失败，使用默认值", e);
-            return 1L; // 临时默认值
-        }
     }
 
     /**
@@ -1116,5 +1124,117 @@ public class HomeService {
         profileVO.setGender(coach.getGender());
 
         return ResponseDTO.ok(profileVO);
+    }
+
+    /**
+     * 获取家庭成员列表
+     */
+    public ResponseDTO<FamilyMembersVO> getFamilyMembers() {
+        try {
+            // 1. 获取当前登录会员ID
+            Long currentMemberId = MemberRequestUtil.getRequestMemberId();
+
+            // 2. 验证登录状态
+            if (currentMemberId == null) {
+                return ResponseDTO.error(UserErrorCode.LOGIN_STATE_INVALID, "请先登录");
+            }
+
+            // 3. 根据会员ID查询家庭信息
+            ResponseDTO<FamilyInfoVO> familyResponse = familyGroupService.getFamilyInfoByMemberId(currentMemberId);
+            if (!familyResponse.getOk()) {
+                return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "该会员未加入任何家庭组");
+            }
+
+            FamilyInfoVO familyInfo = familyResponse.getData();
+            if (familyInfo == null) {
+                return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST, "家庭信息不存在");
+            }
+
+            // 4. 构建返回VO
+            FamilyMembersVO familyMembersVO = buildFamilyMembersVO(familyInfo);
+
+            return ResponseDTO.ok(familyMembersVO);
+
+        } catch (Exception e) {
+            log.error("获取家庭成员列表失败", e);
+            return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "获取家庭成员列表失败");
+        }
+    }
+
+    /**
+     * 构建家庭成员VO对象
+     */
+    private FamilyMembersVO buildFamilyMembersVO(FamilyInfoVO familyInfo) {
+        FamilyMembersVO vo = new FamilyMembersVO();
+
+        // 构建家庭组信息
+        FamilyMembersVO.FamilyGroupInfo groupInfo = new FamilyMembersVO.FamilyGroupInfo();
+        groupInfo.setFamilyName(familyInfo.getFamilyName());
+        // 通过家庭组ID查询俱乐部信息
+        groupInfo.setClubName(getClubNameByFamilyGroupId(familyInfo.getFamilyGroupId()));
+        groupInfo.setMemberCount(familyInfo.getMemberList() != null ? familyInfo.getMemberList().size() : 0);
+        vo.setFamilyGroup(groupInfo);
+
+        // 构建成员列表
+        List<FamilyMembersVO.FamilyMemberInfo> memberInfoList = new ArrayList<>();
+        if (familyInfo.getMemberList() != null) {
+            for (FamilyInfoVO.FamilyMemberVO member : familyInfo.getMemberList()) {
+                FamilyMembersVO.FamilyMemberInfo memberInfo = new FamilyMembersVO.FamilyMemberInfo();
+                memberInfo.setMemberNo(member.getMemberNo());
+                memberInfo.setActualName(member.getActualName());
+                memberInfo.setPhone(member.getPhone());
+                memberInfo.setIsGuardian(member.getIsGuardian() == 1);
+                memberInfo.setJoinDate(member.getJoinDate() != null ? member.getJoinDate().toString() : "");
+                memberInfo.setAge(member.getAge());
+                memberInfo.setGender(member.getGender());
+                memberInfo.setGenderDesc(getGenderDesc(member.getGender()));
+
+                memberInfoList.add(memberInfo);
+            }
+        }
+        vo.setMembers(memberInfoList);
+
+        return vo;
+    }
+
+    /**
+     * 根据家庭组ID获取俱乐部名称
+     */
+    private String getClubNameByFamilyGroupId(Long familyGroupId) {
+        if (familyGroupId == null) {
+            return "";
+        }
+        try {
+            // 通过familyGroupDao查询家庭组信息获取clubId
+            FamilyGroupEntity familyGroup = familyGroupDao.selectById(familyGroupId);
+            if (familyGroup == null || familyGroup.getClubId() == null) {
+                return "";
+            }
+
+            // 再通过clubId查询俱乐部名称
+            ClubEntity club = clubDao.selectById(familyGroup.getClubId());
+            return club != null ? club.getClubName() : "";
+        } catch (Exception e) {
+            log.warn("获取俱乐部名称失败，familyGroupId: {}", familyGroupId, e);
+            return "";
+        }
+    }
+
+    /**
+     * 获取性别描述
+     */
+    private String getGenderDesc(Integer gender) {
+        if (gender == null) {
+            return GenderEnum.UNKNOWN.getDesc();
+        }
+
+        switch (gender) {
+            case 1:
+                return GenderEnum.MAN.getDesc();
+            case 2:
+                return GenderEnum.WOMAN.getDesc();
+            default:
+                return GenderEnum.UNKNOWN.getDesc();
+        }
     }
 }
