@@ -41,18 +41,23 @@
 
           <a-row :gutter="16">
             <a-col :span="12">
-              <a-form-item label="生日" name="birthDate">
-                <a-date-picker v-model:value="form.birthDate" placeholder="请选择生日" style="width: 100%" />
+              <a-form-item label="身份证号码" name="idCard">
+                <a-input v-model:value.trim="form.idCard" placeholder="请输入身份证号码" />
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="手机号" name="phone">
-                <a-input v-model:value.trim="form.phone" placeholder="请输入手机号" />
+              <a-form-item label="生日" name="birthDate">
+                <a-date-picker v-model:value="form.birthDate" placeholder="请选择生日" style="width: 100%" />
               </a-form-item>
             </a-col>
           </a-row>
 
           <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item label="手机号" name="phone">
+                <a-input v-model:value.trim="form.phone" placeholder="请输入手机号" />
+              </a-form-item>
+            </a-col>
             <a-col :span="12">
               <a-form-item label="登录名" name="loginName">
                 <a-input v-model:value.trim="form.loginName" placeholder="请输入登录名" />
@@ -71,18 +76,10 @@
               </a-form-item>
             </a-col>
             <a-col :span="12">
-              <a-form-item label="角色" name="roleIdList">
-                <a-select mode="multiple" v-model:value="form.roleIdList" optionFilterProp="title" placeholder="请选择角色">
+              <a-form-item label="角色" name="roleId">
+                <a-select v-model:value="form.roleId" optionFilterProp="title" placeholder="请选择角色">
                   <a-select-option v-for="item in roleList" :key="item.roleId" :title="item.roleName">{{ item.roleName }}</a-select-option>
                 </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
-
-          <a-row :gutter="16">
-            <a-col :span="24">
-              <a-form-item label="身份证号码" name="idCard" :label-col="{ span: 3 }" :wrapper-col="{ span: 21 }">
-                <a-input v-model:value.trim="form.idCard" placeholder="请输入身份证号码" />
               </a-form-item>
             </a-col>
           </a-row>
@@ -150,6 +147,10 @@
     Object.assign(form, formDefault);
     if (rowData && !_.isEmpty(rowData)) {
       Object.assign(form, rowData);
+      // 转换roleIdList数组为单个roleId用于显示
+      if (form.roleIdList && form.roleIdList.length > 0) {
+        form.roleId = form.roleIdList[0];
+      }
     }
     visible.value = true;
     nextTick(() => {
@@ -176,6 +177,7 @@
     loginName: undefined,
     phone: undefined,
     roleIdList: undefined,
+    roleId: undefined,
     positionId: undefined,
     birthDate: undefined,
     idCard: undefined,
@@ -205,7 +207,7 @@
       { max: 30, message: '登录账号不能大于30个字符', trigger: 'blur' },
     ],
     gender: [{ required: true, message: '性别不能为空' }],
-    departmentId: [{ required: true, message: '部门不能为空' }],
+    roleId: [{ required: true, message: '角色不能为空' }],
     disabledFlag: [{ required: true, message: '状态不能为空' }],
     leaveFlag: [{ required: true, message: '在职状态不能为空' }],
     idCard: [
@@ -244,7 +246,17 @@
 
   async function addEmployee() {
     try {
-      let { data } = await employeeApi.addEmployee(form);
+      // 转换单个roleId为roleIdList数组用于提交
+      const submitForm = { ...form };
+      if (submitForm.roleId) {
+        submitForm.roleIdList = [submitForm.roleId];
+      }
+      delete submitForm.roleId;
+      
+      // 固定设置部门ID为1
+      submitForm.departmentId = 1;
+      
+      let { data } = await employeeApi.addEmployee(submitForm);
       message.success('添加成功');
       emit('show-account', form.loginName, data);
       onClose();
@@ -258,7 +270,17 @@
   
   async function updateEmployee() {
     try {
-      let result = await employeeApi.updateEmployee(form);
+      // 转换单个roleId为roleIdList数组用于提交
+      const submitForm = { ...form };
+      if (submitForm.roleId) {
+        submitForm.roleIdList = [submitForm.roleId];
+      }
+      delete submitForm.roleId;
+      
+      // 固定设置部门ID为1
+      submitForm.departmentId = 1;
+      
+      let result = await employeeApi.updateEmployee(submitForm);
       message.success('更新成功');
       onClose();
       emit('refresh');

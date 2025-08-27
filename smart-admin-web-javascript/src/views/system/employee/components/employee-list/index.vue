@@ -162,6 +162,12 @@
       align: 'center',
     },
     {
+      title: '身份证号码',
+      dataIndex: 'idCard',
+      ellipsis: true,
+      align: 'center',
+    },
+    {
       title: '登录账号',
       dataIndex: 'loginName',
       align: 'center',
@@ -174,12 +180,6 @@
     {
       title: '生日',
       dataIndex: 'birthDate',
-      align: 'center',
-    },
-    {
-      title: '身份证号码',
-      dataIndex: 'idCard',
-      ellipsis: true,
       align: 'center',
     },
     {

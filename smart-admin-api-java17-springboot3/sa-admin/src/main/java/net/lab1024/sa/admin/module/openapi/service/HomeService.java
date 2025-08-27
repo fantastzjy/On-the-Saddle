@@ -23,6 +23,9 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.MyHorseListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CareStatisticsVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MedicalInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.BookingTimeVO;
+import net.lab1024.sa.admin.module.business.order.constant.OrderStatusEnum;
+import net.lab1024.sa.admin.module.business.order.constant.OrderTypeEnum;
+import net.lab1024.sa.admin.module.business.schedule.constant.ResourceTypeEnum;
 import net.lab1024.sa.admin.module.openapi.domain.form.OrderCreateForm;
 import net.lab1024.sa.admin.module.business.order.dao.OrderDao;
 import net.lab1024.sa.admin.module.business.order.domain.entity.OrderEntity;
@@ -47,19 +50,26 @@ import net.lab1024.sa.base.common.code.SystemErrorCode;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
+import net.lab1024.sa.base.enums.BusinessTimeConst;
+import net.lab1024.sa.base.enums.ClubTypeEnum;
+import net.lab1024.sa.base.enums.CourseSubTypeEnum;
+import net.lab1024.sa.base.enums.HorseTypeEnum;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import net.lab1024.sa.admin.module.business.product.constant.ProductTypeEnum;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 /**
  * 小程序首页服务
@@ -120,7 +130,7 @@ public class HomeService {
 
         ClubInfoVO clubInfo = SmartBeanUtil.copy(club, ClubInfoVO.class);
 
-        clubInfo.setClubType(1);
+        clubInfo.setClubType(ClubTypeEnum.STANDARD.getCode());
 
         // 处理轮播图 - 将JSON字符串解析为List
         if (StrUtil.isNotBlank(club.getCarouselImages())) {
@@ -161,7 +171,7 @@ public class HomeService {
         }
 
         ClubTypeVO clubTypeVO = new ClubTypeVO();
-        clubTypeVO.setClubType(1); // 固定设置为1
+        clubTypeVO.setClubType(ClubTypeEnum.STANDARD.getCode());
         clubTypeVO.setClubName(club.getClubName());
 
         return ResponseDTO.ok(clubTypeVO);
@@ -359,8 +369,8 @@ public class HomeService {
             List<ProductEntity> products = productDao.selectList(
                 new LambdaQueryWrapper<ProductEntity>()
                     .eq(ProductEntity::getClubId, club.getClubId())
-                    .eq(ProductEntity::getProductType, 1) // 1代表课程
-                    .eq(ProductEntity::getSubType, "single_class")
+                    .eq(ProductEntity::getProductType, ProductTypeEnum.COURSE.getValue())
+                    .eq(ProductEntity::getSubType, CourseSubTypeEnum.SINGLE_CLASS.getCode())
                     .eq(ProductEntity::getIsValid, true)
                     .eq(ProductEntity::getIsDelete, false)
                     .orderBy(true, true, ProductEntity::getProductId)
@@ -411,7 +421,11 @@ public class HomeService {
             }
 
             // 2. 统计已参与人数（待支付+已支付+已完成状态）
-            List<Integer> statusList = Arrays.asList(1, 2, 3); // 待支付、已支付、已完成
+            List<Integer> statusList = Arrays.asList(
+                OrderStatusEnum.PENDING_PAYMENT.getCode(),
+                OrderStatusEnum.PAID.getCode(),
+                OrderStatusEnum.COMPLETED.getCode()
+            );
             int participantCount = orderDao.countActivityParticipants(productId, statusList);
 
             // 3. 判断是否已满
@@ -444,7 +458,7 @@ public class HomeService {
             ProductEntity product = validation.getProduct();
 
             // 2. 检查时间段可用性（仅限课程类型）
-            if (product.getProductType() == 1) {
+            if (product.getProductType().equals(ProductTypeEnum.COURSE.getValue())) {
                 for (BookingTimeVO timeInfo : form.getTimes()) {
                     LocalDate date = LocalDate.parse(timeInfo.getDate());
 
@@ -455,7 +469,7 @@ public class HomeService {
 
                         // 检查教练可用性
                         ResponseDTO<Boolean> coachAvailable = resourceScheduleService
-                                .checkResourceAvailability(club.getClubId(), 2, coach.getCoachId(),
+                                .checkResourceAvailability(club.getClubId(), ResourceTypeEnum.COACH.getValue(), coach.getCoachId(),
                                                          date, startTime, endTime);
 
                         if (!coachAvailable.getOk() || !Boolean.TRUE.equals(coachAvailable.getData())) {
@@ -468,7 +482,7 @@ public class HomeService {
             }
 
             // 3. 如果是活动类型，校验人数
-            if (product.getProductType() == 3) {
+            if (product.getProductType().equals(ProductTypeEnum.ACTIVITY.getValue())) {
                 ResponseDTO<Boolean> capacityCheck = checkActivityCapacity(product.getProductId());
                 if (!capacityCheck.getOk()) {
                     return ResponseDTO.error(UserErrorCode.PARAM_ERROR, capacityCheck.getMsg());
@@ -480,13 +494,13 @@ public class HomeService {
 
             // 4. 创建订单记录
             OrderEntity order = buildOrderEntity(form, validation, orderNo);
-            order.setOrderStatus(1); // 待支付
-            order.setPaymentExpireTime(LocalDateTime.now().plusMinutes(10)); // 10分钟支付期限
+            order.setOrderStatus(OrderStatusEnum.PENDING_PAYMENT.getCode());
+            order.setPaymentExpireTime(LocalDateTime.now().plusMinutes(BusinessTimeConst.ORDER_PAYMENT_EXPIRE_MINUTES));
             orderDao.insert(order);
 
             // 5. 占用教练时间段（仅限课程类型）
-            if (product.getProductType() == 1) {
-                LocalDateTime expireTime = LocalDateTime.now().plusMinutes(10);
+            if (product.getProductType().equals(ProductTypeEnum.COURSE.getValue())) {
+                LocalDateTime expireTime = LocalDateTime.now().plusMinutes(BusinessTimeConst.RESOURCE_OCCUPY_EXPIRE_MINUTES);
                 for (BookingTimeVO timeInfo : form.getTimes()) {
                     LocalDate date = LocalDate.parse(timeInfo.getDate());
 
@@ -496,7 +510,7 @@ public class HomeService {
                         LocalTime endTime = LocalTime.parse(times[1]);
 
                         ResponseDTO<Void> occupyResult = resourceScheduleService.occupyResourceTimeSlot(
-                                orderNo, club.getClubId(), 2, coach.getCoachId(),
+                                orderNo, club.getClubId(), ResourceTypeEnum.COACH.getValue(), coach.getCoachId(),
                                 date, startTime, endTime, expireTime);
 
                         if (!occupyResult.getOk()) {
@@ -662,13 +676,10 @@ public class HomeService {
                         return ResponseDTO.userErrorParam("开始时间必须早于结束时间：" + timeSlot);
                     }
 
-                    // 检查时间段长度是否合理（比如不能超过4小时）
+                    // 检查时间段长度是否为1小时
                     long minutes = Duration.between(startTime, endTime).toMinutes();
-                    if (minutes > 240) { // 4小时 = 240分钟
-                        return ResponseDTO.userErrorParam("单个时间段不能超过4小时：" + timeSlot);
-                    }
-                    if (minutes < 30) { // 最少30分钟
-                        return ResponseDTO.userErrorParam("单个时间段不能少于30分钟：" + timeSlot);
+                    if (minutes != 60) {
+                        return ResponseDTO.userErrorParam("每个时间段必须为1小时：" + timeSlot);
                     }
                 }
 
@@ -729,8 +740,8 @@ public class HomeService {
         order.setOrderNo(orderNo);
         order.setClubId(validation.getClub().getClubId());
         order.setMemberId(getCurrentMemberId());
-        order.setOrderType(1); // 课程订单
-        order.setOrderStatus(1); // 待支付
+        order.setOrderType(OrderTypeEnum.COURSE.getCode());
+        order.setOrderStatus(OrderStatusEnum.PENDING_PAYMENT.getCode());
         order.setTotalAmount(form.getTotalAmount());
         order.setPaidAmount(BigDecimal.ZERO);
         order.setPaymentMethod("");
@@ -848,7 +859,7 @@ public class HomeService {
             List<ProductEntity> products = productDao.selectList(
                 new LambdaQueryWrapper<ProductEntity>()
                     .eq(ProductEntity::getClubId, club.getClubId())
-                    .eq(ProductEntity::getProductType, 3) // 3代表活动类型
+                    .eq(ProductEntity::getProductType, ProductTypeEnum.ACTIVITY.getValue())
                     .eq(ProductEntity::getIsValid, true)
                     .eq(ProductEntity::getIsDelete, false)
                     .orderBy(true, true, ProductEntity::getProductId)
@@ -915,7 +926,7 @@ public class HomeService {
             // 查询该会员的马主马列表（不限制俱乐部）
             List<HorseEntity> horses = horseDao.selectList(
                 new LambdaQueryWrapper<HorseEntity>()
-                    .eq(HorseEntity::getHorseType, 2) // 2-马主马
+                    .eq(HorseEntity::getHorseType, HorseTypeEnum.OWNER_HORSE.getCode())
                     .eq(HorseEntity::getOwnerId, currentMemberId)
                     .eq(HorseEntity::getIsValid, 1)
                     .eq(HorseEntity::getIsDelete, 0)
