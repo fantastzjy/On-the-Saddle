@@ -482,6 +482,37 @@ public class HomeService {
     }
 
     /**
+     * 检查活动人数是否已满
+     */
+    private ResponseDTO<Boolean> checkActivityCapacity(Long productId) {
+        try {
+            // 1. 查询活动配置的最大人数
+            ProductActivityEntity activity = productActivityDao.selectOne(
+                new LambdaQueryWrapper<ProductActivityEntity>()
+                    .eq(ProductActivityEntity::getProductId, productId)
+            );
+
+            if (activity == null || activity.getMaxParticipants() == null) {
+                return ResponseDTO.userErrorParam("活动配置不存在或未设置最大参与人数");
+            }
+
+            // 2. 统计已参与人数（待支付+已支付+已完成状态）
+            List<Integer> statusList = Arrays.asList(1, 2, 3); // 待支付、已支付、已完成
+            int participantCount = orderDao.countActivityParticipants(productId, statusList);
+
+            // 3. 判断是否已满
+            if (participantCount >= activity.getMaxParticipants()) {
+                return ResponseDTO.userErrorParam("活动人数已满，当前参与人数：" + participantCount + "，最大人数：" + activity.getMaxParticipants());
+            }
+
+            return ResponseDTO.ok(true);
+        } catch (Exception e) {
+            log.error("检查活动人数失败", e);
+            return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "检查活动人数失败");
+        }
+    }
+
+    /**
      * 创建订单 - 完整实现
      */
     @Transactional(rollbackFor = Exception.class)
