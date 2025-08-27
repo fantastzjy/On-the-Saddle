@@ -2,7 +2,6 @@ package net.lab1024.sa.admin.module.openapi.service;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
@@ -12,8 +11,6 @@ import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
-import net.lab1024.sa.admin.module.business.coach.domain.RequestCoach;
-import net.lab1024.sa.admin.module.business.coach.domain.vo.CertificateVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachSimpleProfileVO;
@@ -50,7 +47,6 @@ import net.lab1024.sa.base.common.code.SystemErrorCode;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
-import net.lab1024.sa.base.common.util.SmartRequestUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -529,29 +525,39 @@ public class HomeService {
             CoachEntity coach = validation.getCoach();
             ProductEntity product = validation.getProduct();
 
-            // 2. 检查时间段可用性
-            for (BookingTimeVO timeInfo : form.getTimes()) {
-                LocalDate date = LocalDate.parse(timeInfo.getDate());
+            // 2. 如果是活动类型，校验人数
+            if (product.getProductType() == 3) {
+                ResponseDTO<Boolean> capacityCheck = checkActivityCapacity(product.getProductId());
+                if (!capacityCheck.getOk()) {
+                    return ResponseDTO.error(UserErrorCode.PARAM_ERROR, capacityCheck.getMsg());
+                }
+            }
 
-                for (String timeSlot : timeInfo.getTimeSlots()) {
-                    String[] times = timeSlot.split("-");
-                    LocalTime startTime = LocalTime.parse(times[0]);
-                    LocalTime endTime = LocalTime.parse(times[1]);
+            // 3. 检查时间段可用性（仅限课程类型）
+            if (product.getProductType() == 1) {
+                for (BookingTimeVO timeInfo : form.getTimes()) {
+                    LocalDate date = LocalDate.parse(timeInfo.getDate());
 
-                    // 检查教练可用性
-                    ResponseDTO<Boolean> coachAvailable = resourceScheduleService
-                            .checkResourceAvailability(club.getClubId(), 2, coach.getCoachId(),
-                                                     date, startTime, endTime);
+                    for (String timeSlot : timeInfo.getTimeSlots()) {
+                        String[] times = timeSlot.split("-");
+                        LocalTime startTime = LocalTime.parse(times[0]);
+                        LocalTime endTime = LocalTime.parse(times[1]);
 
-                    if (!coachAvailable.getOk() || !Boolean.TRUE.equals(coachAvailable.getData())) {
-                        return ResponseDTO.userErrorParam(
-                                String.format("教练%s在%s %s时间段不可用",
-                                            coach.getActualName(), date, timeSlot));
+                        // 检查教练可用性
+                        ResponseDTO<Boolean> coachAvailable = resourceScheduleService
+                                .checkResourceAvailability(club.getClubId(), 2, coach.getCoachId(),
+                                                         date, startTime, endTime);
+
+                        if (!coachAvailable.getOk() || !Boolean.TRUE.equals(coachAvailable.getData())) {
+                            return ResponseDTO.userErrorParam(
+                                    String.format("教练%s在%s %s时间段不可用",
+                                                coach.getActualName(), date, timeSlot));
+                        }
                     }
                 }
             }
 
-            // 3. 生成订单号
+            // 4. 生成订单号
             String orderNo = generateOrderNo();
 
             // 4. 创建订单记录
@@ -560,23 +566,25 @@ public class HomeService {
             order.setPaymentExpireTime(LocalDateTime.now().plusMinutes(30)); // 30分钟支付期限
             orderDao.insert(order);
 
-            // 5. 占用教练时间段
-            LocalDateTime expireTime = LocalDateTime.now().plusMinutes(30);
-            for (BookingTimeVO timeInfo : form.getTimes()) {
-                LocalDate date = LocalDate.parse(timeInfo.getDate());
+            // 5. 占用教练时间段（仅限课程类型）
+            if (product.getProductType() == 1) {
+                LocalDateTime expireTime = LocalDateTime.now().plusMinutes(30);
+                for (BookingTimeVO timeInfo : form.getTimes()) {
+                    LocalDate date = LocalDate.parse(timeInfo.getDate());
 
-                for (String timeSlot : timeInfo.getTimeSlots()) {
-                    String[] times = timeSlot.split("-");
-                    LocalTime startTime = LocalTime.parse(times[0]);
-                    LocalTime endTime = LocalTime.parse(times[1]);
+                    for (String timeSlot : timeInfo.getTimeSlots()) {
+                        String[] times = timeSlot.split("-");
+                        LocalTime startTime = LocalTime.parse(times[0]);
+                        LocalTime endTime = LocalTime.parse(times[1]);
 
-                    ResponseDTO<Void> occupyResult = resourceScheduleService.occupyResourceTimeSlot(
-                            orderNo, club.getClubId(), 2, coach.getCoachId(),
-                            date, startTime, endTime, expireTime);
+                        ResponseDTO<Void> occupyResult = resourceScheduleService.occupyResourceTimeSlot(
+                                orderNo, club.getClubId(), 2, coach.getCoachId(),
+                                date, startTime, endTime, expireTime);
 
-                    if (!occupyResult.getOk()) {
-                        // 如果占用失败，需要回滚之前的操作
-                        throw new RuntimeException("占用教练时间段失败：" + occupyResult.getMsg());
+                        if (!occupyResult.getOk()) {
+                            // 如果占用失败，需要回滚之前的操作
+                            throw new RuntimeException("占用教练时间段失败：" + occupyResult.getMsg());
+                        }
                     }
                 }
             }
