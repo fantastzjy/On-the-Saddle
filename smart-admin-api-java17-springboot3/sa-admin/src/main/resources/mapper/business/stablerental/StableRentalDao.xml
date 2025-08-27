@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.stablerental.dao.StableRentalDao">
+
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.stablerental.domain.vo.StableRentalListVO">
+        SELECT
+        sr.rental_id,
+        sr.rental_no,
+        sr.lessor_id,
+        COALESCE(e.actual_name, c1.actual_name) AS lessor_name,
+        sr.lessee_id,
+        c2.actual_name AS lessee_name,
+        sr.target_club_id,
+        club.club_name,
+        sr.rental_start_time,
+        sr.rental_end_time,
+        sr.rental_amount,
+        sr.rental_status,
+        sr.remark,
+        sr.update_by,
+        sr.update_time,
+        sr.create_time
+        FROM m_stable_rental sr
+        LEFT JOIN t_employee e ON sr.lessor_id = e.employee_id
+        LEFT JOIN m_coach c1 ON sr.lessor_id = c1.coach_id
+        LEFT JOIN m_coach c2 ON sr.lessee_id = c2.coach_id
+        LEFT JOIN m_club club ON sr.target_club_id = club.club_id
+        WHERE sr.is_delete = 0
+        <if test="queryForm.rentalNo != null and queryForm.rentalNo != ''">
+            AND sr.rental_no LIKE CONCAT('%', #{queryForm.rentalNo}, '%')
+        </if>
+        <if test="queryForm.lessorId != null">
+            AND sr.lessor_id = #{queryForm.lessorId}
+        </if>
+        <if test="queryForm.lesseeId != null">
+            AND sr.lessee_id = #{queryForm.lesseeId}
+        </if>
+        <if test="queryForm.targetClubId != null">
+            AND sr.target_club_id = #{queryForm.targetClubId}
+        </if>
+        <if test="queryForm.rentalStatus != null">
+            AND sr.rental_status = #{queryForm.rentalStatus}
+        </if>
+        <if test="queryForm.rentalStartTimeBegin != null">
+            AND sr.rental_start_time >= #{queryForm.rentalStartTimeBegin}
+        </if>
+        <if test="queryForm.rentalStartTimeEnd != null">
+            AND sr.rental_start_time &lt;= #{queryForm.rentalStartTimeEnd}
+        </if>
+        <if test="queryForm.rentalEndTimeBegin != null">
+            AND sr.rental_end_time >= #{queryForm.rentalEndTimeBegin}
+        </if>
+        <if test="queryForm.rentalEndTimeEnd != null">
+            AND sr.rental_end_time &lt;= #{queryForm.rentalEndTimeEnd}
+        </if>
+        ORDER BY sr.create_time DESC
+    </select>
+
+    <select id="getDetailById" resultType="net.lab1024.sa.admin.module.business.stablerental.domain.vo.StableRentalDetailVO">
+        SELECT
+        sr.rental_id,
+        sr.rental_no,
+        sr.lessor_id,
+        COALESCE(e.actual_name, c1.actual_name) AS lessor_name,
+        sr.lessee_id,
+        c2.actual_name AS lessee_name,
+        sr.target_club_id,
+        club.club_name,
+        sr.rental_start_time,
+        sr.rental_end_time,
+        sr.rental_amount,
+        sr.rental_status,
+        sr.remark,
+        sr.create_by,
+        sr.create_time,
+        sr.update_by,
+        sr.update_time
+        FROM m_stable_rental sr
+        LEFT JOIN t_employee e ON sr.lessor_id = e.employee_id
+        LEFT JOIN m_coach c1 ON sr.lessor_id = c1.coach_id
+        LEFT JOIN m_coach c2 ON sr.lessee_id = c2.coach_id
+        LEFT JOIN m_club club ON sr.target_club_id = club.club_id
+        WHERE sr.rental_id = #{rentalId} AND sr.is_delete = 0
+    </select>
+
+    <select id="getByRentalNo" resultType="net.lab1024.sa.admin.module.business.stablerental.domain.entity.StableRentalEntity">
+        SELECT * FROM m_stable_rental
+        WHERE rental_no = #{rentalNo} AND is_delete = 0
+    </select>
+
+</mapper>
