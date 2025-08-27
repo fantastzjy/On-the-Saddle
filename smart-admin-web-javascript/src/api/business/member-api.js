@@ -22,6 +22,9 @@ export const memberApi = {
   removeFamilyMember: (familyGroupId, memberId) => postRequest('/club/family/remove-member', {familyGroupId, memberId}),
   setGuardian: (familyGroupId, memberId, isGuardian) => postRequest('/club/family/set-guardian', {familyGroupId, memberId, isGuardian}),
   
+  // 新增：创建新会员并加入家庭组（事务保障）
+  addFamilyMember: (param) => postRequest('/admin/family-group/add-family-member', param),
+  
   
   // 辅助接口
   checkPhoneExist: (phone, excludeId) => getRequest(`/club/member/check-phone/${phone}${excludeId ? '?excludeId=' + excludeId : ''}`),

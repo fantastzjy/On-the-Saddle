@@ -49,6 +49,7 @@
             <ScheduleCard 
               v-if="getSlotData(coach, timeSlot)?.scheduleId"
               :schedule="getSlotData(coach, timeSlot)"
+              :simplified="true"
               @click="onScheduleClick(getSlotData(coach, timeSlot).scheduleId)" />
             <div v-else class="empty-slot">
               <a-button type="dashed" size="small" @click.stop="onCreateSchedule(coach.coachId, timeSlot)">

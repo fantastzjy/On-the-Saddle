@@ -74,7 +74,8 @@ function showModal(familyData) {
   Object.assign(form, {
     familyGroupId: familyData.familyGroupId,
     familyName: familyData.familyName,
-    mainContactId: familyData.mainContactId,
+    mainContactId: Array.isArray(familyData.mainContactId) ? 
+      familyData.mainContactId[0] : familyData.mainContactId,
     description: familyData.description || ''
   })
   

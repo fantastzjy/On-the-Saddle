@@ -49,6 +49,9 @@ export const TABLE_ID_CONST = {
       SCHEDULE: businessClubInitTableId + 8, //课表管理
       BOOKING: businessClubInitTableId + 9, //预约管理
     },
+    STABLE_RENTAL: {
+      STABLE_RENTAL: businessClubInitTableId + 10, //马房租赁
+    },
   },
 
   /**

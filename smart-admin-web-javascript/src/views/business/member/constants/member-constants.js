@@ -130,14 +130,8 @@ export const TABLE_COLUMNS = [
     title: '会员姓名',
     dataIndex: 'actualName',
     width: 120,
-    align: 'center'
-  },
-  {
-    title: '手机号',
-    dataIndex: 'phone',
-    width: 140,
     align: 'center',
-    slots: { customRender: 'phone' }
+    slots: { customRender: 'actualName' }
   },
   {
     title: '性别',
@@ -145,6 +139,13 @@ export const TABLE_COLUMNS = [
     width: 80,
     align: 'center',
     slots: { customRender: 'gender' }
+  },
+  {
+    title: '手机号',
+    dataIndex: 'phone',
+    width: 140,
+    align: 'center',
+    slots: { customRender: 'phone' }
   },
   // {
   //   title: '年龄',
@@ -154,38 +155,18 @@ export const TABLE_COLUMNS = [
   //   slots: { customRender: 'age' }
   // },
   {
-    title: '注册状态',
-    dataIndex: 'registrationStatus',
-    width: 100,
-    align: 'center',
-    slots: { customRender: 'registrationStatus' }
-  },
-  {
-    title: '会籍状态',
-    dataIndex: 'isMembership',
-    width: 100,
-    align: 'center',
-    slots: { customRender: 'isMembership' }
-  },
-  {
-    title: '会籍到期时间',
-    dataIndex: 'membershipExpireDate',
-    width: 120,
-    align: 'center',
-    slots: { customRender: 'membershipExpireDate' }
-  },
-  {
-    title: '家庭组',
-    dataIndex: 'familyName',
-    width: 120,
-    align: 'center'
-  },
-  {
     title: '身份证号',
     dataIndex: 'idCardNo',
     width: 180,
     align: 'center',
     slots: { customRender: 'idCardNo' }
+  },
+  {
+    title: '家庭组',
+    dataIndex: 'familyName',
+    width: 120,
+    align: 'center',
+    slots: { customRender: 'familyName' }
   },
   {
     title: '骑手证号',
@@ -201,9 +182,9 @@ export const TABLE_COLUMNS = [
     slots: { customRender: 'defaultCoach' }
   },
   {
-    title: '课程级别',
+    title: '默认课程级别',
     dataIndex: 'defaultCourseLevel',
-    width: 100,
+    width: 120,
     align: 'center',
     slots: { customRender: 'defaultCourseLevel' }
   },
@@ -219,6 +200,27 @@ export const TABLE_COLUMNS = [
   //   width: 150,
   //   align: 'center'
   // },
+  {
+    title: '会籍状态',
+    dataIndex: 'isMembership',
+    width: 100,
+    align: 'center',
+    slots: { customRender: 'isMembership' }
+  },
+  {
+    title: '会籍到期时间',
+    dataIndex: 'membershipExpireDate',
+    width: 120,
+    align: 'center',
+    slots: { customRender: 'membershipExpireDate' }
+  },
+  {
+    title: '注册状态',
+    dataIndex: 'registrationStatus',
+    width: 100,
+    align: 'center',
+    slots: { customRender: 'registrationStatus' }
+  },
   {
     title: '创建方式',
     dataIndex: 'createdByGuardian',
@@ -239,6 +241,25 @@ export const TABLE_COLUMNS = [
     width: 150,
     align: 'center',
     slots: { customRender: 'createTime' }
+  },
+  {
+    title: '创建人',
+    dataIndex: 'createBy',
+    width: 100,
+    align: 'center'
+  },
+  {
+    title: '更新时间',
+    dataIndex: 'updateTime',
+    width: 150,
+    align: 'center',
+    slots: { customRender: 'updateTime' }
+  },
+  {
+    title: '更新人',
+    dataIndex: 'updateBy',
+    width: 100,
+    align: 'center'
   },
   {
     title: '操作',

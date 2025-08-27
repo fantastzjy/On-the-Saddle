@@ -31,17 +31,20 @@
           <a-descriptions-item label="家庭名称">
             {{ familyDetail.familyName }}
           </a-descriptions-item>
+          <a-descriptions-item label="家庭描述" :span="2">
+            {{ familyDetail.description || '暂无描述' }}
+          </a-descriptions-item>
           <a-descriptions-item label="所属俱乐部">
             <a-tag color="blue">{{ familyDetail.clubName }}</a-tag>
           </a-descriptions-item>
           <a-descriptions-item label="主要联系人">
             {{ familyDetail.mainContactName || '-' }}
           </a-descriptions-item>
-          <a-descriptions-item label="联系电话">
-            {{ familyDetail.mainContactPhone || '-' }}
-          </a-descriptions-item>
           <a-descriptions-item label="成员数量">
             <a-tag color="green">{{ familyDetail.memberCount }}人</a-tag>
+          </a-descriptions-item>
+          <a-descriptions-item label="联系电话">
+            {{ familyDetail.mainContactPhone || '-' }}
           </a-descriptions-item>
           <a-descriptions-item label="创建时间">
             {{ dayjs(familyDetail.createTime).format('YYYY-MM-DD HH:mm:ss') }}
@@ -52,9 +55,6 @@
           <a-descriptions-item label="状态">
             <a-tag v-if="familyDetail.isDelete === 0" color="success">正常</a-tag>
             <a-tag v-else color="error">已删除</a-tag>
-          </a-descriptions-item>
-          <a-descriptions-item label="家庭描述" :span="3">
-            {{ familyDetail.description || '暂无描述' }}
           </a-descriptions-item>
         </a-descriptions>
       </a-card>
@@ -77,7 +77,6 @@
           :pagination="false"
           row-key="relationId"
           size="small"
-          :scroll="{ x: 1000 }"
         >
           <!-- 成员信息 -->
           <template #memberInfo="{ record }">
@@ -93,7 +92,6 @@
               </a-avatar>
               <div class="member-details">
                 <div class="member-name" style="color: #1890ff;">{{ record.actualName }}</div>
-                <div class="member-no">{{ record.memberNo }}</div>
               </div>
             </div>
           </template>
@@ -228,59 +226,49 @@ const memberColumns = [
   {
     title: '成员信息',
     key: 'memberInfo',
-    width: 200,
     slots: { customRender: 'memberInfo' }
   },
   {
     title: '性别',
     key: 'gender',
-    width: 60,
     align: 'center',
     slots: { customRender: 'gender' }
   },
   {
     title: '年龄',
     key: 'age',
-    width: 60,
     align: 'center',
     slots: { customRender: 'age' }
   },
   {
     title: '手机号',
-    dataIndex: 'phone',
-    width: 120
+    dataIndex: 'phone'
   },
   {
     title: '注册状态',
     key: 'registrationStatus',
-    width: 80,
     align: 'center',
     slots: { customRender: 'registrationStatus' }
   },
   {
     title: '角色',
     key: 'isGuardian',
-    width: 80,
     align: 'center',
     slots: { customRender: 'isGuardian' }
   },
   {
     title: '关系备注',
     dataIndex: 'remark',
-    width: 120,
     ellipsis: true
   },
   {
     title: '加入时间',
     key: 'joinDate',
-    width: 100,
     slots: { customRender: 'joinDate' }
   },
   {
     title: '操作',
     key: 'action',
-    width: 180,
-    fixed: 'right',
     slots: { customRender: 'action' }
   }
 ]

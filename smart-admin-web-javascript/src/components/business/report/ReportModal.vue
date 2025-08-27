@@ -18,6 +18,38 @@
       <a-spin size="large" tip="正在生成报告..." />
     </div>
 
+    <!-- 月份选择区域 -->
+    <div v-else-if="!reportData" class="month-selector-container">
+      <div class="selector-header">
+        <h3>选择报告月份</h3>
+        <p>请选择要生成马匹健康报告的年月</p>
+      </div>
+
+      <div class="selector-content">
+        <a-form layout="inline" :style="{ textAlign: 'center', marginBottom: '24px' }">
+          <a-form-item label="报告月份">
+            <a-date-picker
+              v-model:value="selectedMonth"
+              picker="month"
+              placeholder="选择年月"
+              format="YYYY年MM月"
+              style="width: 200px"
+            />
+          </a-form-item>
+        </a-form>
+
+        <div class="selector-actions">
+          <a-space>
+            <a-button @click="handleClose">取消</a-button>
+            <a-button type="primary" @click="handleGenerateReport" :loading="generating">
+              <template #icon><FilePdfOutlined /></template>
+              生成报告
+            </a-button>
+          </a-space>
+        </div>
+      </div>
+    </div>
+
     <div v-else-if="reportData" class="report-container">
       <!-- 报告头部信息 -->
       <div class="report-header">
@@ -28,43 +60,23 @@
         </p>
       </div>
 
-      <!-- 报告摘要卡片 -->
-      <div class="report-summary" v-if="reportData.summary && Object.keys(reportData.summary).length > 0">
-        <h3 class="section-title">📊 报告摘要</h3>
-        <a-row :gutter="16">
-          <a-col :span="6" v-for="(value, key) in reportData.summary" :key="key">
-            <a-statistic 
-              :title="key" 
-              :value="value"
-              class="summary-card"
-            />
-          </a-col>
-        </a-row>
-      </div>
-
-      <!-- 图表展示区域 -->
-      <div class="report-charts" v-if="reportData.chartData && Object.keys(reportData.chartData).length > 0">
-        <h3 class="section-title">📈 数据图表</h3>
-        <ReportCharts :chart-data="reportData.chartData" />
-      </div>
-
       <!-- 报告章节内容 -->
       <div class="report-sections" v-if="reportData.sections && reportData.sections.length > 0">
-        <div 
-          v-for="section in reportData.sections" 
+        <div
+          v-for="section in reportData.sections"
           :key="section.sectionId"
           class="report-section"
         >
           <h3 class="section-title">{{ section.title }}</h3>
-          
+
           <!-- 章节内容 -->
           <div class="section-content" v-if="section.content" v-html="section.content"></div>
-          
+
           <!-- 章节表格 -->
           <div v-if="section.tables && section.tables.length > 0" class="section-tables">
             <div v-for="table in section.tables" :key="table.tableId" class="table-container">
               <h4 v-if="table.title" class="table-title">{{ table.title }}</h4>
-              <a-table 
+              <a-table
                 :columns="table.columns"
                 :dataSource="table.data"
                 :pagination="false"
@@ -89,10 +101,6 @@
             <template #icon><FilePdfOutlined /></template>
             导出PDF
           </a-button>
-          <a-button @click="handleExportExcel" :loading="exporting">
-            <template #icon><FileExcelOutlined /></template>
-            导出Excel
-          </a-button>
           <a-button @click="handleClose">关闭</a-button>
         </a-space>
       </div>
@@ -107,10 +115,10 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { message } from 'ant-design-vue';
-import { ReloadOutlined, FilePdfOutlined, FileExcelOutlined } from '@ant-design/icons-vue';
+import { ReloadOutlined, FilePdfOutlined } from '@ant-design/icons-vue';
 import dayjs from 'dayjs';
 import { reportApi } from '/@/api/report';
-import ReportCharts from './ReportCharts.vue';
+import ReportCharts from './ReportCharts.vue'; // 已不使用
 
 // 定义组件属性
 const props = defineProps({
@@ -133,7 +141,7 @@ const props = defineProps({
 });
 
 // 定义组件事件
-const emit = defineEmits(['update:open', 'refresh']);
+const emit = defineEmits(['update:open', 'refresh', 'reportGenerated']);
 
 // 响应式数据
 const visible = computed({
@@ -143,6 +151,10 @@ const visible = computed({
 
 const refreshing = ref(false);
 const exporting = ref(false);
+const generating = ref(false);
+
+// 月份选择
+const selectedMonth = ref(dayjs()); // 默认当前月份
 
 // 格式化时间
 const formatTime = (time) => {
@@ -150,11 +162,55 @@ const formatTime = (time) => {
   return dayjs(time).format('YYYY-MM-DD HH:mm:ss');
 };
 
+// 生成报告
+const handleGenerateReport = async () => {
+  try {
+    generating.value = true;
+
+    // 获取选择的年月，转换为完整时间范围
+    const year = selectedMonth.value.year();
+    const month = selectedMonth.value.month() + 1; // dayjs的月份从0开始
+
+    // 计算月初和月末的完整时间范围
+    const startDate = selectedMonth.value.startOf('month').format('YYYY-MM-DD HH:mm:ss');
+    const endDate = selectedMonth.value.endOf('month').format('YYYY-MM-DD HH:mm:ss');
+
+    // 更新报告参数
+    const updatedParams = {
+      ...props.reportParams,
+      params: {
+        ...props.reportParams.params,
+        year: year,
+        month: month,
+        startDate: startDate,
+        endDate: endDate
+      }
+    };
+
+    // 生成报告
+    const response = await reportApi.generateReport(updatedParams);
+
+    if (response.ok && response.data) {
+      // 触发父组件更新reportData
+      emit('reportGenerated', response.data);
+      message.success('报告生成成功');
+    } else {
+      message.error(response.msg || '报告生成失败');
+    }
+
+  } catch (error) {
+    console.error('生成报告失败:', error);
+    message.error('生成报告失败');
+  } finally {
+    generating.value = false;
+  }
+};
+
 // 刷新数据
 const handleRefresh = () => {
   refreshing.value = true;
   emit('refresh');
-  
+
   setTimeout(() => {
     refreshing.value = false;
   }, 1000);
@@ -164,7 +220,7 @@ const handleRefresh = () => {
 const handleExportPdf = async () => {
   try {
     exporting.value = true;
-    
+
     const exportData = {
       reportType: props.reportParams.reportType,
       params: props.reportParams.params,
@@ -174,7 +230,7 @@ const handleExportPdf = async () => {
 
     console.log('PDF导出 - 请求数据:', exportData);
     const response = await reportApi.exportToPdf(exportData);
-    
+
     console.log('PDF导出 - 响应类型:', typeof response);
     console.log('PDF导出 - 响应instanceof:', {
       isArrayBuffer: response instanceof ArrayBuffer,
@@ -183,18 +239,18 @@ const handleExportPdf = async () => {
       isObject: response instanceof Object,
       constructor: response?.constructor?.name
     });
-    console.log('PDF导出 - 响应内容预览:', 
+    console.log('PDF导出 - 响应内容预览:',
       typeof response === 'string' ? response.substring(0, 200) : response);
-    
+
     // 检查响应是否存在
     if (!response) {
       throw new Error('服务器未返回任何数据');
     }
-    
+
     // 创建下载链接
     const blob = new Blob([response], { type: 'text/html' });
     console.log('PDF导出 - Blob创建成功:', blob.size, 'bytes');
-    
+
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -205,7 +261,7 @@ const handleExportPdf = async () => {
     window.URL.revokeObjectURL(url);
 
     message.success('导出成功！文件已下载，请在浏览器中打印为PDF');
-    
+
   } catch (error) {
     console.error('导出PDF失败:', error);
     if (error.message) {
@@ -218,72 +274,12 @@ const handleExportPdf = async () => {
   }
 };
 
-// 导出Excel
-const handleExportExcel = async () => {
-  try {
-    exporting.value = true;
-    
-    const exportData = {
-      reportType: props.reportParams.reportType,
-      params: props.reportParams.params,
-      exportFormat: 'excel',
-      fileName: generateFileName('excel')
-    };
-
-    console.log('Excel导出 - 请求数据:', exportData);
-    const response = await reportApi.exportToExcel(exportData);
-    
-    console.log('Excel导出 - 响应类型:', typeof response);
-    console.log('Excel导出 - 响应instanceof:', {
-      isArrayBuffer: response instanceof ArrayBuffer,
-      isBlob: response instanceof Blob,
-      isString: typeof response === 'string',
-      isObject: response instanceof Object,
-      constructor: response?.constructor?.name
-    });
-    console.log('Excel导出 - 响应内容预览:', 
-      typeof response === 'string' ? response.substring(0, 200) : response);
-    
-    // 检查响应是否存在
-    if (!response) {
-      throw new Error('服务器未返回任何数据');
-    }
-    
-    // 创建下载链接
-    const blob = new Blob([response], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-    });
-    console.log('Excel导出 - Blob创建成功:', blob.size, 'bytes');
-    
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = exportData.fileName + '.xlsx';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    message.success('导出Excel成功！');
-    
-  } catch (error) {
-    console.error('导出Excel失败:', error);
-    if (error.message) {
-      message.error(`导出Excel失败: ${error.message}`);
-    } else {
-      message.error('导出Excel失败，请稍后重试');
-    }
-  } finally {
-    exporting.value = false;
-  }
-};
-
 // 生成文件名
 const generateFileName = (type) => {
   const title = props.reportData?.reportTitle || '报告';
   const subtitle = props.reportData?.reportSubtitle || '';
   const timestamp = dayjs().format('YYYYMMDD_HHmmss');
-  
+
   return `${title}_${subtitle}_${timestamp}`;
 };
 
@@ -436,5 +432,30 @@ const handleClose = () => {
   justify-content: center;
   align-items: center;
   height: 300px;
+}
+
+.month-selector-container {
+  padding: 40px;
+  text-align: center;
+}
+
+.selector-header h3 {
+  font-size: 18px;
+  color: #1890ff;
+  margin-bottom: 8px;
+}
+
+.selector-header p {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.selector-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.selector-actions {
+  margin-top: 24px;
 }
 </style>

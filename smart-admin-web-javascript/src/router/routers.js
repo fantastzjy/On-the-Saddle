@@ -14,6 +14,7 @@ import { memberRouters } from './business/member';
 import { productRouters } from './business/product';
 import { scheduleRouters } from './business/schedule';
 import { orderRouters } from './business/order';
+import { stableRentalRouters } from './business/stable-rental';
 import NotFound from '/@/views/system/40X/404.vue';
 import NoPrivilege from '/@/views/system/40X/403.vue';
 
@@ -25,6 +26,7 @@ export const routerArray = [
     ...productRouters,
     ...scheduleRouters,
     ...orderRouters,
+    ...stableRentalRouters,
     { path: '/:pathMatch(.*)*', name: '404', component: NotFound },
     { path: '/403', name: '403', component: NoPrivilege }
 ];

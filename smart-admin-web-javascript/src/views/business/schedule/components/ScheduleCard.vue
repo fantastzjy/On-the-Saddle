@@ -11,16 +11,25 @@
     :class="getCardClass()"
     @click="onClick"
   >
-    <div class="schedule-content">
+    <div class="schedule-content" :class="{ 'simplified': simplified }">
       <div class="member-name">{{ schedule.memberName }}</div>
-      <div class="schedule-details">
-        <div class="horse-course">
-          {{ schedule.horseName || '待分配' }} | {{ schedule.courseName || '基础课程' }}
+      
+      <!-- 简化模式：只显示马匹名 -->
+      <template v-if="simplified">
+        <div class="horse-name">{{ schedule.horseName || '待分配' }}</div>
+      </template>
+      
+      <!-- 完整模式：显示详细信息 -->
+      <template v-else>
+        <div class="schedule-details">
+          <div class="horse-course">
+            {{ schedule.horseName || '待分配' }} | {{ schedule.courseName || '基础课程' }}
+          </div>
+          <div class="time-info">
+            {{ formatTime(schedule.startTime) }} - {{ formatTime(schedule.endTime) }}
+          </div>
         </div>
-        <div class="time-info">
-          {{ formatTime(schedule.startTime) }} - {{ formatTime(schedule.endTime) }}
-        </div>
-      </div>
+      </template>
     </div>
     
     <!-- 状态标识 -->
@@ -37,6 +46,10 @@ const props = defineProps({
   schedule: {
     type: Object,
     required: true
+  },
+  simplified: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -47,8 +60,9 @@ const getCardClass = () => {
   const baseClass = 'schedule-card';
   const statusClass = getStatusClass();
   const typeClass = `type-${props.schedule.productType || 1}`;
+  const modeClass = props.simplified ? 'simplified' : '';
   
-  return [baseClass, statusClass, typeClass];
+  return [baseClass, statusClass, typeClass, modeClass].filter(Boolean);
 };
 
 const getStatusClass = () => {
@@ -91,6 +105,12 @@ function onClick() {
   overflow: hidden;
 }
 
+/* 简化模式的高度调整 */
+.schedule-card.simplified {
+  height: 60px;
+  padding: 6px 8px;
+}
+
 .schedule-card:hover {
   border-color: #1890ff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -104,12 +124,31 @@ function onClick() {
   justify-content: space-between;
 }
 
+/* 简化模式的内容布局 */
+.schedule-content.simplified {
+  justify-content: center;
+  gap: 2px;
+}
+
 .member-name {
   font-weight: 600;
   font-size: 14px;
   color: #262626;
   line-height: 1.2;
   margin-bottom: 4px;
+}
+
+/* 简化模式下的会员名样式 */
+.simplified .member-name {
+  font-size: 13px;
+  margin-bottom: 1px;
+}
+
+/* 简化模式下的马匹名样式 */
+.horse-name {
+  font-size: 11px;
+  color: #8c8c8c;
+  line-height: 1.2;
 }
 
 .schedule-details {

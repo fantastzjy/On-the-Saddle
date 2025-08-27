@@ -25,11 +25,11 @@
       <a-row :gutter="20">
         <a-col :span="12">
           <a-form-item label="俱乐部" name="clubId">
-            <a-select v-model:value="formState.form.clubId" placeholder="请选择俱乐部">
-              <a-select-option v-for="club in clubList" :key="club.clubId" :value="club.clubId">
-                {{ club.clubName }}
-              </a-select-option>
-            </a-select>
+            <ClubSelector
+              v-model:value="formState.form.clubId"
+              placeholder="请选择俱乐部"
+              :auto-load="true"
+            />
           </a-form-item>
         </a-col>
         <a-col :span="12">
@@ -75,19 +75,11 @@
 
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-form-item label="毛色" name="color">
-            <a-input v-model:value="formState.form.color" placeholder="请输入毛色" />
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
           <a-form-item label="出生日期" name="birthDate">
             <a-date-picker v-model:value="formState.form.birthDate" placeholder="请选择出生日期" style="width: 100%" />
           </a-form-item>
         </a-col>
-      </a-row>
-
-      <a-row :gutter="20">
-        <a-col :span="24">
+        <a-col :span="12">
           <a-form-item label="身高(cm)" name="height">
             <a-input-number
               v-model:value="formState.form.height"
@@ -98,59 +90,51 @@
             />
           </a-form-item>
         </a-col>
-        <!-- <a-col :span="12">
-          <a-form-item label="体重(kg)" name="weight">
-            <a-input-number
-              v-model:value="formState.form.weight"
-              placeholder="请输入体重"
-              :min="200"
-              :max="800"
-              style="width: 100%"
-            />
-          </a-form-item>
-        </a-col> -->
       </a-row>
 
       <!-- 第一行：责任教练 + 责任马工 -->
       <a-row :gutter="20">
         <a-col :span="12">
           <a-form-item label="责任教练" name="responsibleCoachId">
-            <a-select v-model:value="formState.form.responsibleCoachId" placeholder="请选择责任教练" showSearch allowClear>
-              <a-select-option v-for="coach in coachList" :key="coach.coachId" :value="coach.coachId">
-                {{ coach.userName }}
-              </a-select-option>
-            </a-select>
+            <CoachSelector
+              v-model:value="formState.form.responsibleCoachId"
+              placeholder="请选择责任教练"
+              :allow-clear="true"
+              :auto-load="true"
+            />
           </a-form-item>
         </a-col>
         <a-col :span="12">
           <a-form-item label="责任马工" name="responsibleGroomId">
-            <a-select v-model:value="formState.form.responsibleGroomId" placeholder="请选择责任马工" showSearch allowClear>
-              <a-select-option v-for="groom in groomList" :key="groom.employeeId" :value="groom.employeeId">
-                {{ groom.actualName }}
-              </a-select-option>
-            </a-select>
+            <EmployeeSelector
+              v-model:value="formState.form.responsibleGroomId"
+              placeholder="请选择责任马工"
+              :role-id="35"
+              :allow-clear="true"
+              :auto-load="true"
+            />
           </a-form-item>
         </a-col>
       </a-row>
 
       <!-- 第二行：所属教练 + 马主 -->
       <a-row :gutter="20">
-        <a-col :span="12">
+        <a-col :span="12" v-if="formState.form.horseType === 3">
           <a-form-item label="所属教练" name="coachId">
-            <a-select v-model:value="formState.form.coachId" placeholder="请选择教练" showSearch allowClear>
-              <a-select-option v-for="coach in coachList" :key="coach.coachId" :value="coach.coachId">
-                {{ coach.userName }}
-              </a-select-option>
-            </a-select>
+            <CoachSelector
+              v-model:value="formState.form.coachId"
+              placeholder="请选择教练"
+              :auto-load="true"
+            />
           </a-form-item>
         </a-col>
-        <a-col :span="12">
+        <a-col :span="12" v-if="formState.form.horseType === 2">
           <a-form-item label="马主" name="ownerId">
-            <a-select v-model:value="formState.form.ownerId" placeholder="请选择马主" showSearch allowClear>
-              <a-select-option v-for="owner in ownerList" :key="owner.employeeId" :value="owner.employeeId">
-                {{ owner.actualName }}
-              </a-select-option>
-            </a-select>
+            <MemberSelector
+              v-model:value="formState.form.ownerId"
+              placeholder="请选择马主"
+              :auto-load="true"
+            />
           </a-form-item>
         </a-col>
       </a-row>
@@ -158,21 +142,23 @@
       <a-row :gutter="20" v-if="formState.form.horseType === 2">
         <a-col :span="12">
           <a-form-item label="寄养开始时间" name="boardingStartDate">
-            <a-date-picker 
-              v-model:value="formState.form.boardingStartDate" 
-              placeholder="请选择寄养开始时间" 
+            <a-date-picker
+              v-model:value="formState.form.boardingStartDate"
+              placeholder="请选择寄养开始时间"
               style="width: 100%"
-              showTime
+              format="YYYY-MM-DD"
+              @change="onBoardingStartDateChange"
             />
           </a-form-item>
         </a-col>
         <a-col :span="12">
           <a-form-item label="寄养结束时间" name="boardingEndDate">
-            <a-date-picker 
-              v-model:value="formState.form.boardingEndDate" 
-              placeholder="请选择寄养结束时间" 
+            <a-date-picker
+              v-model:value="formState.form.boardingEndDate"
+              placeholder="请选择寄养结束时间"
               style="width: 100%"
-              showTime
+              format="YYYY-MM-DD"
+              @change="onBoardingEndDateChange"
             />
           </a-form-item>
         </a-col>
@@ -210,9 +196,13 @@
         </a-col>
       </a-row>
 
-      <a-form-item label="备注" name="remark">
-        <a-textarea v-model:value="formState.form.remark" placeholder="请输入备注" :rows="3" />
-      </a-form-item>
+      <a-row :gutter="20">
+        <a-col :span="24">
+          <a-form-item label="备注" name="remark" :label-col="{ span: 3 }" :wrapper-col="{ span: 21 }">
+            <a-textarea v-model:value="formState.form.remark" placeholder="请输入备注" :rows="3" />
+          </a-form-item>
+        </a-col>
+      </a-row>
     </a-form>
   </a-modal>
 </template>
@@ -221,19 +211,18 @@
 import { ref, reactive, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
 import { horseApi } from '/@/api/business/horse/horse-api';
-import { clubApi } from '/@/api/business/club/club-api';
-import { coachApi } from '/@/api/business/coach/coach-api';
-import { employeeApi } from '/@/api/system/employee-api';
+import {
+  ClubSelector,
+  MemberSelector,
+  CoachSelector,
+  EmployeeSelector
+} from '/@/components/business/selector';
 import { smartSentry } from '/@/lib/smart-sentry';
 import dayjs from 'dayjs';
 
 const emit = defineEmits(['reloadList']);
 
 const formRef = ref();
-const clubList = ref([]);
-const coachList = ref([]);
-const ownerList = ref([]);
-const groomList = ref([]);
 
 const formState = reactive({
   visible: false,
@@ -281,7 +270,7 @@ const formRules = {
 function showModal(isCreate, rowData = {}) {
   formState.visible = true;
   formState.isCreate = isCreate;
-  
+
   if (isCreate) {
     resetForm();
   } else {
@@ -309,8 +298,8 @@ function resetForm() {
     birthDate: undefined,
     height: undefined,
     weight: undefined,
-    coachId: undefined,
     ownerId: undefined,
+    coachId: undefined,
     responsibleCoachId: undefined,
     responsibleGroomId: undefined,
     boardingStartDate: undefined,
@@ -323,14 +312,26 @@ function resetForm() {
 }
 
 function onHorseTypeChange() {
-  // 归属类型改变时，清空相关字段
-  formState.form.coachId = undefined;
   formState.form.ownerId = undefined;
-  
+  formState.form.coachId = undefined;
   if (formState.form.horseType !== 2) {
     formState.form.boardingStartDate = undefined;
     formState.form.boardingEndDate = undefined;
     formState.form.boardingFee = undefined;
+  }
+}
+
+// 寄养开始时间改变时，设置为当天开始时间（00:00:00）
+function onBoardingStartDateChange(date) {
+  if (date) {
+    formState.form.boardingStartDate = dayjs(date).startOf('day');
+  }
+}
+
+// 寄养结束时间改变时，设置为当天结束时间（23:59:59）
+function onBoardingEndDateChange(date) {
+  if (date) {
+    formState.form.boardingEndDate = dayjs(date).endOf('day');
   }
 }
 
@@ -372,49 +373,6 @@ function onClose() {
   resetForm();
   formRef.value?.resetFields();
 }
-
-async function queryClubList() {
-  try {
-    const res = await clubApi.queryList();
-    clubList.value = res.data || [];
-  } catch (error) {
-    smartSentry.captureError(error);
-  }
-}
-
-async function queryCoachList() {
-  try {
-    const res = await coachApi.queryList();
-    coachList.value = res.data || [];
-  } catch (error) {
-    smartSentry.captureError(error);
-  }
-}
-
-async function queryOwnerList() {
-  try {
-    const res = await employeeApi.queryAll();
-    ownerList.value = res.data || [];
-  } catch (error) {
-    smartSentry.captureError(error);
-  }
-}
-
-async function queryGroomList() {
-  try {
-    const res = await employeeApi.queryAll();
-    groomList.value = res.data || [];
-  } catch (error) {
-    smartSentry.captureError(error);
-  }
-}
-
-onMounted(() => {
-  queryClubList();
-  queryCoachList();
-  queryOwnerList();
-  queryGroomList();
-});
 
 defineExpose({
   showModal,

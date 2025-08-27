@@ -115,15 +115,6 @@
             新建家庭
           </a-button>
           
-          <a-button 
-            type="primary" 
-            danger
-            disabled
-            style="opacity: 0.5; cursor: not-allowed;"
-          >
-            <template #icon><DeleteOutlined /></template>
-            批量删除 (0)
-          </a-button>
           
           <a-button 
             v-if="searchForm.status === 1"
@@ -272,7 +263,6 @@ import dayjs from 'dayjs'
 import {
   SearchOutlined,
   ReloadOutlined,
-  DeleteOutlined,
   RedoOutlined,
   ExportOutlined,
   PlusOutlined

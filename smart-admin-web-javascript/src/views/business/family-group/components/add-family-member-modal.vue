@@ -380,6 +380,7 @@ async function onSubmitCreate() {
     
     confirmLoading.value = true
     
+    // 使用新的统一事务API
     const submitData = {
       familyGroupId: familyGroupInfo.value.familyGroupId,
       clubId: familyGroupInfo.value.clubId,
@@ -394,7 +395,7 @@ async function onSubmitCreate() {
     const res = await memberApi.addFamilyMember(submitData)
     
     if (res.code === 0 && res.ok) {
-      message.success('创建会员成功')
+      message.success('创建会员并加入家庭组成功')
       emits('success')
       onCancel()
     } else {

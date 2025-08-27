@@ -57,6 +57,32 @@
         size="small"
         bordered
       >
+        <!-- 会员姓名 -->
+        <template #actualName="{ record }">
+          <a 
+            @click="showDetail(record.memberId)" 
+            style="color: #1890ff; cursor: pointer; text-decoration: none;"
+            @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+            @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+          >
+            {{ record.actualName }}
+          </a>
+        </template>
+
+        <!-- 家庭组 -->
+        <template #familyName="{ record }">
+          <a 
+            v-if="record.familyName && record.familyGroupId"
+            @click="goToFamilyDetail(record.familyGroupId)" 
+            style="color: #1890ff; cursor: pointer; text-decoration: none;"
+            @mouseenter="(e) => e.target.style.textDecoration = 'underline'"
+            @mouseleave="(e) => e.target.style.textDecoration = 'none'"
+          >
+            {{ record.familyName }}
+          </a>
+          <span v-else style="color: #ccc;">-</span>
+        </template>
+
         <!-- 性别 -->
         <template #gender="{ record }">
           {{ GENDER_TEXT[record.gender] }}
@@ -64,7 +90,7 @@
 
         <!-- 手机号 -->
         <template #phone="{ record }">
-          <div class="sensitive-field">
+          <div class="sensitive-field phone-field">
             <span>{{ getDisplayPhone(record.phone, record.memberId) }}</span>
             <a-button 
               type="text" 
@@ -109,9 +135,10 @@
 
         <!-- 身份证号 -->
         <template #idCardNo="{ record }">
-          <div class="sensitive-field">
+          <div class="sensitive-field idcard-field">
             <span>{{ getDisplayIdCard(record.idCardNo, record.memberId) }}</span>
             <a-button 
+              v-if="record.idCardNo && record.idCardNo.trim()"
               type="text" 
               size="small" 
               @click="toggleIdCardVisibility(record.memberId)"
@@ -156,6 +183,11 @@
         <!-- 创建时间 -->
         <template #createTime="{ record }">
           {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm') }}
+        </template>
+
+        <!-- 更新时间 -->
+        <template #updateTime="{ record }">
+          {{ record.updateTime ? dayjs(record.updateTime).format('YYYY-MM-DD HH:mm') : '-' }}
         </template>
 
         <!-- 操作列 -->
@@ -345,6 +377,10 @@ function showDetail(memberId) {
   router.push({ name: 'MemberDetail', params: { memberId } })
 }
 
+function goToFamilyDetail(familyGroupId) {
+  router.push(`/family-group/detail/${familyGroupId}`)
+}
+
 async function handleFamilyNavigation(record) {
   try {
     const res = await adminFamilyGroupApi.getMemberFamily(record.memberId)
@@ -466,6 +502,7 @@ function getDisplayIdCard(idCard, memberId) {
 
 function maskPhone(phone) {
   if (!phone || phone.length < 7) return phone
+  // 保持原始长度，避免脱敏后长度变短
   return phone.replace(/^(.{3}).*(.{4})$/, '$1****$2')
 }
 
@@ -476,7 +513,11 @@ function calculateAge(birthDate) {
 
 function maskIdCard(idCard) {
   if (!idCard || idCard.length < 6) return idCard
-  return idCard.replace(/^(.{3}).*(.{4})$/, '$1****$2')
+  // 保持原始长度，使用更多星号
+  if (idCard.length === 18) {
+    return idCard.replace(/^(.{3}).*(.{4})$/, '$1***********$2')
+  }
+  return idCard.replace(/^(.{3}).*(.{3})$/, '$1****$2')
 }
 
 function getMembershipExpireStyle(expireDate) {
@@ -543,10 +584,27 @@ function getCourseLevelText(level) {
     min-width: 20px;
     height: 20px;
     color: #666;
+    flex-shrink: 0; /* 防止按钮被压缩 */
     
     &:hover {
       color: #1890ff;
     }
+  }
+  
+  /* 脱敏文本容器 */
+  span {
+    flex: 1;
+    min-width: 0; /* 允许文本被截断 */
+  }
+  
+  /* 手机号字段 */
+  &.phone-field {
+    min-width: 120px;
+  }
+  
+  /* 身份证号字段 - 需要更宽的显示空间 */
+  &.idcard-field {
+    min-width: 170px;
   }
 }
 </style>

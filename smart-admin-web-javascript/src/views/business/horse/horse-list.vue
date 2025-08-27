@@ -57,7 +57,7 @@
               <template #icon>
                 <FilePdfOutlined />
               </template>
-              月度健康报告
+              马匹健康报告
             </a-button>
           </a-form-item>
         </a-row>
@@ -140,6 +140,7 @@
       :loading="reportLoading"
       :report-params="reportParams"
       @refresh="generateHealthReport"
+      @reportGenerated="handleReportGenerated"
     />
   </div>
 </template>
@@ -351,15 +352,18 @@ async function queryClubList() {
   }
 }
 
-// 显示月度健康报告
+// 显示马匹健康报告
 function showHealthReport() {
-  // 移除俱乐部选择检查，直接使用默认俱乐部ID
+  // 重置报告数据，显示月份选择界面
+  reportData.value = null;
+  
+  // 直接打开报告弹窗，在弹窗中选择月份
   const currentDate = new Date();
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth() + 1;
 
   reportParams.value = {
-    reportType: 1, // HORSE_HEALTH_MONTHLY
+    reportType: 1, // HORSE_HEALTH_MONTHLY (复用现有类型)
     params: {
       year: year,
       month: month,
@@ -368,10 +372,15 @@ function showHealthReport() {
   };
 
   reportModalVisible.value = true;
-  generateHealthReport();
+  // 不自动生成报告，等用户在弹窗中选择月份后再生成
 }
 
-// 生成健康报告
+// 处理报告生成完成
+function handleReportGenerated(data) {
+  reportData.value = data;
+}
+
+// 生成马匹健康报告
 async function generateHealthReport() {
   try {
     reportLoading.value = true;
