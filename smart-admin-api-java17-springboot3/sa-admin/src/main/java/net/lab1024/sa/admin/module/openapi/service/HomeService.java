@@ -341,88 +341,6 @@ public class HomeService {
     }
 
     /**
-     * 解析教练证书JSON为VO列表（统一结构版）
-     * @param certificatesJson 证书JSON字符串
-     * @return 教练证书VO列表
-     */
-    /*
-    private List<CertificateVO> parseCoachCertificates(String certificatesJson) {
-        if (StrUtil.isBlank(certificatesJson)) {
-            return new ArrayList<>();
-        }
-
-        try {
-            JSONArray array = JSONUtil.parseArray(certificatesJson);
-            List<CertificateVO> result = new ArrayList<>();
-
-            for (Object obj : array) {
-                JSONObject certObj = (JSONObject) obj;
-                CertificateVO vo = new CertificateVO();
-
-                vo.setCategory(certObj.getInt("category"));
-                vo.setCategoryText(CoachCertificateConstant.getCoachCategoryText(vo.getCategory()));
-
-                // 使用统一的level字段
-                Integer level = certObj.getInt("level");
-                vo.setLevel(level);
-                vo.setLevelText(CoachCertificateConstant.getCoachLevelText(level));
-
-                JSONArray imagesArray = certObj.getJSONArray("images");
-                vo.setImages(imagesArray != null ? imagesArray.toList(String.class) : new ArrayList<>());
-
-                result.add(vo);
-            }
-
-            return result;
-        } catch (Exception e) {
-            log.warn("解析教练证书JSON失败: {}", certificatesJson, e);
-            return new ArrayList<>();
-        }
-    }
-    */
-
-    /**
-     * 解析骑手证书JSON为VO列表（统一结构版）
-     * @param certificatesJson 证书JSON字符串
-     * @return 骑手证书VO列表
-     */
-    /*
-    private List<CertificateVO> parseRiderCertificates(String certificatesJson) {
-        if (StrUtil.isBlank(certificatesJson)) {
-            return new ArrayList<>();
-        }
-
-        try {
-            JSONArray array = JSONUtil.parseArray(certificatesJson);
-            List<CertificateVO> result = new ArrayList<>();
-
-            for (Object obj : array) {
-                JSONObject certObj = (JSONObject) obj;
-                CertificateVO vo = new CertificateVO();
-
-                vo.setCategory(certObj.getInt("category"));
-                vo.setCategoryText(CoachCertificateConstant.getRiderCategoryText(vo.getCategory()));
-
-                // 使用统一的level字段
-                Integer level = certObj.getInt("level");
-                vo.setLevel(level);
-                vo.setLevelText(CoachCertificateConstant.getRiderLevelText(level));
-
-                JSONArray imagesArray = certObj.getJSONArray("images");
-                vo.setImages(imagesArray != null ? imagesArray.toList(String.class) : new ArrayList<>());
-
-                result.add(vo);
-            }
-
-            return result;
-        } catch (Exception e) {
-            log.warn("解析骑手证书JSON失败: {}", certificatesJson, e);
-            return new ArrayList<>();
-        }
-    }
-    */
-
-    /**
      * 获取课程列表
      */
     public ResponseDTO<List<CourseListVO>> getCourseList(String clubCode) {
@@ -525,15 +443,7 @@ public class HomeService {
             CoachEntity coach = validation.getCoach();
             ProductEntity product = validation.getProduct();
 
-            // 2. 如果是活动类型，校验人数
-            if (product.getProductType() == 3) {
-                ResponseDTO<Boolean> capacityCheck = checkActivityCapacity(product.getProductId());
-                if (!capacityCheck.getOk()) {
-                    return ResponseDTO.error(UserErrorCode.PARAM_ERROR, capacityCheck.getMsg());
-                }
-            }
-
-            // 3. 检查时间段可用性（仅限课程类型）
+            // 2. 检查时间段可用性（仅限课程类型）
             if (product.getProductType() == 1) {
                 for (BookingTimeVO timeInfo : form.getTimes()) {
                     LocalDate date = LocalDate.parse(timeInfo.getDate());
@@ -557,18 +467,26 @@ public class HomeService {
                 }
             }
 
+            // 3. 如果是活动类型，校验人数
+            if (product.getProductType() == 3) {
+                ResponseDTO<Boolean> capacityCheck = checkActivityCapacity(product.getProductId());
+                if (!capacityCheck.getOk()) {
+                    return ResponseDTO.error(UserErrorCode.PARAM_ERROR, capacityCheck.getMsg());
+                }
+            }
+
             // 4. 生成订单号
             String orderNo = generateOrderNo();
 
             // 4. 创建订单记录
             OrderEntity order = buildOrderEntity(form, validation, orderNo);
             order.setOrderStatus(1); // 待支付
-            order.setPaymentExpireTime(LocalDateTime.now().plusMinutes(30)); // 30分钟支付期限
+            order.setPaymentExpireTime(LocalDateTime.now().plusMinutes(10)); // 10分钟支付期限
             orderDao.insert(order);
 
             // 5. 占用教练时间段（仅限课程类型）
             if (product.getProductType() == 1) {
-                LocalDateTime expireTime = LocalDateTime.now().plusMinutes(30);
+                LocalDateTime expireTime = LocalDateTime.now().plusMinutes(10);
                 for (BookingTimeVO timeInfo : form.getTimes()) {
                     LocalDate date = LocalDate.parse(timeInfo.getDate());
 
@@ -656,12 +574,151 @@ public class HomeService {
         }
 
         // 5. 校验金额计算
-        BigDecimal expectedTotal = form.getCoachFee().add(form.getBaseFee());
-        if (expectedTotal.compareTo(form.getTotalAmount()) != 0) {
-            return ResponseDTO.userErrorParam("金额计算错误");
+        ResponseDTO<Void> amountValidation = validateAmountCalculation(form);
+        if (!amountValidation.getOk()) {
+            return ResponseDTO.userErrorParam(amountValidation.getMsg());
         }
 
         return ResponseDTO.ok(result);
+    }
+
+    /**
+     * 增强的金额校验方法
+     */
+    private ResponseDTO<Void> validateAmountCalculation(OrderCreateForm form) {
+        try {
+            // 1. 计算总时间段数
+            int totalTimeSlots = calculateTotalTimeSlots(form.getTimes());
+
+            if (totalTimeSlots <= 0) {
+                return ResponseDTO.userErrorParam("时间段数量不能为0");
+            }
+
+            // 2. 计算预期总价：(教练费 + 基础费) × 时间段个数
+            BigDecimal unitPrice = form.getCoachFee().add(form.getBaseFee());
+            BigDecimal expectedTotal = unitPrice.multiply(BigDecimal.valueOf(totalTimeSlots));
+
+            // 3. 校验金额（使用BigDecimal的精确比较）
+            if (expectedTotal.compareTo(form.getTotalAmount()) != 0) {
+                return ResponseDTO.userErrorParam(
+                        String.format("金额计算错误，预期总价：%.2f 元，实际总价：%.2f 元，时间段数：%d，单价：%.2f 元",
+                                expectedTotal, form.getTotalAmount(), totalTimeSlots, unitPrice));
+            }
+
+            // 4. 额外的时间段合理性校验
+            ResponseDTO<Void> timeSlotsValidation = validateTimeSlots(form.getTimes());
+            if (!timeSlotsValidation.getOk()) {
+                return timeSlotsValidation;
+            }
+
+            return ResponseDTO.ok();
+        } catch (Exception e) {
+            log.error("金额校验异常", e);
+            return ResponseDTO.userErrorParam("金额校验失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 计算总时间段数量
+     */
+    private int calculateTotalTimeSlots(List<BookingTimeVO> times) {
+        if (times == null || times.isEmpty()) {
+            return 0;
+        }
+
+        return times.stream()
+                .filter(Objects::nonNull)
+                .mapToInt(timeInfo -> {
+                    List<String> timeSlots = timeInfo.getTimeSlots();
+                    return timeSlots != null ? timeSlots.size() : 0;
+                })
+                .sum();
+    }
+
+    /**
+     * 校验时间段合理性
+     */
+    private ResponseDTO<Void> validateTimeSlots(List<BookingTimeVO> times) {
+        try {
+            for (BookingTimeVO timeInfo : times) {
+                LocalDate date = LocalDate.parse(timeInfo.getDate());
+
+                // 检查日期不能是过去的日期
+                if (date.isBefore(LocalDate.now())) {
+                    return ResponseDTO.userErrorParam("不能预订过去的日期：" + timeInfo.getDate());
+                }
+
+                // 检查时间段格式和逻辑
+                for (String timeSlot : timeInfo.getTimeSlots()) {
+                    if (!timeSlot.matches("\\d{2}:\\d{2}-\\d{2}:\\d{2}")) {
+                        return ResponseDTO.userErrorParam("时间格式错误：" + timeSlot + "，正确格式应为：HH:mm-HH:mm");
+                    }
+
+                    String[] times_array = timeSlot.split("-");
+                    LocalTime startTime = LocalTime.parse(times_array[0]);
+                    LocalTime endTime = LocalTime.parse(times_array[1]);
+
+                    if (!startTime.isBefore(endTime)) {
+                        return ResponseDTO.userErrorParam("开始时间必须早于结束时间：" + timeSlot);
+                    }
+
+                    // 检查时间段长度是否合理（比如不能超过4小时）
+                    long minutes = Duration.between(startTime, endTime).toMinutes();
+                    if (minutes > 240) { // 4小时 = 240分钟
+                        return ResponseDTO.userErrorParam("单个时间段不能超过4小时：" + timeSlot);
+                    }
+                    if (minutes < 30) { // 最少30分钟
+                        return ResponseDTO.userErrorParam("单个时间段不能少于30分钟：" + timeSlot);
+                    }
+                }
+
+                // 检查同一天内时间段是否重叠
+                ResponseDTO<Void> overlapCheck = checkTimeSlotOverlap(timeInfo.getTimeSlots());
+                if (!overlapCheck.getOk()) {
+                    return ResponseDTO.userErrorParam("日期 " + timeInfo.getDate() + " " + overlapCheck.getMsg());
+                }
+            }
+
+            return ResponseDTO.ok();
+        } catch (Exception e) {
+            log.error("时间段校验异常", e);
+            return ResponseDTO.userErrorParam("时间段校验失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 检查时间段重叠
+     */
+    private ResponseDTO<Void> checkTimeSlotOverlap(List<String> timeSlots) {
+        if (timeSlots == null || timeSlots.size() <= 1) {
+            return ResponseDTO.ok();
+        }
+
+        // 转换为时间对象并排序
+        List<LocalTime[]> timeRanges = new ArrayList<>();
+        for (String timeSlot : timeSlots) {
+            String[] times = timeSlot.split("-");
+            LocalTime start = LocalTime.parse(times[0]);
+            LocalTime end = LocalTime.parse(times[1]);
+            timeRanges.add(new LocalTime[]{start, end});
+        }
+
+        // 按开始时间排序
+        timeRanges.sort(Comparator.comparing(range -> range[0]));
+
+        // 检查重叠
+        for (int i = 0; i < timeRanges.size() - 1; i++) {
+            LocalTime currentEnd = timeRanges.get(i)[1];
+            LocalTime nextStart = timeRanges.get(i + 1)[0];
+
+            if (currentEnd.isAfter(nextStart)) {
+                return ResponseDTO.userErrorParam(
+                        String.format("存在时间段重叠：%s-%s 与 %s-%s",
+                                timeRanges.get(i)[0], currentEnd, nextStart, timeRanges.get(i + 1)[1]));
+            }
+        }
+
+        return ResponseDTO.ok();
     }
 
     /**
