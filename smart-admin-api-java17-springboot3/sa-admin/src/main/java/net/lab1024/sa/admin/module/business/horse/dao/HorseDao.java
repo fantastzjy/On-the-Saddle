@@ -9,6 +9,7 @@ import net.lab1024.sa.admin.module.business.horse.domain.vo.HorseVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -57,4 +58,9 @@ public interface HorseDao extends BaseMapper<HorseEntity> {
      * 根据芯片号查询马匹（排除指定ID）
      */
     HorseEntity selectByChipNoExcludeId(@Param("chipNo") String chipNo, @Param("excludeHorseId") Long excludeHorseId);
+
+    /**
+     * 查询俱乐部马匹信息报告数据
+     */
+    List<HorseListVO> queryHorseInfoForReport(@Param("clubId") Long clubId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

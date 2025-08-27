@@ -61,7 +61,7 @@ public interface MemberDao extends BaseMapper<MemberEntity> {
     /**
      * 更新会员状态
      */
-    int updateMemberStatus(@Param("memberId") Long memberId, @Param("disabledFlag") Integer disabledFlag);
+    int updateMemberStatus(@Param("memberId") Long memberId, @Param("disabledFlag") Integer disabledFlag, @Param("updateBy") String updateBy);
 
 
     /**
@@ -73,4 +73,14 @@ public interface MemberDao extends BaseMapper<MemberEntity> {
      * 查询所有有效会员
      */
     List<MemberEntity> queryAllValidMembers();
+
+    /**
+     * 根据会员ID查找其监护人
+     */
+    MemberVO getGuardianByMemberId(@Param("memberId") Long memberId);
+
+    /**
+     * 根据监护人ID查找其所有被监护人
+     */
+    List<MemberVO> getGuardedMembersByGuardianId(@Param("guardianId") Long guardianId);
 }

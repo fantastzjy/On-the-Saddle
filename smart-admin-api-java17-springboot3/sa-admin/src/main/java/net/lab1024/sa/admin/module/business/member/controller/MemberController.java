@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberQueryForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.MemberStatusUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberDetailVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO;
 import net.lab1024.sa.admin.module.business.member.service.MemberService;
@@ -71,8 +72,8 @@ public class MemberController {
 
     @Operation(summary = "更新会员状态")
     @PostMapping("/update-status")
-    public ResponseDTO<String> updateStatus(@RequestParam Long memberId, @RequestParam Integer status) {
-        return memberService.updateStatus(memberId, status);
+    public ResponseDTO<String> updateStatus(@RequestBody @Valid MemberStatusUpdateForm form) {
+        return memberService.updateStatus(form.getMemberId(), form.getStatus());
     }
 
     @Operation(summary = "检查手机号是否存在")

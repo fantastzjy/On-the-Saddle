@@ -18,6 +18,9 @@ public class CoachSelectorVO {
     @Schema(description = "教练ID")
     private Long coachId;
 
+    @Schema(description = "教练编号")
+    private String coachNo;
+
     @Schema(description = "用户名")
     private String userName;
 

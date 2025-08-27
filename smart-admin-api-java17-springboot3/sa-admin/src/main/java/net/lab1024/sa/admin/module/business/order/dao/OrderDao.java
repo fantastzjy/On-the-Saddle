@@ -46,4 +46,9 @@ public interface OrderDao extends BaseMapper<OrderEntity> {
      * 统计订单数量
      */
     int countOrdersByStatus(@Param("clubId") Long clubId, @Param("orderStatus") Integer orderStatus);
+
+    /**
+     * 统计活动参与人数（包含待支付状态）
+     */
+    int countActivityParticipants(@Param("productId") Long productId, @Param("statusList") List<Integer> statusList);
 }

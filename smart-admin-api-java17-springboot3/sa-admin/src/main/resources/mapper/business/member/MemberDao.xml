@@ -194,7 +194,7 @@
     <!-- 更新会员状态 -->
     <update id="updateMemberStatus">
         UPDATE m_member 
-        SET disabled_flag = #{disabledFlag}, update_time = NOW()
+        SET disabled_flag = #{disabledFlag}, update_time = NOW(), update_by = #{updateBy}
         WHERE member_id = #{memberId}
     </update>
 
@@ -210,6 +210,64 @@
     <select id="queryAllValidMembers" resultType="net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity">
         SELECT * FROM m_member 
         WHERE is_valid = 1 AND is_delete = 0
+    </select>
+
+    <!-- 根据会员ID查找其监护人 -->
+    <select id="getGuardianByMemberId" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO">
+        SELECT 
+            m.member_id,
+            m.member_no,
+            m.actual_name,
+            m.phone,
+            m.email,
+            m.avatar_url,
+            m.gender,
+            m.birth_date,
+            m.club_id,
+            m.registration_status,
+            m.disabled_flag,
+            m.default_coach_id,
+            m.default_course_level,
+            m.create_time,
+            'guardian' as relationship_type
+        FROM m_member m
+        INNER JOIN m_family_member_relation fmr ON m.member_id = fmr.member_id
+        INNER JOIN m_family_member_relation child_fmr ON fmr.family_group_id = child_fmr.family_group_id
+        WHERE child_fmr.member_id = #{memberId}
+          AND fmr.is_guardian = 1 
+          AND fmr.is_delete = 0 
+          AND child_fmr.is_delete = 0
+          AND m.is_delete = 0
+    </select>
+
+    <!-- 根据监护人ID查找其所有被监护人 -->
+    <select id="getGuardedMembersByGuardianId" resultType="net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO">
+        SELECT 
+            m.member_id,
+            m.member_no,
+            m.actual_name,
+            m.phone,
+            m.email,
+            m.avatar_url,
+            m.gender,
+            m.birth_date,
+            m.club_id,
+            m.registration_status,
+            m.disabled_flag,
+            m.default_coach_id,
+            m.default_course_level,
+            m.create_time,
+            fmr.remark as relationship_remark
+        FROM m_member m
+        INNER JOIN m_family_member_relation fmr ON m.member_id = fmr.member_id  
+        INNER JOIN m_family_member_relation guardian_fmr ON fmr.family_group_id = guardian_fmr.family_group_id
+        WHERE guardian_fmr.member_id = #{guardianId}
+          AND guardian_fmr.is_guardian = 1
+          AND fmr.is_guardian = 0 
+          AND fmr.is_delete = 0 
+          AND guardian_fmr.is_delete = 0
+          AND m.is_delete = 0
+        ORDER BY m.birth_date DESC
     </select>
 
 </mapper>

@@ -19,9 +19,9 @@
         h.passport_no,
         h.horse_type,
         h.owner_id,
-        owner.actual_name as owner_name,
+        member.actual_name as owner_name,
         h.responsible_coach_id,
-        u_coach.actual_name as responsible_coach_name,
+        coach.actual_name as responsible_coach_name,
         h.responsible_groom_id,
         u_groom.actual_name as responsible_groom_name,
         h.boarding_start_date,
@@ -33,9 +33,8 @@
         h.create_by
         FROM m_horse h
         LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
-        LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
-        LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid =1
-        LEFT JOIN t_employee u_coach ON coach.user_id = u_coach.employee_id AND u_coach.deleted_flag = 0
+        LEFT JOIN m_member member ON h.owner_id = member.member_id AND member.is_delete = 0 AND member.is_valid = 1
+        LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid = 1
         LEFT JOIN t_employee u_groom ON h.responsible_groom_id = u_groom.employee_id AND u_groom.deleted_flag = 0
         <where>
             h.is_delete = #{query.isDelete} AND h.is_valid = #{query.isValid}
@@ -96,9 +95,9 @@
             h.pedigree_cert_url,
             h.horse_type,
             h.owner_id,
-            owner.actual_name as owner_name,
+            member.actual_name as owner_name,
             h.responsible_coach_id,
-            u_coach.actual_name as responsible_coach_name,
+            coach.actual_name as responsible_coach_name,
             h.responsible_groom_id,
             groom.actual_name as responsible_groom_name,
             h.boarding_start_date,
@@ -113,9 +112,8 @@
             h.update_by
         FROM m_horse h
         LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
-        LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
+        LEFT JOIN m_member member ON h.owner_id = member.member_id AND member.is_delete = 0 AND member.is_valid = 1
         LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid = 1
-        LEFT JOIN t_employee u_coach ON coach.user_id = u_coach.employee_id AND u_coach.deleted_flag = 0
         LEFT JOIN t_employee groom ON h.responsible_groom_id = groom.employee_id AND groom.deleted_flag = 0
         WHERE h.horse_id = #{horseId} AND h.is_delete = 0 AND h.is_valid = 1
     </select>
@@ -137,9 +135,9 @@
             h.passport_no,
             h.horse_type,
             h.owner_id,
-            owner.actual_name as owner_name,
+            member.actual_name as owner_name,
             h.responsible_coach_id,
-            u_coach.actual_name as responsible_coach_name,
+            coach.actual_name as responsible_coach_name,
             h.responsible_groom_id,
             u_groom.actual_name as responsible_groom_name,
             h.boarding_start_date,
@@ -151,9 +149,8 @@
             h.create_by
         FROM m_horse h
         LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
-        LEFT JOIN t_employee owner ON h.owner_id = owner.employee_id AND owner.deleted_flag = 0
+        LEFT JOIN m_member member ON h.owner_id = member.member_id AND member.is_delete = 0 AND member.is_valid = 1
         LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid = 1
-        LEFT JOIN t_employee u_coach ON coach.user_id = u_coach.employee_id AND u_coach.deleted_flag = 0
         LEFT JOIN t_employee u_groom ON h.responsible_groom_id = u_groom.employee_id AND u_groom.deleted_flag = 0
         WHERE h.is_delete = 0 AND h.is_valid = 1
         <if test="clubId != null">
@@ -183,6 +180,53 @@
     <select id="selectByChipNoExcludeId" resultType="net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity">
         SELECT * FROM m_horse
         WHERE chip_no = #{chipNo} AND horse_id != #{excludeHorseId} AND is_delete = 0 AND is_valid = 1
+    </select>
+
+    <select id="queryHorseInfoForReport" resultType="net.lab1024.sa.admin.module.business.horse.domain.vo.HorseListVO">
+        SELECT
+            h.horse_id,
+            h.club_id,
+            c.club_name,
+            h.horse_name,
+            h.horse_code,
+            h.breed,
+            h.gender,
+            h.color,
+            h.height,
+            h.weight,
+            h.birth_date,
+            h.chip_no,
+            h.passport_no,
+            h.horse_type,
+            h.owner_id,
+            CASE
+                WHEN h.horse_type = 1 THEN c.club_name
+                WHEN h.horse_type = 2 THEN member.actual_name
+                WHEN h.horse_type = 3 THEN coach.actual_name
+                ELSE '-'
+            END as owner_name,
+            h.responsible_coach_id,
+            coach.actual_name as responsible_coach_name,
+            h.responsible_groom_id,
+            u_groom.actual_name as responsible_groom_name,
+            h.boarding_start_date,
+            h.boarding_end_date,
+            h.boarding_fee,
+            h.health_status,
+            h.work_status,
+            h.create_time,
+            h.create_by
+        FROM m_horse h
+        LEFT JOIN m_club c ON h.club_id = c.club_id AND c.is_delete = 0 AND c.is_valid = 1
+        LEFT JOIN m_member member ON h.owner_id = member.member_id AND member.is_delete = 0 AND member.is_valid = 1
+        LEFT JOIN m_coach coach ON h.responsible_coach_id = coach.coach_id AND coach.is_delete = 0 AND coach.is_valid = 1
+        LEFT JOIN t_employee u_groom ON h.responsible_groom_id = u_groom.employee_id AND u_groom.deleted_flag = 0
+        WHERE h.is_delete = 0 AND h.is_valid = 1 AND h.club_id = #{clubId}
+        <!-- TODO: 当前使用update_time过滤，后续可能需要调整为业务相关的时间字段 -->
+        <if test="startDate != null and endDate != null">
+            AND h.update_time BETWEEN #{startDate} AND #{endDate}
+        </if>
+        ORDER BY h.horse_name ASC
     </select>
 
 </mapper>

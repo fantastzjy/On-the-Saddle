@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupQueryForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupCreateForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.FamilyMemberAddForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO;
 import net.lab1024.sa.admin.module.business.member.service.AdminFamilyGroupService;
@@ -72,5 +73,11 @@ public class AdminFamilyGroupController {
     @GetMapping("/member/{memberId}")
     public ResponseDTO<FamilyGroupDetailVO> getMemberFamily(@PathVariable Long memberId) {
         return adminFamilyGroupService.getMemberFamily(memberId);
+    }
+
+    @Operation(summary = "创建新会员并加入家庭组")
+    @PostMapping("/add-family-member")
+    public ResponseDTO<String> addFamilyMember(@RequestBody @Valid FamilyMemberAddForm addForm) {
+        return adminFamilyGroupService.addFamilyMember(addForm);
     }
 }

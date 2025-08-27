@@ -3,13 +3,14 @@ package net.lab1024.sa.admin.module.business.member.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
-import net.lab1024.sa.admin.module.business.member.dao.FamilyMemberExtraDao;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberQueryForm;
 import net.lab1024.sa.admin.module.openapi.domain.form.MemberUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberDetailVO;
+import net.lab1024.sa.admin.module.system.login.domain.RequestEmployee;
+import net.lab1024.sa.admin.util.AdminRequestUtil;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
@@ -41,8 +42,6 @@ public class MemberService {
     @Resource
     private MemberDao memberDao;
 
-    @Resource
-    private FamilyMemberExtraDao familyMemberExtraDao;
 
     @Resource
     private DataTracerService dataTracerService;
@@ -102,6 +101,11 @@ public class MemberService {
         // 转换实体并保存
         MemberEntity memberEntity = SmartBeanUtil.copy(createForm, MemberEntity.class);
         memberEntity.setCreateTime(LocalDateTime.now());
+
+        // 获取当前操作用户
+        String createBy = getCurrentOperatorName();
+        memberEntity.setCreateBy(createBy);
+
         memberEntity.setIsValid(1);
         memberEntity.setIsDelete(0);
 
@@ -144,6 +148,10 @@ public class MemberService {
         MemberEntity memberEntity = SmartBeanUtil.copy(updateForm, MemberEntity.class);
         memberEntity.setUpdateTime(LocalDateTime.now());
 
+        // 获取当前操作用户
+        String updateBy = getCurrentOperatorName();
+        memberEntity.setUpdateBy(updateBy);
+
         memberDao.updateById(memberEntity);
 
         // 记录数据变更日志
@@ -170,10 +178,13 @@ public class MemberService {
         // 软删除
         memberEntity.setIsDelete(1);
         memberEntity.setUpdateTime(LocalDateTime.now());
+
+        // 获取当前操作用户
+        String updateBy = getCurrentOperatorName();
+        memberEntity.setUpdateBy(updateBy);
+
         memberDao.updateById(memberEntity);
 
-        // 删除扩展信息
-        familyMemberExtraDao.deleteByMemberId(memberId);
 
         // 记录数据变更日志
         dataTracerService.delete(memberId, DataTracerTypeEnum.CLUB_MEMBER);
@@ -219,7 +230,10 @@ public class MemberService {
         MemberEntity oldMemberEntity = SmartBeanUtil.copy(memberEntity, MemberEntity.class);
         oldMemberEntity.setDisabledFlag(memberEntity.getDisabledFlag());
 
-        int result = memberDao.updateMemberStatus(memberId, disabledFlag);
+        // 获取当前操作用户
+        String updateBy = getCurrentOperatorName();
+
+        int result = memberDao.updateMemberStatus(memberId, disabledFlag, updateBy);
         if (result > 0) {
             // 获取更新后的数据用于审计日志
             MemberEntity updatedMemberEntity = SmartBeanUtil.copy(memberEntity, MemberEntity.class);
@@ -285,6 +299,21 @@ public class MemberService {
         }
 
         return memberNo;
+    }
+
+    /**
+     * 获取当前操作人姓名
+     */
+    private String getCurrentOperatorName() {
+        try {
+            RequestEmployee currentUser = AdminRequestUtil.getRequestUser();
+            return currentUser != null && StringUtils.isNotBlank(currentUser.getActualName())
+                ? currentUser.getActualName()
+                : "未知";
+        } catch (Exception e) {
+            log.warn("获取当前操作人信息失败", e);
+            return "未知";
+        }
     }
 
 }

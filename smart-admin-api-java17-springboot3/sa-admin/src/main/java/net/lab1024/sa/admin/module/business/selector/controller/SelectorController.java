@@ -25,7 +25,7 @@ import java.util.List;
  * @Copyright 1024创新实验室
  */
 @RestController
-@RequestMapping("/api/selector")
+@RequestMapping("/selector")
 @Tag(name = "选择器接口")
 @Slf4j
 public class SelectorController {
@@ -33,7 +33,7 @@ public class SelectorController {
     @Autowired
     private SelectorService selectorService;
 
-    // 固定俱乐部ID，后续可以从用户上下文获取
+    // TODO 固定俱乐部ID，后续可以从用户上下文获取
     private static final Long DEFAULT_CLUB_ID = 1L;
 
     @GetMapping("/horse")

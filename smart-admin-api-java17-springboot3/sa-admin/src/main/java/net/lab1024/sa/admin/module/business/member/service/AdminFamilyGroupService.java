@@ -11,6 +11,7 @@ import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupQueryForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupCreateForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.FamilyMemberAddForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -26,6 +27,7 @@ import jakarta.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 家庭组后台管理服务
@@ -271,5 +273,127 @@ public class AdminFamilyGroupService {
             log.info("该会员未加入任何家庭组，memberId: {}", memberId);
             return ResponseDTO.userErrorParam("该会员未加入任何家庭组");
         }
+    }
+
+    /**
+     * 创建新会员并加入家庭组（事务保障）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @OperateLog
+    public ResponseDTO<String> addFamilyMember(FamilyMemberAddForm addForm) {
+        log.info("开始创建新会员并加入家庭组，参数: {}", addForm);
+        
+        try {
+            // 1. 参数验证
+            if (addForm.getFamilyGroupId() == null) {
+                return ResponseDTO.userErrorParam("家庭组ID不能为空");
+            }
+            if (addForm.getClubId() == null) {
+                return ResponseDTO.userErrorParam("俱乐部ID不能为空");
+            }
+            
+            // 2. 检查家庭组是否存在
+            FamilyGroupEntity familyGroup = familyGroupDao.selectById(addForm.getFamilyGroupId());
+            if (familyGroup == null || familyGroup.getIsDelete() == 1) {
+                return ResponseDTO.userErrorParam("家庭组不存在");
+            }
+
+            // 3. 检查手机号是否已存在（如果提供了手机号）
+            if (addForm.getPhone() != null && !addForm.getPhone().trim().isEmpty()) {
+                int phoneCount = memberDao.checkPhoneExists(addForm.getPhone(), null);
+                if (phoneCount > 0) {
+                    return ResponseDTO.userErrorParam("该手机号已被注册");
+                }
+            }
+
+            // 4. 如果要设置为监护人，检查是否已有监护人
+            if (addForm.getIsGuardian() != null && addForm.getIsGuardian() == 1) {
+                int guardianCount = familyMemberRelationDao.countGuardiansByFamilyGroupId(addForm.getFamilyGroupId());
+                if (guardianCount > 0) {
+                    return ResponseDTO.userErrorParam("该家庭组已有监护人，每个家庭组只能有一个监护人");
+                }
+            }
+
+            // 5. 创建会员实体
+            String memberNo = generateMemberNo();
+            MemberEntity newMember = new MemberEntity();
+            newMember.setMemberNo(memberNo);
+            newMember.setActualName(addForm.getActualName());
+            newMember.setGender(addForm.getGender());
+            newMember.setBirthDate(addForm.getBirthDate());
+            newMember.setPhone(addForm.getPhone());
+            newMember.setIdCardNo(addForm.getIdCardNo());
+            newMember.setRiderCertNo(addForm.getRiderCertNo());
+            newMember.setClubId(addForm.getClubId());
+            newMember.setRegistrationStatus(0); // 未激活状态
+            newMember.setCreatedByGuardian(1); // 标记为由监护人创建
+            newMember.setDisabledFlag(0); // 启用状态
+            newMember.setDefaultCoachId(addForm.getDefaultCoachId() == null ? 0L : addForm.getDefaultCoachId());
+            newMember.setDefaultCourseLevel(addForm.getCourseLevelPreference() == null ? "" : addForm.getCourseLevelPreference());
+            newMember.setCreateTime(LocalDateTime.now());
+            newMember.setIsValid(1);
+            newMember.setIsDelete(0);
+
+            // 6. 插入会员记录
+            int insertResult = memberDao.insert(newMember);
+            if (insertResult <= 0) {
+                throw new RuntimeException("会员记录插入失败");
+            }
+
+            // 7. 创建家庭成员关系
+            FamilyMemberRelationEntity relation = new FamilyMemberRelationEntity();
+            relation.setFamilyGroupId(addForm.getFamilyGroupId());
+            relation.setMemberId(newMember.getMemberId());
+            relation.setIsGuardian(addForm.getIsGuardian() == null ? 0 : addForm.getIsGuardian());
+            relation.setJoinDate(LocalDate.now());
+            relation.setRemark(addForm.getRemark() == null ? "" : addForm.getRemark());
+            relation.setCreateTime(LocalDateTime.now());
+            relation.setIsValid(1);
+            relation.setIsDelete(0);
+
+            // 8. 插入家庭关系记录
+            int relationInsertResult = familyMemberRelationDao.insert(relation);
+            if (relationInsertResult <= 0) {
+                throw new RuntimeException("家庭关系记录插入失败");
+            }
+
+            // 9. 如果是监护人，更新家庭组的主联系人
+            if (addForm.getIsGuardian() != null && addForm.getIsGuardian() == 1) {
+                familyGroupDao.updateMainContact(addForm.getFamilyGroupId(), newMember.getMemberId());
+            }
+
+            // 10. 记录数据变更日志
+            try {
+                dataTracerService.insert(newMember.getMemberId(), DataTracerTypeEnum.CLUB_MEMBER);
+                dataTracerService.insert(relation.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP);
+            } catch (Exception e) {
+                log.warn("数据变更日志记录失败，但不影响主流程，error={}", e.getMessage());
+            }
+
+            log.info("创建新会员并加入家庭组成功，会员ID: {}, 姓名: {}", newMember.getMemberId(), newMember.getActualName());
+            return ResponseDTO.ok("创建会员并加入家庭组成功");
+            
+        } catch (Exception e) {
+            log.error("创建新会员并加入家庭组失败", e);
+            throw e; // 重新抛出异常，触发事务回滚
+        }
+    }
+
+    /**
+     * 生成会员编号
+     */
+    private String generateMemberNo() {
+        String dateStr = LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String randomStr = String.format("%04d", ThreadLocalRandom.current().nextInt(1000, 9999));
+        String memberNo = "M" + dateStr + randomStr;
+
+        // 检查是否重复
+        int count = memberDao.checkMemberNoExists(memberNo);
+        if (count > 0) {
+            // 如果重复，递归生成新的编号
+            return generateMemberNo();
+        }
+
+        return memberNo;
     }
 }

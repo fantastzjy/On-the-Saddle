@@ -23,9 +23,9 @@ public class FamilyMemberAddForm {
     @NotNull(message = "家庭组ID不能为空")
     private Long familyGroupId;
 
-    @Schema(description = "会员ID")
-    @NotNull(message = "会员ID不能为空")
-    private Long memberId;
+    // @Schema(description = "会员ID")
+    // @NotNull(message = "会员ID不能为空")
+    // private Long memberId;
 
     @Schema(description = "是否监护人: 1-是 0-否")
     private Integer isGuardian;
@@ -52,7 +52,7 @@ public class FamilyMemberAddForm {
     private String phone;
 
     @Schema(description = "身份证号")
-    @Pattern(regexp = "^[1-9]\\d{5}(19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])\\d{3}[0-9Xx]$", 
+    @Pattern(regexp = "^[1-9]\\d{5}(19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])\\d{3}[0-9Xx]$",
             message = "身份证号格式不正确")
     private String idCardNo;
 
