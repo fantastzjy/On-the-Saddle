@@ -142,6 +142,18 @@
           </a-button>
 
           <a-button 
+            @click="showCreateOrder()" 
+            v-privilege="'business:order:create'" 
+            type="primary"
+            style="margin-left: 8px;"
+          >
+            <template #icon>
+              <ShoppingCartOutlined />
+            </template>
+            创建订单
+          </a-button>
+
+          <a-button 
             @click="showDragSchedule()" 
             v-privilege="'business:schedule:drag'" 
             type="dashed"
@@ -296,6 +308,23 @@
       :package-data="currentPackageData"
       @success="onPackageBookingSuccess"
     />
+
+    <!-- 订单创建弹窗 -->
+    <a-modal
+      v-model:visible="createOrderVisible"
+      title="创建订单"
+      width="1200px"
+      :footer="null"
+      :destroyOnClose="true"
+      :maskClosable="false"
+    >
+      <CreateOrderPage
+        :embedded-mode="true"
+        :context-data="{ from: 'schedule', queryForm }"
+        @success="handleOrderSuccess"
+        @cancel="handleOrderCancel"
+      />
+    </a-modal>
     </a-spin>
   </div>
 </template>
@@ -311,7 +340,8 @@ import {
   CalendarOutlined,
   AppstoreOutlined,
   DragOutlined,
-  TeamOutlined
+  TeamOutlined,
+  ShoppingCartOutlined
 } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { scheduleApi } from '/@/api/business/schedule/schedule-api';
@@ -337,6 +367,7 @@ import PackageBookingCreateModal from './components/PackageBookingCreateModal.vu
 import CoachDayView from './components/CoachDayView.vue';
 import CoachWeekView from './components/CoachWeekView.vue';
 import CoachMonthView from './components/CoachMonthView.vue';
+import CreateOrderPage from '/@/views/business/order/CreateOrderPage.vue';
 import dayjs from 'dayjs';
 
 const router = useRouter();
@@ -371,6 +402,9 @@ const calendarViewType = ref(SCHEDULE_VIEW_TYPE_ENUM.WEEK.value);
 const coachViewType = ref('day'); // day | week | month
 const coachQueryDate = ref(dayjs());
 const coachViewLoading = ref(false);
+
+// 订单创建弹窗相关
+const createOrderVisible = ref(false);
 const coachDayData = ref({});
 const coachWeekData = ref({});
 const coachMonthData = ref({});
@@ -464,6 +498,28 @@ function getCache(key) {
 function clearCache() {
   dataCache.value.clear();
   cacheExpiry.value.clear();
+}
+
+// ===== 订单创建相关方法 =====
+// 显示订单创建弹窗
+function showCreateOrder() {
+  createOrderVisible.value = true;
+}
+
+// 订单创建成功回调
+function handleOrderSuccess(orderData) {
+  message.success(`订单创建成功！订单号: ${orderData.orderNo || orderData.orderId}`);
+  createOrderVisible.value = false;
+  
+  // 如果创建的是课程相关订单，刷新数据
+  if ([1, 2, 3].includes(orderData.orderType)) {
+    onSearch(); // 刷新课表数据
+  }
+}
+
+// 订单创建取消回调
+function handleOrderCancel() {
+  createOrderVisible.value = false;
 }
 
 // ======================== 查询相关 ========================

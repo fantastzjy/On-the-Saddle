@@ -25,6 +25,16 @@ export const orderRouters = [
         }
       },
       {
+        path: 'create',
+        name: 'OrderCreate',
+        component: () => import('/@/views/business/order/CreateOrderPage.vue'),
+        meta: {
+          title: '创建订单',
+          requireAuth: true,
+          privilege: 'business:order:create'
+        }
+      },
+      {
         path: 'detail/:id',
         name: 'OrderDetail',
         component: () => import('/@/views/business/order/OrderDetail.vue'),

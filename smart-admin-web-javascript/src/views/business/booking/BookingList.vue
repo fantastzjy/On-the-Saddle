@@ -349,6 +349,11 @@ const queryData = async () => {
     
     let params = { ...queryForm };
     
+    // 将单个 bookingStatus 转换为数组格式以兼容后端
+    if (params.bookingStatus !== null && params.bookingStatus !== undefined) {
+      params.bookingStatus = [params.bookingStatus];
+    }
+    
     // 处理日期范围
     if (queryForm.dateRange && queryForm.dateRange.length === 2) {
       params.startDate = dayjs(queryForm.dateRange[0]).format('YYYY-MM-DD');

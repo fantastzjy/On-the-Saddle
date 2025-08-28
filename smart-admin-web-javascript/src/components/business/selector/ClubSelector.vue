@@ -63,9 +63,13 @@ const options = ref([])
 const loading = ref(false)
 const hasLoaded = ref(false)
 
-// 监听value变化
+// 监听value变化，添加智能加载机制
 watch(() => props.value, (newVal) => {
   selectedValue.value = newVal
+  // 智能加载：如果有值但数据未加载，自动触发加载
+  if (newVal && !hasLoaded.value && props.lazy) {
+    loadOptions()
+  }
 }, { immediate: true })
 
 // 监听selectedValue变化

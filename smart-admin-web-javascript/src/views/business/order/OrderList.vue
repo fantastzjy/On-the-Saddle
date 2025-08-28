@@ -26,6 +26,9 @@
           <a-select-option value="1">课程</a-select-option>
           <a-select-option value="2">课时包</a-select-option>
           <a-select-option value="3">活动</a-select-option>
+          <a-select-option value="4">补差费</a-select-option>
+          <a-select-option value="5">饲养费</a-select-option>
+          <a-select-option value="6">健康服务</a-select-option>
         </a-select>
       </a-form-item>
 
@@ -75,6 +78,12 @@
   <a-card size="small" :bordered="false" :hoverable="true">
     <a-row class="smart-table-btn-block">
       <div class="smart-table-operate-block">
+        <a-button type="primary" @click="createOrder" v-privilege="'business:order:create'">
+          <template #icon>
+            <PlusOutlined />
+          </template>
+          创建订单
+        </a-button>
         <a-button @click="refreshData()">
           <template #icon>
             <ReloadOutlined />

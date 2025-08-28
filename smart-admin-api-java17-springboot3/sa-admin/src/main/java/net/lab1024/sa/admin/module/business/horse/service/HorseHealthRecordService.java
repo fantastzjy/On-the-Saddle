@@ -10,6 +10,9 @@ import net.lab1024.sa.admin.module.business.horse.domain.form.HorseHealthRecordC
 import net.lab1024.sa.admin.module.business.horse.domain.form.HorseHealthRecordQueryForm;
 import net.lab1024.sa.admin.module.business.horse.domain.form.HorseHealthRecordUpdateForm;
 import net.lab1024.sa.admin.module.business.horse.domain.vo.HorseHealthRecordListVO;
+import net.lab1024.sa.admin.module.business.order.service.OrderService;
+import net.lab1024.sa.admin.module.business.order.domain.form.OrderAddForm;
+import net.lab1024.sa.admin.module.business.order.constant.OrderSubTypeEnum;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -44,6 +48,9 @@ public class HorseHealthRecordService {
 
     @Resource
     private DataTracerService dataTracerService;
+
+    @Resource
+    private OrderService orderService;
 
     /**
      * 分页查询健康记录
@@ -90,10 +97,67 @@ public class HorseHealthRecordService {
             horseHealthPlanDao.updateNextDate(createForm.getPlanId(), createForm.getNextDate(), createForm.getRecordDate());
         }
 
+        // 2. 如果有实际费用，自动生成健康服务订单
+        if (createForm.getActualCost() != null && createForm.getActualCost().compareTo(BigDecimal.ZERO) > 0) {
+            generateHealthServiceOrder(entity, createForm.getActualCost());
+        }
+
         // 记录数据变更日志
         dataTracerService.insert(entity.getId(), DataTracerTypeEnum.CLUB_HORSE_HEALTH_RECORD);
 
         return ResponseDTO.ok();
+    }
+
+    /**
+     * 根据健康记录自动生成健康服务订单
+     */
+    private void generateHealthServiceOrder(HorseHealthRecordEntity record, BigDecimal actualCost) {
+        try {
+            OrderAddForm orderForm = new OrderAddForm();
+            orderForm.setClubId(1L); // TODO: 从当前登录用户获取俱乐部ID
+            orderForm.setMemberId(getHorseOwnerId(record.getHorseId())); // 获取马主ID
+            orderForm.setOrderType(6); // 健康服务订单
+            orderForm.setOrderSubType(getHealthServiceSubType(record.getPlanType()));
+            orderForm.setIsDirectPrice(1); // 直接定价
+            orderForm.setServiceAmount(actualCost);
+            orderForm.setQuantity(1);
+            orderForm.setTargetHorseId(record.getHorseId());
+            orderForm.setRelatedHealthRecordId(record.getId());
+            orderForm.setRemark("健康服务执行完成，系统自动生成订单");
+            orderForm.setPaymentMethod("cash"); // 默认现金支付
+            
+            ResponseDTO<Long> result = orderService.createOrder(orderForm);
+            if (result.getOk()) {
+                log.info("健康服务订单生成成功，订单ID：{}, 健康记录ID：{}", result.getData(), record.getId());
+            } else {
+                log.error("健康服务订单生成失败：{}", result.getMsg());
+            }
+        } catch (Exception e) {
+            log.error("自动生成健康服务订单异常", e);
+        }
+    }
+
+    /**
+     * 根据健康计划类型获取对应的订单子类型
+     */
+    private String getHealthServiceSubType(String planType) {
+        switch (planType) {
+            case "shoeing": return OrderSubTypeEnum.HEALTH_SHOEING.getCode();
+            case "deworming": return OrderSubTypeEnum.HEALTH_DEWORMING.getCode();
+            case "dental": return OrderSubTypeEnum.HEALTH_DENTAL.getCode();
+            case "vaccine": return OrderSubTypeEnum.HEALTH_VACCINE.getCode();
+            case "medication": return OrderSubTypeEnum.HEALTH_MEDICATION.getCode();
+            default: return OrderSubTypeEnum.HEALTH_MEDICATION.getCode();
+        }
+    }
+
+    /**
+     * 获取马主ID (暂时返回固定值，实际需要查询马匹表)
+     * TODO: 实现真实的马主ID查询逻辑
+     */
+    private Long getHorseOwnerId(Long horseId) {
+        // 暂时返回一个固定的会员ID，实际需要根据马匹查询马主
+        return 1L;
     }
 
     /**

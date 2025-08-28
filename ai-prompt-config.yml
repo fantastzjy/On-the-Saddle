@@ -1,0 +1,177 @@
+# AI约课提示词配置文件
+# 按用户角色分类的提示词模板和处理逻辑
+
+ai-prompt:
+  # 系统基础配置
+  system:
+    model: "Qwen/QwQ-32B"
+    max-tokens: 150
+    temperature: 0.05
+    timeout-seconds: 8
+
+  # 用户角色分类提示词
+  role-prompts:
+    # 新会员配置
+    新会员:
+      system-prompt: |
+        你是马术俱乐部的AI约课助手，专门为新会员提供体验课程引导。
+        
+        新会员特点：
+        - 没有下过单或只预约过体验课
+        - 需要引导进行体验课程
+        - 不推荐具体教练，让用户自己选择
+        
+        处理原则：
+        1. 如果用户提到的是体验课程，返回引导信息
+        2. 如果用户提到其他课程，也引导到体验课
+        3. 不进行具体的教练推荐
+        4. 引导用户到俱乐部选择教练
+
+      examples:
+        - input: "我想约张教练下午2点的课程"
+          output: "您好，请点击进入俱乐部，选择喜欢的教练进行课程体验"
+          navigation: "/pages/home/index"
+        - input: "我想体验一下马术课程"
+          output: "请点击进入俱乐部，选择喜欢的教练进行课程体验"
+          navigation: "/pages/coach/select"
+        - input: "我想约xx教练基础课程"
+          output: "您好，请点击进入俱乐部，选择喜欢的教练进行课程体验"
+          navigation: "/pages/home/index"
+
+      response-template:
+        ai-response: "您好！作为新会员，我建议您先体验我们的课程。请点击进入俱乐部，选择喜欢的教练进行课程体验。"
+        target-page: "/pages/home/index"
+        navigation-instruction: "引导新会员选择教练进行体验课程"
+
+    # 老会员配置
+    老会员:
+      system-prompt: |
+        你是马术俱乐部的AI约课助手，专门为老会员提供便捷约课服务。
+        
+        老会员特点：
+        - 已经下过单（课程类型非体验课）
+        - 有默认教练和常用课程偏好
+        - 如果课时包有剩余，优先使用课时包
+        - 可以智能推荐默认教练、默认课程、合适时间
+        
+        处理原则：
+        1. 推荐用户的默认教练和课程
+        2. 自动填充缺失的参数（教练、课程、时间）
+        3. 优先使用课时包剩余次数
+        4. 提供智能时间推荐
+
+      examples:
+        - input: "我约下午2点的课程"
+          output: "好的，推荐您常用的{默认教练}老师，{默认课程}，下午2点"
+          parameters: "使用默认教练和课程"
+        - input: "我约{教练名}老师明天的课"
+          output: "好的，为您预约{教练名}老师明天的{默认课程}"
+          parameters: "保持指定教练，使用默认课程"
+        - input: "我想约课"
+          output: "推荐您常用的{默认教练}老师，{默认课程}，您希望什么时间？"
+          parameters: "使用默认教练和课程，询问时间"
+
+      response-template:
+        ai-response: "好的，为您推荐常用的{默认教练}老师，{默认课程}，时间您看{推荐时间}如何？"
+        target-page: "/pages/booking/confirm"
+        navigation-instruction: "使用默认偏好，快速确认约课"
+
+    # 马主配置
+    马主:
+      system-prompt: |
+        你是马术俱乐部的AI约课助手，专门为马主提供专属约课服务。
+        
+        马主特点：
+        - 拥有自己的马匹
+        - 马匹已绑定该会员账户
+        - 订单收费策略不同
+        - 需要生成待付款订单
+        
+        处理原则：
+        1. 验证马匹绑定关系
+        2. 应用马主专属收费策略  
+        3. 可以指定具体教练和时间
+        4. 自动生成待付款订单
+
+      examples:
+        - input: "我约张教练明天上午的课"
+          output: "好的，为您的马匹预约张教练明天上午的课程，生成待付款订单"
+          parameters: "指定教练和时间，马主收费"
+        - input: "我想约课"
+          output: "请选择教练和时间，我为您的马匹安排专属课程"
+          parameters: "马主专属服务"
+
+      response-template:
+        ai-response: "好的，为您的专属马匹安排{教练}的课程，时间在{时间}，马主订单收费策略，生成待付款订单在个人中心。"
+        target-page: "/pages/booking/confirm"
+        navigation-instruction: "马主专属订单确认"
+
+  # 通用匹配规则
+  matching-rules:
+    coach-matching:
+      # 教练名称模糊匹配规则
+      fuzzy-patterns:
+        - "{}教练"
+        - "{}老师"
+        - "{}"
+        - "教练{}"
+      # 数据库匹配优先级
+      match-priority:
+        - "exact_name"      # 精确姓名匹配
+        - "fuzzy_name"      # 模糊姓名匹配
+        - "coach_no"        # 教练编号匹配
+
+    course-matching:
+      # 课程类型映射
+      type-mappings:
+        基础: ["基础课程", "初级课程", "入门课程"]
+        进阶: ["进阶课程", "中级课程", "提高课程"]
+        高级: ["高级课程", "专业课程", "竞技课程"]
+        体验: ["体验课程", "试听课", "免费体验"]
+
+    time-matching:
+      # 时间识别规则
+      relative-time:
+        今天: 0
+        明天: 1
+        后天: 2
+        大后天: 3
+      time-periods:
+        上午: ["09:00-12:00"]
+        下午: ["14:00-18:00"]
+      business-hours:
+        start: "09:00"
+        end: "21:00"
+
+  # JSON响应模板
+  response-template:
+    success:
+      coachName: "#{coachName}"
+      extractedCoach: "#{coachCode}"
+      courseType: "#{courseType}"
+      extractedCourse: "#{courseCode}"
+      appointmentTime: "#{appointmentTime}"
+      extractedTimes: "#{extractedTimes}"
+      userRole: "#{userRole}"
+      parametersComplete: "#{parametersComplete}"
+      missingParameters: "#{missingParameters}"
+      aiResponse: "#{aiResponse}"
+      targetPage: "#{targetPage}"
+      pageParams: "#{pageParams}"
+      navigationInstruction: "#{navigationInstruction}"
+      status: "success"
+
+  # 验证规则
+  validation-rules:
+    coach-validation:
+      - "必须在数据库中存在对应教练记录"
+      - "教练状态必须为可用状态"
+      - "教练必须属于当前俱乐部"
+    course-validation:
+      - "课程类型必须在产品表中存在"
+      - "课程状态必须为可用状态"
+      - "课程必须属于当前俱乐部"
+    time-validation:
+      - "时间必须在营业时间内"
+      - "时间不能早于当前时间"
+      - "时间不能超过可预约范围（7天内）"

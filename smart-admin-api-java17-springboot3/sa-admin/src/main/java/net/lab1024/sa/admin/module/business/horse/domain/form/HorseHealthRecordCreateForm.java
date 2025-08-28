@@ -44,4 +44,10 @@ public class HorseHealthRecordCreateForm {
 
     @Schema(description = "记录扩展数据JSON格式")
     private String recordData;
+
+    @Schema(description = "实际费用")
+    private java.math.BigDecimal actualCost;
+
+    @Schema(description = "预算费用") 
+    private java.math.BigDecimal budgetCost;
 }

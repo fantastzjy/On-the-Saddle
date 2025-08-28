@@ -18,8 +18,8 @@
           <a-form-item label="归属" class="smart-query-form-item">
             <a-select style="width: 120px" v-model:value="queryForm.horseType" placeholder="请选择归属" allowClear>
               <a-select-option :value="1">俱乐部马</a-select-option>
-              <a-select-option :value="2">马主马</a-select-option>
-              <a-select-option :value="3">教练马</a-select-option>
+              <a-select-option :value="2">竞技马房马</a-select-option>
+              <a-select-option :value="3">马主马</a-select-option>
             </a-select>
           </a-form-item>
 
@@ -75,8 +75,8 @@
         <template #bodyCell="{ text, record, column }">
           <template v-if="column.dataIndex === 'ownership'">
             <span v-if="record.horseType === 1">{{ record.clubName }}</span>
-            <span v-else-if="record.horseType === 2">{{ record.ownerName || '-' }}</span>
-            <span v-else-if="record.horseType === 3">{{ record.responsibleCoachName || '-' }}</span>
+            <span v-else-if="record.horseType === 2">{{ record.responsibleCoachName || '-' }}</span>
+            <span v-else-if="record.horseType === 3">{{ record.ownerName || '-' }}</span>
             <span v-else>-</span>
           </template>
           <template v-else-if="column.dataIndex === 'gender'">
@@ -88,7 +88,7 @@
             {{ text ? dayjs(text).format('YYYY-MM-DD') : '-' }}
           </template>
           <template v-else-if="column.dataIndex === 'boarding'">
-            <div v-if="record.horseType === 2 && record.boardingStartDate" class="boarding-info">
+            <div v-if="(record.horseType === 2 || record.horseType === 3) && record.boardingStartDate" class="boarding-info">
               <div class="boarding-time">
                 {{ formatDateRange(record.boardingStartDate, record.boardingEndDate) }}
               </div>
@@ -99,8 +99,8 @@
                 ⚠️ {{ getExpiryText(record.boardingEndDate) }}
               </div>
             </div>
-            <div v-else-if="record.horseType === 2">
-              <!-- 马主马但无寄养信息时显示空 -->
+            <div v-else-if="record.horseType === 2 || record.horseType === 3">
+              <!-- 竞技马房马或马主马但无寄养信息时显示空 -->
             </div>
             <div v-else>
               <!-- 非马主马显示 - -->

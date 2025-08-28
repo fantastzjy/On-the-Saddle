@@ -9,8 +9,8 @@
           <a-descriptions-item label="护照号">{{ horseDetail.passportNo || '-' }}</a-descriptions-item>
           <a-descriptions-item label="归属">
             <span v-if="horseDetail.horseType === 1">{{ horseDetail.clubName }}</span>
-            <span v-else-if="horseDetail.horseType === 2">{{ horseDetail.ownerName || '-' }}</span>
-            <span v-else-if="horseDetail.horseType === 3">{{ horseDetail.responsibleCoachName || '-' }}</span>
+            <span v-else-if="horseDetail.horseType === 2">{{ horseDetail.responsibleCoachName || '-' }}</span>
+            <span v-else-if="horseDetail.horseType === 3">{{ horseDetail.ownerName || '-' }}</span>
             <span v-else>-</span>
           </a-descriptions-item>
         </a-descriptions>
@@ -69,8 +69,8 @@
           </a-descriptions-item>
         </a-descriptions>
 
-        <!-- 马主马寄养信息 -->
-        <a-descriptions v-if="horseDetail.horseType === 2" title="寄养信息" :column="1" bordered style="margin-top: 16px;">
+        <!-- 竞技马房马和马主马寄养信息 -->
+        <a-descriptions v-if="(horseDetail.horseType === 2 || horseDetail.horseType === 3)" title="寄养信息" :column="1" bordered style="margin-top: 16px;">
           <a-descriptions-item label="寄养开始时间">
             {{ horseDetail.boardingStartDate ? dayjs(horseDetail.boardingStartDate).format('YYYY-MM-DD HH:mm:ss') : '-' }}
           </a-descriptions-item>

@@ -15,6 +15,8 @@
             <a-form-item label="出租人" name="lessorId">
               <EmployeeSelector
                 v-model:value="form.lessorId"
+                :lazy="false"
+                :auto-load="true"
                 placeholder="请选择出租人"
                 style="width: 100%"
               />
@@ -24,6 +26,8 @@
             <a-form-item label="租赁人" name="lesseeId">
               <CoachSelector
                 v-model:value="form.lesseeId"
+                :lazy="false"
+                :auto-load="true"
                 placeholder="请选择租赁人"
                 style="width: 100%"
               />
@@ -33,6 +37,8 @@
             <a-form-item label="租赁俱乐部" name="targetClubId">
               <ClubSelector
                 v-model:value="form.targetClubId"
+                :lazy="false"
+                :auto-load="true"
                 placeholder="请选择租赁俱乐部"
                 style="width: 100%"
               />

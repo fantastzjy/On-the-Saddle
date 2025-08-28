@@ -67,8 +67,11 @@
                     p.product_name LIKE CONCAT('%', #{queryForm.keywords}, '%')
                 )
             </if>
-            <if test="queryForm.bookingStatus != null">
-                AND b.booking_status = #{queryForm.bookingStatus}
+            <if test="queryForm.bookingStatus != null and queryForm.bookingStatus.size() > 0">
+                AND b.booking_status IN
+                <foreach collection="queryForm.bookingStatus" item="status" open="(" separator="," close=")">
+                    #{status}
+                </foreach>
             </if>
             <if test="queryForm.coachId != null">
                 AND b.coach_id = #{queryForm.coachId}

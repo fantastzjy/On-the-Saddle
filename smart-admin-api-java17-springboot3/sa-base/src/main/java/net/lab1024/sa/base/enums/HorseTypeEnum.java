@@ -10,8 +10,8 @@ package net.lab1024.sa.base.enums;
 public enum HorseTypeEnum {
 
     CLUB_HORSE(1, "俱乐部马"),
-    OWNER_HORSE(2, "马主马"),
-    COACH_HORSE(3, "教练马");
+    RACING_STABLE_HORSE(2, "竞技马房马"),
+    OWNER_HORSE(3, "马主马");
 
     private final Integer code;
     private final String desc;

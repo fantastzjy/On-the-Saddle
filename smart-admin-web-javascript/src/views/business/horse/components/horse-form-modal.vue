@@ -36,8 +36,8 @@
           <a-form-item label="归属" name="horseType">
             <a-select v-model:value="formState.form.horseType" placeholder="请选择归属" @change="onHorseTypeChange">
               <a-select-option :value="1">俱乐部马</a-select-option>
-              <a-select-option :value="2">马主马</a-select-option>
-              <a-select-option :value="3">教练马</a-select-option>
+              <a-select-option :value="2">竞技马房马</a-select-option>
+              <a-select-option :value="3">马主马</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
@@ -119,7 +119,7 @@
 
       <!-- 第二行：所属教练 + 马主 -->
       <a-row :gutter="20">
-        <a-col :span="12" v-if="formState.form.horseType === 3">
+        <a-col :span="12" v-if="formState.form.horseType === 2">
           <a-form-item label="所属教练" name="coachId">
             <CoachSelector
               v-model:value="formState.form.coachId"
@@ -128,7 +128,7 @@
             />
           </a-form-item>
         </a-col>
-        <a-col :span="12" v-if="formState.form.horseType === 2">
+        <a-col :span="12" v-if="formState.form.horseType === 3">
           <a-form-item label="马主" name="ownerId">
             <MemberSelector
               v-model:value="formState.form.ownerId"
@@ -139,7 +139,7 @@
         </a-col>
       </a-row>
 
-      <a-row :gutter="20" v-if="formState.form.horseType === 2">
+      <a-row :gutter="20" v-if="formState.form.horseType === 2 || formState.form.horseType === 3">
         <a-col :span="12">
           <a-form-item label="寄养开始时间" name="boardingStartDate">
             <a-date-picker
@@ -314,7 +314,7 @@ function resetForm() {
 function onHorseTypeChange() {
   formState.form.ownerId = undefined;
   formState.form.coachId = undefined;
-  if (formState.form.horseType !== 2) {
+  if (formState.form.horseType === 1) {
     formState.form.boardingStartDate = undefined;
     formState.form.boardingEndDate = undefined;
     formState.form.boardingFee = undefined;

@@ -4,27 +4,22 @@
     <a-card size="small" :bordered="false" :body-style="{ paddingBottom: '0' }">
       <a-form ref="queryForm" :model="queryParam" layout="horizontal" class="smart-query-form">
         <a-row :gutter="24">
-          <a-col :span="8">
-            <a-form-item label="租赁单号" name="rentalNo">
-              <a-input v-model:value="queryParam.rentalNo" placeholder="请输入租赁单号" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
+          <a-col :span="5">
             <a-form-item label="出租人" name="lessorId">
               <EmployeeSelector v-model:value="queryParam.lessorId" placeholder="请选择出租人" />
             </a-form-item>
           </a-col>
-          <a-col :span="8">
+          <a-col :span="5">
             <a-form-item label="租赁人" name="lesseeId">
               <CoachSelector v-model:value="queryParam.lesseeId" placeholder="请选择租赁人" />
             </a-form-item>
           </a-col>
-          <a-col :span="8">
+          <a-col :span="5">
             <a-form-item label="俱乐部" name="targetClubId">
               <ClubSelector v-model:value="queryParam.targetClubId" placeholder="请选择俱乐部" />
             </a-form-item>
           </a-col>
-          <a-col :span="8">
+          <a-col :span="5">
             <a-form-item label="租赁状态" name="rentalStatus">
               <a-select v-model:value="queryParam.rentalStatus" placeholder="请选择租赁状态" allowClear>
                 <a-select-option :value="1">生效中</a-select-option>
@@ -33,7 +28,7 @@
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="8">
+          <a-col :span="4">
             <a-form-item class="smart-query-form-button">
               <a-button type="primary" @click="ajaxQuery">
                 <template #icon>
@@ -50,25 +45,21 @@
 
     <!-- 表格操作栏 -->
     <a-card size="small" :bordered="false" :body-style="{ padding: '0 20px 20px 20px' }">
-      <TableOperator 
-        v-model="columns" 
-        :tableId="TABLE_ID_CONST.BUSINESS.STABLE_RENTAL.STABLE_RENTAL" 
-        :refresh="ajaxQuery"
-        class="smart-margin-bottom10"
-      >
-        <a-button type="primary" @click="showAddModal" v-privilege="'business:stable-rental:add'">
-          <template #icon>
-            <PlusOutlined />
-          </template>
-          新建
-        </a-button>
-        <a-button @click="confirmBatchDelete" :disabled="!selectedRowKeyList.length" v-privilege="'business:stable-rental:delete'">
-          <template #icon>
-            <DeleteOutlined />
-          </template>
-          批量删除
-        </a-button>
-      </TableOperator>
+      <div style="display: flex; justify-content: space-between; align-items: center;" class="smart-margin-bottom10">
+        <div>
+          <a-button type="primary" @click="showAddModal" v-privilege="'business:stable-rental:add'">
+            <template #icon>
+              <PlusOutlined />
+            </template>
+            新建
+          </a-button>
+        </div>
+        <TableOperator 
+          v-model="columns" 
+          :tableId="TABLE_ID_CONST.BUSINESS.STABLE_RENTAL.STABLE_RENTAL" 
+          :refresh="ajaxQuery"
+        />
+      </div>
 
       <!-- 数据表格 -->
       <a-table
@@ -79,7 +70,6 @@
         :pagination="false"
         :loading="tableLoading"
         :scroll="{ x: 1400 }"
-        :row-selection="{ selectedRowKeys: selectedRowKeyList, onChange: onSelectChange }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.dataIndex === 'rentalStatus'">
@@ -116,7 +106,6 @@
                 danger 
                 @click="onDelete(record.rentalId)" 
                 size="small"
-                v-privilege="'business:stable-rental:delete'"
               >
                 删除
               </a-button>
@@ -153,7 +142,7 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue';
 import { Modal } from 'ant-design-vue';
-import { ExclamationCircleOutlined, SearchOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import { SearchOutlined, PlusOutlined } from '@ant-design/icons-vue';
 import { stableRentalApi } from '/@/api/business/stable-rental-api';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/index.js';
@@ -165,7 +154,6 @@ import { EmployeeSelector, CoachSelector, ClubSelector } from '/@/components/bus
 
 // 查询参数
 const queryParam = reactive({
-  rentalNo: '',
   lessorId: null,
   lesseeId: null,
   targetClubId: null,
@@ -178,34 +166,32 @@ const queryParam = reactive({
 const tableData = ref([]);
 const tableLoading = ref(false);
 const total = ref(0);
-const selectedRowKeyList = ref([]);
 
 // 表格列配置
 const columns = [
   {
-    title: '租赁单号',
-    dataIndex: 'rentalNo',
+    title: '俱乐部',
+    dataIndex: 'clubName',
     width: 120,
+    align: 'center',
   },
   {
     title: '出租人',
     dataIndex: 'lessorName',
     width: 100,
+    align: 'center',
   },
   {
     title: '租赁人',
     dataIndex: 'lesseeName',
     width: 100,
-  },
-  {
-    title: '俱乐部',
-    dataIndex: 'clubName',
-    width: 120,
+    align: 'center',
   },
   {
     title: '租赁开始时间',
     dataIndex: 'rentalStartTime',
     width: 120,
+    align: 'center',
     customRender: ({ text }) => {
       return text ? text.split(' ')[0] : '';
     }
@@ -214,6 +200,7 @@ const columns = [
     title: '租赁结束时间', 
     dataIndex: 'rentalEndTime',
     width: 120,
+    align: 'center',
     customRender: ({ text }) => {
       return text ? text.split(' ')[0] : '';
     }
@@ -222,27 +209,32 @@ const columns = [
     title: '租赁金额',
     dataIndex: 'rentalAmount',
     width: 100,
+    align: 'center',
   },
   {
     title: '状态',
     dataIndex: 'rentalStatus',
     width: 80,
+    align: 'center',
   },
   {
     title: '更新人',
     dataIndex: 'updateBy',
     width: 100,
+    align: 'center',
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     width: 150,
+    align: 'center',
   },
   {
     title: '操作',
     dataIndex: 'operate',
     fixed: 'right',
     width: 150,
+    align: 'center',
   },
 ];
 
@@ -268,7 +260,6 @@ async function ajaxQuery() {
 // 重置查询
 function resetQuery() {
   Object.assign(queryParam, {
-    rentalNo: '',
     lessorId: null,
     lesseeId: null,
     targetClubId: null,
@@ -277,11 +268,6 @@ function resetQuery() {
     pageSize: 10,
   });
   ajaxQuery();
-}
-
-// 行选择
-function onSelectChange(selectedRowKeys) {
-  selectedRowKeyList.value = selectedRowKeys;
 }
 
 // 新增
@@ -301,33 +287,22 @@ function showDetailModal(rentalId) {
 
 // 删除
 function onDelete(rentalId) {
+  console.log('删除按钮被点击，rentalId:', rentalId);
   Modal.confirm({
     title: '提示',
     content: '确定要删除该租赁记录吗？',
-    icon: ExclamationCircleOutlined,
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
     onOk: async () => {
       try {
-        await stableRentalApi.delete(rentalId);
+        console.log('确认删除，调用API');
+        const response = await stableRentalApi.delete(rentalId);
+        console.log('删除API响应:', response);
         ajaxQuery();
+        console.log('刷新列表完成');
       } catch (e) {
-        smartSentry.captureError(e);
-      }
-    },
-  });
-}
-
-// 批量删除
-function confirmBatchDelete() {
-  Modal.confirm({
-    title: '提示',
-    content: `确定要删除选中的${selectedRowKeyList.value.length}条记录吗？`,
-    icon: ExclamationCircleOutlined,
-    onOk: async () => {
-      try {
-        await stableRentalApi.batchDelete(selectedRowKeyList.value);
-        selectedRowKeyList.value = [];
-        ajaxQuery();
-      } catch (e) {
+        console.error('删除失败:', e);
         smartSentry.captureError(e);
       }
     },

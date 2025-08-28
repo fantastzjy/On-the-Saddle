@@ -11,7 +11,10 @@ public enum OrderTypeEnum {
 
     COURSE(1, "课程"),
     PACKAGE(2, "课时包"),
-    ACTIVITY(3, "活动");
+    ACTIVITY(3, "活动"),
+    EXTRA_FEE(4, "补差费"),
+    BOARDING_FEE(5, "寄养费"),
+    HEALTH_SERVICE(6, "健康服务");
 
     private final Integer code;
     private final String desc;

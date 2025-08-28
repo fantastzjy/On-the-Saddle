@@ -80,6 +80,7 @@ public class OrderService {
             orderEntity.setClubId(addForm.getClubId());
             orderEntity.setMemberId(addForm.getMemberId());
             orderEntity.setOrderType(addForm.getOrderType());
+            orderEntity.setOrderSubType(addForm.getOrderSubType());
             orderEntity.setOrderStatus(1); // 1-待支付
             orderEntity.setPaymentMethod(addForm.getPaymentMethod());
             orderEntity.setRemark(addForm.getRemark());
@@ -87,48 +88,20 @@ public class OrderService {
             orderEntity.setIsValid(true);
             orderEntity.setIsDelete(false);
 
-            // 计算订单总金额
-            BigDecimal totalAmount = addForm.getOrderItems().stream()
-                    .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            orderEntity.setTotalAmount(totalAmount);
-            orderEntity.setPaidAmount(BigDecimal.ZERO);
+            // 2. 判断是否为直接定价订单
+            if (isDirectPriceOrder(addForm.getOrderType())) {
+                // 直接定价订单逻辑
+                handleDirectPriceOrder(orderEntity, addForm);
+            } else {
+                // 商品订单逻辑（现有逻辑）
+                handleProductOrder(orderEntity, addForm);
+            }
 
             orderDao.insert(orderEntity);
             log.info("创建订单成功，订单ID：{}, 订单号：{}", orderEntity.getOrderId(), orderEntity.getOrderNo());
 
-            // 2. 创建订单明细
-            List<OrderItemEntity> orderItems = new ArrayList<>();
-            for (OrderAddForm.OrderItemForm itemForm : addForm.getOrderItems()) {
-                OrderItemEntity orderItemEntity = new OrderItemEntity();
-                orderItemEntity.setOrderId(orderEntity.getOrderId());
-                orderItemEntity.setProductId(itemForm.getProductId());
-                orderItemEntity.setProductName(itemForm.getProductName());
-                orderItemEntity.setProductType(itemForm.getProductType());
-                orderItemEntity.setQuantity(itemForm.getQuantity());
-                orderItemEntity.setUnitPrice(itemForm.getUnitPrice());
-                orderItemEntity.setTotalPrice(itemForm.getUnitPrice().multiply(BigDecimal.valueOf(itemForm.getQuantity())));
-                orderItemEntity.setCoachId(itemForm.getCoachId());
-                orderItemEntity.setPreferredTime(itemForm.getPreferredTime());
-                orderItemEntity.setItemConfig(itemForm.getItemConfig());
-                orderItemEntity.setCreateTime(LocalDateTime.now());
-
-                orderItems.add(orderItemEntity);
-            }
-
-            // 批量插入订单明细
-            for (OrderItemEntity item : orderItems) {
-                orderItemDao.insert(item);
-            }
-            log.info("创建订单明细成功，共{}条", orderItems.size());
-
-            // 3. 自动生成预约（待教练确认）
-            ResponseDTO<Void> bookingResult = orderBookingService.createBookingsFromOrder(
-                    orderEntity.getOrderId(), orderItems);
-            if (!bookingResult.getOk()) {
-                log.error("自动生成预约失败：{}", bookingResult.getMsg());
-                throw new RuntimeException("自动生成预约失败：" + bookingResult.getMsg());
-            }
+            // 3. 根据订单类型创建关联记录
+            handleOrderRelations(orderEntity, addForm);
 
             log.info("订单创建完成，订单ID：{}", orderEntity.getOrderId());
             return ResponseDTO.ok(orderEntity.getOrderId());
@@ -136,6 +109,160 @@ public class OrderService {
         } catch (Exception e) {
             log.error("创建订单失败", e);
             return ResponseDTO.userErrorParam("创建订单失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 判断是否为直接定价订单
+     */
+    private boolean isDirectPriceOrder(Integer orderType) {
+        return orderType >= 4; // 4,5,6都是直接定价订单
+    }
+
+    /**
+     * 处理直接定价订单
+     */
+    private void handleDirectPriceOrder(OrderEntity orderEntity, OrderAddForm addForm) {
+        orderEntity.setIsDirectPrice(1);
+        orderEntity.setServiceAmount(addForm.getServiceAmount());
+        orderEntity.setQuantity(addForm.getQuantity());
+        
+        // 计算总金额
+        BigDecimal totalAmount = addForm.getServiceAmount().multiply(BigDecimal.valueOf(addForm.getQuantity()));
+        orderEntity.setTotalAmount(totalAmount);
+        orderEntity.setPaidAmount(BigDecimal.ZERO);
+        
+        // 设置关联对象
+        orderEntity.setTargetHorseId(addForm.getTargetHorseId());
+        orderEntity.setRelatedBookingId(addForm.getRelatedBookingId());
+        orderEntity.setRelatedHealthRecordId(addForm.getRelatedHealthRecordId());
+        
+        // 无商品信息
+        orderEntity.setProductId(null);
+        orderEntity.setProductName(null);
+        orderEntity.setProductType(null);
+        orderEntity.setUnitPrice(addForm.getServiceAmount());
+        
+        log.info("处理直接定价订单，类型：{}, 子类型：{}, 金额：{}", 
+                addForm.getOrderType(), addForm.getOrderSubType(), totalAmount);
+    }
+
+    /**
+     * 处理商品订单
+     */
+    private void handleProductOrder(OrderEntity orderEntity, OrderAddForm addForm) {
+        orderEntity.setIsDirectPrice(0);
+        
+        // 计算订单总金额
+        BigDecimal totalAmount = addForm.getOrderItems().stream()
+                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        orderEntity.setTotalAmount(totalAmount);
+        orderEntity.setPaidAmount(BigDecimal.ZERO);
+        
+        log.info("处理商品订单，类型：{}, 商品数量：{}, 总金额：{}", 
+                addForm.getOrderType(), addForm.getOrderItems().size(), totalAmount);
+    }
+
+    /**
+     * 根据订单类型创建关联记录
+     */
+    private void handleOrderRelations(OrderEntity orderEntity, OrderAddForm addForm) {
+        if (orderEntity.getIsDirectPrice() == 0) {
+            // 商品订单：创建订单明细和预约
+            handleProductOrderRelations(orderEntity, addForm);
+        } else {
+            // 直接定价订单：根据类型创建不同关联记录
+            handleDirectPriceOrderRelations(orderEntity, addForm);
+        }
+    }
+
+    /**
+     * 处理商品订单关联记录
+     */
+    private void handleProductOrderRelations(OrderEntity orderEntity, OrderAddForm addForm) {
+        // 2. 创建订单明细
+        List<OrderItemEntity> orderItems = new ArrayList<>();
+        for (OrderAddForm.OrderItemForm itemForm : addForm.getOrderItems()) {
+            OrderItemEntity orderItemEntity = new OrderItemEntity();
+            orderItemEntity.setOrderId(orderEntity.getOrderId());
+            orderItemEntity.setProductId(itemForm.getProductId());
+            orderItemEntity.setProductName(itemForm.getProductName());
+            orderItemEntity.setProductType(itemForm.getProductType());
+            orderItemEntity.setQuantity(itemForm.getQuantity());
+            orderItemEntity.setUnitPrice(itemForm.getUnitPrice());
+            orderItemEntity.setTotalPrice(itemForm.getUnitPrice().multiply(BigDecimal.valueOf(itemForm.getQuantity())));
+            orderItemEntity.setCoachId(itemForm.getCoachId());
+            orderItemEntity.setPreferredTime(itemForm.getPreferredTime());
+            orderItemEntity.setItemConfig(itemForm.getItemConfig());
+            orderItemEntity.setCreateTime(LocalDateTime.now());
+
+            orderItems.add(orderItemEntity);
+        }
+
+        // 批量插入订单明细
+        for (OrderItemEntity item : orderItems) {
+            orderItemDao.insert(item);
+        }
+        log.info("创建订单明细成功，共{}条", orderItems.size());
+
+        // 3. 自动生成预约（待教练确认）
+        ResponseDTO<Void> bookingResult = orderBookingService.createBookingsFromOrder(
+                orderEntity.getOrderId(), orderItems);
+        if (!bookingResult.getOk()) {
+            log.error("自动生成预约失败：{}", bookingResult.getMsg());
+            throw new RuntimeException("自动生成预约失败：" + bookingResult.getMsg());
+        }
+    }
+
+    /**
+     * 处理直接定价订单关联记录
+     */
+    private void handleDirectPriceOrderRelations(OrderEntity orderEntity, OrderAddForm addForm) {
+        String subType = orderEntity.getOrderSubType();
+        
+        if (subType != null && subType.startsWith("health_")) {
+            // 健康服务订单：关联健康记录
+            handleHealthServiceOrder(orderEntity);
+        } else if (subType != null && subType.startsWith("extra_")) {
+            // 补差费订单：关联预约记录
+            handleExtraFeeOrder(orderEntity);
+        } else if (subType != null && subType.equals("boarding_fee")) {
+            // 饲养费订单：更新马匹饲养记录
+            handleBoardingFeeOrder(orderEntity);
+        }
+        
+        log.info("处理直接定价订单关联记录完成，子类型：{}", subType);
+    }
+
+    /**
+     * 处理健康服务订单
+     */
+    private void handleHealthServiceOrder(OrderEntity orderEntity) {
+        // 如果有关联的健康记录，更新记录中的订单ID
+        if (orderEntity.getRelatedHealthRecordId() != null) {
+            // 这里需要调用健康记录服务更新关联的订单ID
+            log.info("健康服务订单关联健康记录，记录ID：{}", orderEntity.getRelatedHealthRecordId());
+        }
+    }
+
+    /**
+     * 处理补差费订单  
+     */
+    private void handleExtraFeeOrder(OrderEntity orderEntity) {
+        // 补差费订单关联预约记录
+        if (orderEntity.getRelatedBookingId() != null) {
+            log.info("补差费订单关联预约，预约ID：{}", orderEntity.getRelatedBookingId());
+        }
+    }
+
+    /**
+     * 处理饲养费订单
+     */
+    private void handleBoardingFeeOrder(OrderEntity orderEntity) {
+        // 饲养费订单关联马匹记录
+        if (orderEntity.getTargetHorseId() != null) {
+            log.info("饲养费订单关联马匹，马匹ID：{}", orderEntity.getTargetHorseId());
         }
     }
 
@@ -483,6 +610,9 @@ public class OrderService {
             case 1: return "课程订单";
             case 2: return "课时包订单";
             case 3: return "活动订单";
+            case 4: return "补差费订单";
+            case 5: return "饲养费订单";
+            case 6: return "健康服务订单";
             default: return "未知类型";
         }
     }

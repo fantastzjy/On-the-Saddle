@@ -501,8 +501,8 @@ public class BookingService {
 		if (SmartStringUtil.isNotBlank(queryForm.getKeywords())) {
 			// 这里需要联表查询，暂时简化处理
 		}
-		if (queryForm.getBookingStatus() != null) {
-			queryWrapper.eq(BookingEntity::getBookingStatus, queryForm.getBookingStatus());
+		if (queryForm.getBookingStatus() != null && !queryForm.getBookingStatus().isEmpty()) {
+			queryWrapper.in(BookingEntity::getBookingStatus, queryForm.getBookingStatus());
 		}
 		if (queryForm.getCoachId() != null) {
 			queryWrapper.eq(BookingEntity::getCoachId, queryForm.getCoachId());

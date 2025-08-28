@@ -168,4 +168,57 @@ public class BookingController extends SupportBaseController {
         // 更新预约的逻辑
         return ResponseDTO.ok("更新预约功能待实现");
     }
+
+    // ========================================
+    // 内联编辑接口
+    // ========================================
+
+    @Operation(summary = "切换预约教练", description = "内联编辑：切换预约的教练")
+    @PostMapping("/inline-edit/coach")
+    public ResponseDTO<Void> updateBookingCoach(@RequestParam Long bookingId, @RequestParam Long coachId) {
+        log.info("内联编辑教练 - 预约ID: {}, 新教练ID: {}", bookingId, coachId);
+        // TODO: 实现教练切换逻辑
+        // 1. 验证预约是否存在
+        // 2. 验证教练是否存在和可用
+        // 3. 检查时间冲突
+        // 4. 更新预约记录
+        return ResponseDTO.ok();
+    }
+
+    @Operation(summary = "切换预约马匹", description = "内联编辑：切换预约的马匹")
+    @PostMapping("/inline-edit/horse")
+    public ResponseDTO<Void> updateBookingHorse(@RequestParam Long bookingId, @RequestParam Long horseId) {
+        log.info("内联编辑马匹 - 预约ID: {}, 新马匹ID: {}", bookingId, horseId);
+        // TODO: 实现马匹切换逻辑
+        // 1. 验证预约是否存在
+        // 2. 验证马匹是否存在和可用
+        // 3. 检查时间冲突
+        // 4. 更新预约记录
+        return ResponseDTO.ok();
+    }
+
+    @Operation(summary = "切换预约时间", description = "内联编辑：切换预约的时间")
+    @PostMapping("/inline-edit/time")
+    public ResponseDTO<Void> updateBookingTime(@RequestParam Long bookingId, 
+                                               @RequestParam String newStartTime, 
+                                               @RequestParam String newEndTime) {
+        log.info("内联编辑时间 - 预约ID: {}, 新开始时间: {}, 新结束时间: {}", bookingId, newStartTime, newEndTime);
+        // TODO: 实现时间切换逻辑
+        // 1. 验证预约是否存在
+        // 2. 验证时间格式
+        // 3. 检查教练和马匹在新时间段的可用性
+        // 4. 更新预约记录
+        return ResponseDTO.ok();
+    }
+
+    @Operation(summary = "切换预约状态", description = "内联编辑：切换预约的状态")
+    @PostMapping("/inline-edit/status")
+    public ResponseDTO<Void> updateBookingStatus(@RequestParam Long bookingId, @RequestParam Integer status) {
+        log.info("内联编辑状态 - 预约ID: {}, 新状态: {}", bookingId, status);
+        // TODO: 实现状态切换逻辑
+        // 1. 验证预约是否存在
+        // 2. 验证状态转换是否合法
+        // 3. 更新预约记录
+        return ResponseDTO.ok();
+    }
 }

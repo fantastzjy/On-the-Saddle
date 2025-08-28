@@ -29,9 +29,30 @@ public class OrderAddForm {
     @NotNull(message = "会员ID不能为空")
     private Long memberId;
 
-    @Schema(description = "订单类型：1-课程订单 2-课时包订单 3-活动订单")
+    @Schema(description = "订单类型：1-课程订单 2-课时包订单 3-活动订单 4-补差费订单 5-饲养费订单 6-健康服务订单")
     @NotNull(message = "订单类型不能为空")
     private Integer orderType;
+
+    @Schema(description = "订单子类型")
+    private String orderSubType;
+
+    @Schema(description = "是否直接定价订单：0-商品订单 1-直接定价")
+    private Integer isDirectPrice;
+
+    @Schema(description = "服务金额(直接定价时使用)")
+    private BigDecimal serviceAmount;
+
+    @Schema(description = "数量(直接定价时使用)")
+    private Integer quantity;
+
+    @Schema(description = "目标马匹ID(马匹相关服务)")
+    private Long targetHorseId;
+
+    @Schema(description = "关联预约ID(补差费用)")
+    private Long relatedBookingId;
+
+    @Schema(description = "关联健康记录ID(健康服务)")
+    private Long relatedHealthRecordId;
 
     @Schema(description = "支付方式")
     private String paymentMethod;
@@ -40,7 +61,6 @@ public class OrderAddForm {
     private String remark;
 
     @Schema(description = "订单明细列表")
-    @NotEmpty(message = "订单明细不能为空")
     @Valid
     private List<OrderItemForm> orderItems;
 

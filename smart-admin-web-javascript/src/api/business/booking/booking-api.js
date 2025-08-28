@@ -127,5 +127,48 @@ export const bookingApi = {
    */
   checkRescheduleConflict: (data) => {
     return postRequest('/api/admin/booking/checkRescheduleConflict', data)
+  },
+
+  // ==================== 内联编辑接口 ====================
+
+  /**
+   * 内联编辑：切换预约教练
+   */
+  updateBookingCoach: (bookingId, coachId) => {
+    return postRequest('/api/admin/booking/inline-edit/coach', null, {
+      bookingId,
+      coachId
+    })
+  },
+
+  /**
+   * 内联编辑：切换预约马匹
+   */
+  updateBookingHorse: (bookingId, horseId) => {
+    return postRequest('/api/admin/booking/inline-edit/horse', null, {
+      bookingId,
+      horseId
+    })
+  },
+
+  /**
+   * 内联编辑：切换预约时间
+   */
+  updateBookingTime: (bookingId, newStartTime, newEndTime) => {
+    return postRequest('/api/admin/booking/inline-edit/time', null, {
+      bookingId,
+      newStartTime,
+      newEndTime
+    })
+  },
+
+  /**
+   * 内联编辑：切换预约状态
+   */
+  updateBookingStatus: (bookingId, status) => {
+    return postRequest('/api/admin/booking/inline-edit/status', null, {
+      bookingId,
+      status
+    })
   }
 }

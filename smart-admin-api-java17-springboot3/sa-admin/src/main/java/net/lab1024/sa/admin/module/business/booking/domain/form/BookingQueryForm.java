@@ -5,6 +5,7 @@ import lombok.Data;
 import net.lab1024.sa.base.common.domain.PageParam;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * 预约查询表单
@@ -20,8 +21,8 @@ public class BookingQueryForm extends PageParam {
     @Schema(description = "关键字（预约单号/会员姓名/教练姓名）")
     private String keywords;
 
-    @Schema(description = "预约状态")
-    private Integer bookingStatus;
+    @Schema(description = "预约状态（支持多个状态查询）")
+    private List<Integer> bookingStatus;
 
     @Schema(description = "开始日期")
     private LocalDate startDate;
