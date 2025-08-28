@@ -60,7 +60,7 @@ public class HorseVO {
     @Schema(description = "血统证书图片地址")
     private String pedigreeCertUrl;
 
-    @Schema(description = "马匹类型：1-俱乐部马 2-马主马 3-教练马")
+    @Schema(description = "马匹类型：1-俱乐部马 2-竞技马房马 3-马主马")
     private Integer horseType;
 
     @Schema(description = "马主ID")
