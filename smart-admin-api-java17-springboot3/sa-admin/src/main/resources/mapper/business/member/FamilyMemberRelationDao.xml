@@ -75,4 +75,11 @@
         WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId}
     </select>
 
+    <!-- 更新家庭成员关系备注 -->
+    <update id="updateMemberRemark">
+        UPDATE m_family_member_relation
+        SET remark = #{remark}, update_time = NOW()
+        WHERE family_group_id = #{familyGroupId} AND member_id = #{memberId} AND is_delete = 0
+    </update>
+
 </mapper>

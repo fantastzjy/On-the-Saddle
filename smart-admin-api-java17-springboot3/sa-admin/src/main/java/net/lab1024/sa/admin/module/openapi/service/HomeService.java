@@ -890,8 +890,8 @@ public class HomeService {
                     vo.setEndTime(activityConfig.getEndTime());
                     vo.setLocation(activityConfig.getActivityLocation());
                     vo.setPrice(activityConfig.getPrice() != null ? activityConfig.getPrice() : BigDecimal.ZERO);
-                    vo.setRefundRule(StrUtil.isNotBlank(activityConfig.getRefundRule()) ?
-                        activityConfig.getRefundRule() : "退款规则待定");
+                    vo.setActivityRule(StrUtil.isNotBlank(activityConfig.getActivityRule()) ?
+                        activityConfig.getActivityRule() : "活动规则待定");
 
                     // 解析详情图片JSON为List<String>
                     if (StrUtil.isNotBlank(activityConfig.getDetailImages())) {

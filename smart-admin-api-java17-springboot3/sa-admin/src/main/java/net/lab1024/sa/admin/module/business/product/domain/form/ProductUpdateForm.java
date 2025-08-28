@@ -110,8 +110,8 @@ public class ProductUpdateForm {
     @Schema(description = "最大参与人数")
     private Integer maxParticipants;
 
-    @Schema(description = "退款规则")
-    private String refundRule;
+    @Schema(description = "活动规则")
+    private String activityRule;
 
     @Schema(description = "详情图片地址列表JSON格式（最多9张）")
     private String detailImages;

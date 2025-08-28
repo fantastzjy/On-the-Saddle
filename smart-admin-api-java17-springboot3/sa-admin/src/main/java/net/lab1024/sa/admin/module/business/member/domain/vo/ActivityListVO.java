@@ -36,8 +36,8 @@ public class ActivityListVO {
     @Schema(description = "活动单价")
     private BigDecimal price;
 
-    @Schema(description = "退款规则")
-    private String refundRule;
+    @Schema(description = "活动规则")
+    private String activityRule;
 
     @Schema(description = "详情图片列表")
     private List<String> detailImages;

@@ -11,9 +11,7 @@ public enum ProductTypeEnum {
 
     COURSE(1, "课程"),
     PACKAGE(2, "课时包"),
-    ACTIVITY(3, "活动"),
-    EXPERIENCE(4, "体验课"),
-    THEORY(5, "理论课");
+    ACTIVITY(3, "活动");
 
     private final Integer code;
     private final String desc;

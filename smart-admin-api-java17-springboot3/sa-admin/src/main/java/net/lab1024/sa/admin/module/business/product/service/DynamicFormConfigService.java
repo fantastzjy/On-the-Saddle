@@ -246,8 +246,8 @@ public class DynamicFormConfigService {
         // 人数配置
         fields.add(createNumberField("maxParticipants", "最大参与人数", true, 1, 1000, 20));
         
-        // 退款规则
-        fields.add(createTextareaField("refundRule", "退款规则", true, "请明确退款政策"));
+        // 活动规则
+        fields.add(createTextareaField("activityRule", "活动规则", true, "请明确活动政策"));
         
         // 详情图片
         fields.add(createActivityDetailImagesField("detailImages", "详情图片", false, "最多上传9张图片"));
@@ -510,7 +510,7 @@ public class DynamicFormConfigService {
         rules.put("activityLocation", List.of("required", "string", "max:200"));
         rules.put("price", List.of("required", "number", "min:0"));
         rules.put("maxParticipants", List.of("required", "number", "min:1", "max:1000"));
-        rules.put("refundRule", List.of("required", "string"));
+        rules.put("activityRule", List.of("required", "string"));
         return rules;
     }
 
@@ -594,7 +594,7 @@ public class DynamicFormConfigService {
     private ResponseDTO<String> validateActivityData(Map<String, Object> formData) {
         // 验证必填字段
         String[] requiredFields = {"activityName", "activityDetails", "startTime", "endTime", 
-                                  "activityLocation", "price", "maxParticipants", "refundRule"};
+                                  "activityLocation", "price", "maxParticipants", "activityRule"};
         for (String field : requiredFields) {
             if (!formData.containsKey(field) || formData.get(field) == null) {
                 return ResponseDTO.userErrorParam(field + " 是必填字段");

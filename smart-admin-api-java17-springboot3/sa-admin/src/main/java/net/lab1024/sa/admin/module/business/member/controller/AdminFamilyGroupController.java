@@ -8,6 +8,7 @@ import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupCreate
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupQueryForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupUpdateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyMemberAddForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.UpdateMemberRemarkForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO;
 import net.lab1024.sa.admin.module.business.member.service.AdminFamilyGroupService;
@@ -77,5 +78,11 @@ public class AdminFamilyGroupController {
     @PostMapping("/add-family-member")
     public ResponseDTO<String> addFamilyMember(@RequestBody @Valid FamilyMemberAddForm addForm) {
         return adminFamilyGroupService.addFamilyMember(addForm);
-}
+    }
+
+    @Operation(summary = "更新家庭成员关系备注")
+    @PostMapping("/update-member-remark")
+    public ResponseDTO<String> updateMemberRemark(@RequestBody @Valid UpdateMemberRemarkForm form) {
+        return adminFamilyGroupService.updateMemberRemark(form.getFamilyGroupId(), form.getMemberId(), form.getRemark());
+    }
 }

@@ -55,7 +55,7 @@ public class OrderListVO {
     @Schema(description = "课程编号")
     private String productCode;
 
-    @Schema(description = "产品类型：1-课程 2-课时包 3-活动 4-体验课 5-理论课")
+    @Schema(description = "产品类型：1-课程 2-课时包 3-活动")
     private Integer productType;
 
     @Schema(description = "订单类型：1-课程 2-课时包 3-活动")
@@ -84,9 +84,6 @@ public class OrderListVO {
     @Schema(description = "剩余课时数（仅课时包显示）")
     private Integer remainingCount;
 
-    // 体验课和理论课特殊处理标识
-    @Schema(description = "是否为特殊产品类型")
-    private Boolean isSpecialProduct;
 
     @Schema(description = "退款数量（非课时包类型）")
     private Integer refundQuantity;

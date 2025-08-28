@@ -32,16 +32,6 @@ public enum ProductTypeEnum implements BaseEnum {
      */
     ACTIVITY(3, "活动"),
 
-    /**
-     * 4 体验课
-     */
-    EXPERIENCE(4, "体验课"),
-
-    /**
-     * 5 理论课
-     */
-    THEORY_COURSE(5, "理论课"),
-
     ;
 
     private final Integer value;

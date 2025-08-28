@@ -47,8 +47,8 @@ public class ProductActivityEntity {
     @DataTracerFieldLabel("最大参与人数")
     private Integer maxParticipants;
 
-    @DataTracerFieldLabel("退款规则")
-    private String refundRule;
+    @DataTracerFieldLabel("活动规则")
+    private String activityRule;
 
     @DataTracerFieldLabel("详情图片地址列表")
     private String detailImages;

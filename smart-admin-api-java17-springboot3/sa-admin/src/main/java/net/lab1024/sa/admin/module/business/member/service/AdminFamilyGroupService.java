@@ -396,4 +396,39 @@ public class AdminFamilyGroupService {
 
         return memberNo;
     }
+
+    /**
+     * 更新家庭成员关系备注
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @OperateLog
+    public ResponseDTO<String> updateMemberRemark(Long familyGroupId, Long memberId, String remark) {
+        log.info("开始更新家庭成员关系备注，familyGroupId: {}, memberId: {}, remark: {}", familyGroupId, memberId, remark);
+        
+        if (familyGroupId == null || memberId == null) {
+            return ResponseDTO.userErrorParam("家庭组ID和会员ID不能为空");
+        }
+        
+        // 检查家庭成员关系是否存在
+        FamilyMemberRelationEntity relation = familyMemberRelationDao.selectByFamilyAndMember(familyGroupId, memberId);
+        if (relation == null || relation.getIsDelete() == 1) {
+            return ResponseDTO.userErrorParam("家庭成员关系不存在");
+        }
+        
+        // 更新备注
+        int updateCount = familyMemberRelationDao.updateMemberRemark(familyGroupId, memberId, remark == null ? "" : remark);
+        if (updateCount > 0) {
+            // 记录数据变更日志
+            try {
+                dataTracerService.update(relation.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP, relation, null);
+            } catch (Exception e) {
+                log.warn("数据变更日志记录失败，但不影响主流程，error={}", e.getMessage());
+            }
+            
+            log.info("更新家庭成员关系备注成功，familyGroupId: {}, memberId: {}", familyGroupId, memberId);
+            return ResponseDTO.ok("更新成功");
+        } else {
+            return ResponseDTO.userErrorParam("更新失败，请检查数据是否存在");
+        }
+    }
 }

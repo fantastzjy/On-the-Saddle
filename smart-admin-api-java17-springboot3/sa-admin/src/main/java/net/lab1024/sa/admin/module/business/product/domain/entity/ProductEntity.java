@@ -1,6 +1,7 @@
 package net.lab1024.sa.admin.module.business.product.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -45,7 +46,9 @@ public class ProductEntity {
 
     private LocalDateTime updateTime;
 
-    private Boolean isValid;
+    @TableField(value = "is_valid")
+    private Boolean isValid;//TODO
 
-    private Boolean isDelete;
+    @TableField(value = "is_delete")
+    private Boolean isDelete;//TODO
 }
