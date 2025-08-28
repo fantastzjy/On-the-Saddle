@@ -1,8 +1,8 @@
 package net.lab1024.sa.admin.module.business.booking.domain.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

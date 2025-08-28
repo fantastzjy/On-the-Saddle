@@ -5,7 +5,6 @@ import net.lab1024.sa.admin.module.business.category.constant.CategoryTypeEnum;
 import net.lab1024.sa.admin.module.business.category.domain.entity.CategoryEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
