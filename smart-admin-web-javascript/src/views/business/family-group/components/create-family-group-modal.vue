@@ -48,13 +48,6 @@
         />
       </a-form-item>
 
-      <a-form-item label="家庭描述" name="description">
-        <a-textarea
-          v-model:value="form.description"
-          placeholder="请输入家庭描述（可选）"
-          :rows="4"
-        />
-      </a-form-item>
     </a-form>
   </a-modal>
 </template>
@@ -80,8 +73,7 @@ const clubList = ref([])
 const form = reactive({
   familyName: '',
   clubId: null,
-  mainContactId: null, // 统一改名：guardianMemberId → mainContactId
-  description: ''
+  mainContactId: null
 })
 
 const rules = getCreateValidationRules()
@@ -127,8 +119,7 @@ function showModal() {
   Object.assign(form, {
     familyName: '',
     clubId: null,
-    mainContactId: null,
-    description: ''
+    mainContactId: null
   })
   
   visible.value = true

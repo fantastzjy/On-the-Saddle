@@ -4,30 +4,18 @@
     :title="`马匹健康计划 - ${horseDetail.horseName || ''}`"
     @back="goBack"
   >
-    <template #extra>
-      <a-button v-privilege="'club:horse:update'" type="primary" @click="showEditModal">
-        <template #icon>
-          <EditOutlined />
-        </template>
-        编辑
-      </a-button>
-    </template>
   </a-page-header>
 
   <a-card :loading="loading">
     <HorseHealthPlan :horse-id="horseId" />
   </a-card>
-
-  <HorseFormModal ref="formModalRef" @reloadList="loadHorseDetail" />
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { EditOutlined } from '@ant-design/icons-vue';
 import { horseApi } from '/@/api/business/horse/horse-api';
 import { smartSentry } from '/@/lib/smart-sentry';
-import HorseFormModal from './components/horse-form-modal.vue';
 import HorseHealthPlan from './components/horse-health-plan.vue';
 
 const route = useRoute();
@@ -35,7 +23,6 @@ const router = useRouter();
 
 const horseId = ref(route.query.horseId);
 const loading = ref(false);
-const formModalRef = ref();
 
 const horseDetail = reactive({
   horseId: undefined,
@@ -56,10 +43,6 @@ async function loadHorseDetail() {
   } finally {
     loading.value = false;
   }
-}
-
-function showEditModal() {
-  formModalRef.value.showModal(false, horseDetail);
 }
 
 function goBack() {

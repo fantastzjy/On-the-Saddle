@@ -31,12 +31,6 @@
           <a-descriptions-item label="家庭名称">
             {{ familyDetail.familyName }}
           </a-descriptions-item>
-          <a-descriptions-item label="家庭描述" :span="2">
-            {{ familyDetail.description || '暂无描述' }}
-          </a-descriptions-item>
-          <a-descriptions-item label="所属俱乐部">
-            <a-tag color="blue">{{ familyDetail.clubName }}</a-tag>
-          </a-descriptions-item>
           <a-descriptions-item label="主要联系人">
             {{ familyDetail.mainContactName || '-' }}
           </a-descriptions-item>
@@ -121,6 +115,84 @@
               监护人
             </a-tag>
             <span v-else>-</span>
+          </template>
+
+          <!-- 手机号内联编辑 -->
+          <template #phone="{ record }">
+            <div v-if="isEditing(record.memberId, 'phone')" class="inline-edit-container">
+              <a-input
+                v-model:value="editingValue"
+                :status="validationStatus"
+                placeholder="请输入手机号"
+                @input="onPhoneInput"
+                @pressEnter="saveEdit"
+                style="width: 200px;"
+              />
+              <div class="edit-actions">
+                <a-button 
+                  type="primary" 
+                  size="small" 
+                  :loading="editingLoading"
+                  :disabled="!isPhoneValid"
+                  @click="saveEdit"
+                >
+                  ✓
+                </a-button>
+                <a-button 
+                  size="small" 
+                  @click="cancelEdit"
+                >
+                  ✕
+                </a-button>
+              </div>
+              <div v-if="validationMessage" class="validation-message" :class="validationStatus">
+                {{ validationMessage }}
+              </div>
+            </div>
+            <span 
+              v-else 
+              class="editable-cell"
+              @click="startEdit(record, 'phone')"
+              :title="'点击编辑手机号: ' + (record.phone || '未设置')"
+            >
+              {{ record.phone || '点击添加' }}
+            </span>
+          </template>
+
+          <!-- 关系备注内联编辑 -->
+          <template #remark="{ record }">
+            <div v-if="isEditing(record.memberId, 'remark')" class="inline-edit-container">
+              <a-input
+                v-model:value="editingValue"
+                placeholder="请输入关系备注"
+                @pressEnter="saveEdit"
+                style="width: 180px;"
+              />
+              <div class="edit-actions">
+                <a-button 
+                  type="primary" 
+                  size="small" 
+                  :loading="editingLoading"
+                  @click="saveEdit"
+                >
+                  ✓
+                </a-button>
+                <a-button 
+                  size="small" 
+                  @click="cancelEdit"
+                >
+                  ✕
+                </a-button>
+              </div>
+            </div>
+            <span 
+              v-else 
+              class="editable-cell"
+              @click="startEdit(record, 'remark')"
+              :title="'点击编辑关系备注: ' + (record.remark || '暂无备注')"
+            >
+              {{ record.remark || '点击添加备注' }}
+            </span>
           </template>
 
           <!-- 加入时间 -->
@@ -221,6 +293,41 @@ const familyDetail = reactive({
 
 const familyMembers = ref([])
 
+// ----------------------- 内联编辑状态管理 -----------------------
+const editingState = reactive({
+  memberId: null,
+  field: null,
+  value: '',
+  originalValue: '',
+  loading: false,
+  validation: {
+    status: '',
+    message: '',
+    isValid: true
+  }
+})
+
+let phoneValidationTimer = null
+
+// ----------------------- 计算属性 -----------------------
+const editingValue = computed({
+  get: () => editingState.value,
+  set: (value) => editingState.value = value
+})
+
+const validationStatus = computed(() => editingState.validation.status)
+const validationMessage = computed(() => editingState.validation.message)
+const isPhoneValid = computed(() => editingState.validation.isValid)
+const editingLoading = computed(() => editingState.loading)
+
+// 动态列宽计算
+const getColumnWidth = (field) => {
+  if (editingState.field === field) {
+    return field === 'phone' ? 280 : 220  // 编辑时扩大列宽
+  }
+  return field === 'phone' ? 120 : 150    // 默认列宽
+}
+
 // ----------------------- 表格配置 -----------------------
 const memberColumns = [
   {
@@ -242,7 +349,10 @@ const memberColumns = [
   },
   {
     title: '手机号',
-    dataIndex: 'phone'
+    key: 'phone',
+    width: computed(() => getColumnWidth('phone')),
+    align: 'center',
+    slots: { customRender: 'phone' }
   },
   {
     title: '注册状态',
@@ -258,8 +368,11 @@ const memberColumns = [
   },
   {
     title: '关系备注',
-    dataIndex: 'remark',
-    ellipsis: true
+    key: 'remark',
+    width: computed(() => getColumnWidth('remark')),
+    ellipsis: true,
+    align: 'center',
+    slots: { customRender: 'remark' }
   },
   {
     title: '加入时间',
@@ -371,6 +484,204 @@ function onRemoveMember(member) {
     }
   })
 }
+// ----------------------- 内联编辑方法 -----------------------
+
+// 判断是否正在编辑
+function isEditing(memberId, field) {
+  return editingState.memberId === memberId && editingState.field === field
+}
+
+// 开始编辑
+function startEdit(record, field) {
+  // 如果当前有其他单元格在编辑，先取消
+  if (editingState.memberId !== null) {
+    cancelEdit()
+  }
+  
+  editingState.memberId = record.memberId
+  editingState.field = field
+  editingState.value = record[field] || ''
+  editingState.originalValue = record[field] || ''
+  editingState.validation = {
+    status: '',
+    message: '',
+    isValid: true
+  }
+}
+
+// 手机号输入处理
+function onPhoneInput() {
+  const phone = editingState.value.trim()
+  
+  // 清除之前的定时器
+  if (phoneValidationTimer) {
+    clearTimeout(phoneValidationTimer)
+  }
+  
+  // 基础格式验证
+  if (!phone) {
+    editingState.validation = {
+      status: '',
+      message: '',
+      isValid: true
+    }
+    return
+  }
+  
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    editingState.validation = {
+      status: 'error',
+      message: '手机号格式不正确',
+      isValid: false
+    }
+    return
+  }
+  
+  // 防抖重复检查
+  phoneValidationTimer = setTimeout(() => {
+    validatePhoneUnique(phone)
+  }, 500)
+}
+
+// 验证手机号唯一性
+async function validatePhoneUnique(phone) {
+  try {
+    editingState.validation.status = 'validating'
+    editingState.validation.message = '检查中...'
+    
+    const res = await memberApi.checkPhoneExist(phone, editingState.memberId)
+    
+    if (res.code === 0 && res.ok) {
+      if (res.data) {
+        editingState.validation = {
+          status: 'error',
+          message: '该手机号已存在',
+          isValid: false
+        }
+      } else {
+        editingState.validation = {
+          status: 'success',
+          message: '',
+          isValid: true
+        }
+      }
+    } else {
+      editingState.validation = {
+        status: 'warning',
+        message: '验证失败，请重试',
+        isValid: false
+      }
+    }
+  } catch (e) {
+    editingState.validation = {
+      status: 'warning',
+      message: '验证失败，请重试',
+      isValid: false
+    }
+  }
+}
+
+// 保存编辑
+async function saveEdit() {
+  const { memberId, field, value, originalValue } = editingState
+  
+  // 检查是否有变化
+  if (value.trim() === originalValue) {
+    cancelEdit()
+    return
+  }
+  
+  // 手机号的二次验证
+  if (field === 'phone' && value.trim()) {
+    if (!/^1[3-9]\d{9}$/.test(value.trim())) {
+      message.error('手机号格式不正确')
+      return
+    }
+    
+    // 二次重复检查
+    try {
+      const res = await memberApi.checkPhoneExist(value.trim(), memberId)
+      if (res.data) {
+        message.error('该手机号已存在')
+        return
+      }
+    } catch (e) {
+      message.error('验证失败，请重试')
+      return
+    }
+  }
+  
+  try {
+    editingState.loading = true
+    
+    if (field === 'phone') {
+      // 更新手机号
+      const res = await memberApi.update({
+        memberId: memberId,
+        phone: value.trim()
+      })
+      
+      if (res.code === 0 && res.ok) {
+        message.success('手机号更新成功')
+        
+        // 更新本地数据
+        const memberIndex = familyMembers.value.findIndex(m => m.memberId === memberId)
+        if (memberIndex !== -1) {
+          familyMembers.value[memberIndex].phone = value.trim()
+        }
+        
+        cancelEdit()
+      } else {
+        message.error('更新失败：' + res.msg)
+      }
+    } else if (field === 'remark') {
+      // 更新备注
+      const res = await adminFamilyGroupApi.updateMemberRemark(
+        familyDetail.familyGroupId,
+        memberId,
+        value.trim()
+      )
+      
+      if (res.code === 0 && res.ok) {
+        message.success('备注更新成功')
+        
+        // 更新本地数据
+        const memberIndex = familyMembers.value.findIndex(m => m.memberId === memberId)
+        if (memberIndex !== -1) {
+          familyMembers.value[memberIndex].remark = value.trim()
+        }
+        
+        cancelEdit()
+      } else {
+        message.error('更新失败：' + res.msg)
+      }
+    }
+  } catch (e) {
+    smartSentry.captureError(e)
+    message.error('更新失败')
+  } finally {
+    editingState.loading = false
+  }
+}
+
+// 取消编辑
+function cancelEdit() {
+  if (phoneValidationTimer) {
+    clearTimeout(phoneValidationTimer)
+    phoneValidationTimer = null
+  }
+  
+  editingState.memberId = null
+  editingState.field = null
+  editingState.value = ''
+  editingState.originalValue = ''
+  editingState.loading = false
+  editingState.validation = {
+    status: '',
+    message: '',
+    isValid: true
+  }
+}
 </script>
 
 <style scoped lang="less">
@@ -413,6 +724,71 @@ function onRemoveMember(member) {
       .member-name {
         text-decoration: underline;
       }
+    }
+  }
+
+  .inline-edit-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+
+    .edit-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .validation-message {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      font-size: 12px;
+      margin-top: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      z-index: 10;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      
+      &.error {
+        color: #ff4d4f;
+        background: #fff2f0;
+        border: 1px solid #ffccc7;
+      }
+      
+      &.warning {
+        color: #faad14;
+        background: #fffbe6;
+        border: 1px solid #ffe58f;
+      }
+      
+      &.success {
+        color: #52c41a;
+        background: #f6ffed;
+        border: 1px solid #b7eb8f;
+      }
+      
+      &.validating {
+        color: #1890ff;
+        background: #f0f9ff;
+        border: 1px solid #91d5ff;
+      }
+    }
+  }
+
+  .editable-cell {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    display: inline-block;
+    min-width: 60px;
+    color: #666;
+
+    &:hover {
+      background-color: #f5f5f5;
+      color: #1890ff;
     }
   }
 }

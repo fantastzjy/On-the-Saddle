@@ -52,6 +52,9 @@ export const TABLE_ID_CONST = {
     STABLE_RENTAL: {
       STABLE_RENTAL: businessClubInitTableId + 10, //马房租赁
     },
+    ACTIVITY: {
+      ACTIVITY: businessClubInitTableId + 11, //活动管理
+    },
   },
 
   /**

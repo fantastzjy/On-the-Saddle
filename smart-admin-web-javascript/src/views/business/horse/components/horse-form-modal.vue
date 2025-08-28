@@ -261,8 +261,10 @@ const formRules = {
   clubId: [{ required: true, message: '请选择俱乐部' }],
   horseType: [{ required: true, message: '请选择归属' }],
   chipNo: [{ required: true, message: '请输入芯片号' }],
+  passportNo: [{ required: true, message: '请输入护照号' }],
   breed: [{ required: true, message: '请输入血统' }],
   gender: [{ required: true, message: '请选择性别' }],
+  birthDate: [{ required: true, message: '请选择出生日期' }],
   healthStatus: [{ required: true, message: '请选择健康状态' }],
   workStatus: [{ required: true, message: '请选择工作状态' }],
 };

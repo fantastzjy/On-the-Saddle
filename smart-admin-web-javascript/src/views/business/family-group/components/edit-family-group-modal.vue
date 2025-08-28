@@ -29,13 +29,6 @@
         />
       </a-form-item>
 
-      <a-form-item label="家庭描述" name="description">
-        <a-textarea
-          v-model:value="form.description"
-          placeholder="请输入家庭描述（可选）"
-          :rows="4"
-        />
-      </a-form-item>
     </a-form>
   </a-modal>
 </template>
@@ -59,8 +52,7 @@ const formRef = ref()
 const form = reactive({
   familyGroupId: null,
   familyName: '',
-  mainContactId: null,
-  description: ''
+  mainContactId: null
 })
 
 const rules = getEditValidationRules()
@@ -75,8 +67,7 @@ function showModal(familyData) {
     familyGroupId: familyData.familyGroupId,
     familyName: familyData.familyName,
     mainContactId: Array.isArray(familyData.mainContactId) ? 
-      familyData.mainContactId[0] : familyData.mainContactId,
-    description: familyData.description || ''
+      familyData.mainContactId[0] : familyData.mainContactId
   })
   
   visible.value = true

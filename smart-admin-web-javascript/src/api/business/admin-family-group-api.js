@@ -20,5 +20,12 @@ export const adminFamilyGroupApi = {
   batchRestore: (familyGroupIds) => postRequest('/admin/family-group/batch/restore', familyGroupIds),
 
   // 根据会员ID查询家庭信息
-  getMemberFamily: (memberId) => getRequest(`/admin/family-group/member/${memberId}`)
+  getMemberFamily: (memberId) => getRequest(`/admin/family-group/member/${memberId}`),
+
+  // 更新家庭成员关系备注
+  updateMemberRemark: (familyGroupId, memberId, remark) => postRequest('/admin/family-group/update-member-remark', {
+    familyGroupId,
+    memberId,
+    remark
+  })
 }

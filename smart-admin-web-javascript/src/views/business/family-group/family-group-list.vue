@@ -9,22 +9,6 @@
           layout="inline"
           class="search-form"
         >
-          <a-form-item label="俱乐部">
-            <a-select 
-              v-model:value="searchForm.clubId" 
-              placeholder="请选择俱乐部"
-              allow-clear
-              style="width: 180px"
-            >
-              <a-select-option 
-                v-for="club in clubList" 
-                :key="club.clubId" 
-                :value="club.clubId"
-              >
-                {{ club.clubName }}
-              </a-select-option>
-            </a-select>
-          </a-form-item>
           
           <a-form-item label="家庭名称">
             <a-input 
@@ -50,42 +34,8 @@
             />
           </a-form-item>
           
-          <a-form-item label="成员数量">
-            <a-input-number 
-              v-model:value="searchForm.minMemberCount" 
-              placeholder="最少"
-              :min="0"
-              style="width: 80px"
-            />
-            <span style="margin: 0 8px">-</span>
-            <a-input-number 
-              v-model:value="searchForm.maxMemberCount" 
-              placeholder="最多"
-              :min="0"
-              style="width: 80px"
-            />
-          </a-form-item>
           
-          <a-form-item label="创建时间">
-            <a-range-picker 
-              v-model:value="searchForm.createTimeRange" 
-              show-time
-              format="YYYY-MM-DD"
-              style="width: 240px"
-            />
-          </a-form-item>
           
-          <a-form-item label="状态">
-            <a-select 
-              v-model:value="searchForm.status" 
-              placeholder="请选择状态"
-              allow-clear
-              style="width: 120px"
-            >
-              <a-select-option :value="0">正常</a-select-option>
-              <a-select-option :value="1">已删除</a-select-option>
-            </a-select>
-          </a-form-item>
           
           <a-form-item>
             <a-space>
@@ -126,10 +76,6 @@
             批量恢复 (0)
           </a-button>
           
-          <a-button @click="onExport" :loading="exportLoading">
-            <template #icon><ExportOutlined /></template>
-            导出数据
-          </a-button>
         </a-space>
       </a-card>
     </div>
@@ -159,10 +105,6 @@
             </a>
           </template>
 
-          <!-- 俱乐部名称 -->
-          <template #clubName="{ record }">
-            <a-tag color="blue">{{ record.clubName || '-' }}</a-tag>
-          </template>
 
           <!-- 主要联系人 -->
           <template #mainContact="{ record }">
@@ -188,11 +130,12 @@
           <template #action="{ record }">
             <a-space size="small">
               <a-button 
+                v-if="record.isDelete === 0"
                 type="link" 
                 size="small"
-                @click="onViewDetail(record)"
+                @click="onManageMembers(record)"
               >
-                查看详情
+                管理成员
               </a-button>
               
               <a-button 
@@ -202,15 +145,6 @@
                 @click="onEdit(record)"
               >
                 编辑
-              </a-button>
-              
-              <a-button 
-                v-if="record.isDelete === 0"
-                type="link" 
-                size="small"
-                @click="onManageMembers(record)"
-              >
-                管理成员
               </a-button>
               
               <a-popconfirm
@@ -285,14 +219,9 @@ const clubList = ref([])
 const tableData = ref([])
 
 const searchForm = reactive({
-  clubId: null,
   familyName: '',
   mainContactName: '',
   mainContactPhone: '',
-  minMemberCount: null,
-  maxMemberCount: null,
-  createTimeRange: [],
-  status: 0, // 默认显示正常状态
   pageNum: 1,
   pageSize: 10
 })
@@ -323,13 +252,6 @@ const tableColumns = [
     slots: { customRender: 'familyName' }
   },
   {
-    title: '所属俱乐部',
-    dataIndex: 'clubName',
-    width: 120,
-    align: 'center',
-    slots: { customRender: 'clubName' }
-  },
-  {
     title: '主要联系人',
     key: 'mainContact',
     width: 140,
@@ -342,13 +264,6 @@ const tableColumns = [
     width: 80,
     align: 'center',
     slots: { customRender: 'memberCount' }
-  },
-  {
-    title: '家庭描述',
-    dataIndex: 'description',
-    width: 200,
-    ellipsis: true,
-    align: 'center'
   },
   {
     title: '创建时间',
@@ -402,13 +317,6 @@ async function onSearch() {
       pageSize: pagination.pageSize
     }
     
-    // 处理时间范围
-    if (searchForm.createTimeRange && searchForm.createTimeRange.length === 2) {
-      params.createTimeStart = dayjs(searchForm.createTimeRange[0]).format('YYYY-MM-DD 00:00:00')
-      params.createTimeEnd = dayjs(searchForm.createTimeRange[1]).format('YYYY-MM-DD 23:59:59')
-    }
-    delete params.createTimeRange
-    
     const res = await adminFamilyGroupApi.pageQuery(params)
     if (res.code === 0 && res.ok) {
       tableData.value = res.data.list || []
@@ -428,14 +336,9 @@ async function onSearch() {
 
 function onReset() {
   Object.assign(searchForm, {
-    clubId: null,
     familyName: '',
     mainContactName: '',
-    mainContactPhone: '',
-    minMemberCount: null,
-    maxMemberCount: null,
-    createTimeRange: [],
-    status: 0
+    mainContactPhone: ''
   })
   pagination.current = 1
   onSearch()
