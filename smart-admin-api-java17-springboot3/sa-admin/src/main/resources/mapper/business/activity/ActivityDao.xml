@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.activity.dao.ActivityDao">
+
+    <!-- 分页查询活动列表（联合查询 m_product + m_product_activity） -->
+    <select id="queryActivityList" resultType="net.lab1024.sa.admin.module.business.activity.domain.vo.ActivityListVO">
+        SELECT 
+            p.product_id AS productId,
+            a.activity_name AS activityName,
+            a.start_time AS startTime,
+            a.end_time AS endTime,
+            a.activity_location AS activityLocation,
+            a.price AS price,
+            a.max_participants AS maxParticipants,
+            p.create_time AS createTime
+        FROM m_product p
+        LEFT JOIN m_product_activity a ON p.product_id = a.product_id
+        WHERE p.product_type = 3 
+        AND p.is_delete = 0
+        <if test="queryForm.keywords != null and queryForm.keywords != ''">
+            AND a.activity_name LIKE CONCAT('%', #{queryForm.keywords}, '%')
+        </if>
+        <if test="queryForm.startTime != null and queryForm.startTime != ''">
+            AND p.create_time >= #{queryForm.startTime}
+        </if>
+        <if test="queryForm.endTime != null and queryForm.endTime != ''">
+            AND p.create_time &lt;= #{queryForm.endTime}
+        </if>
+        <if test="queryForm.clubId != null">
+            AND p.club_id = #{queryForm.clubId}
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <!-- 查询活动详情（联合查询 m_product + m_product_activity） -->
+    <select id="queryActivityDetail" resultType="net.lab1024.sa.admin.module.business.activity.domain.vo.ActivityDetailVO">
+        SELECT 
+            p.product_id AS productId,
+            p.product_name AS productName,
+            p.product_code AS productCode,
+            a.activity_name AS activityName,
+            a.activity_details AS activityDetails,
+            a.start_time AS startTime,
+            a.end_time AS endTime,
+            a.activity_location AS activityLocation,
+            a.price AS price,
+            a.max_participants AS maxParticipants,
+            a.activity_rule AS activityRule,
+            a.detail_images AS detailImages,
+            p.create_by AS createBy,
+            p.create_time AS createTime,
+            p.update_by AS updateBy,
+            p.update_time AS updateTime
+        FROM m_product p
+        LEFT JOIN m_product_activity a ON p.product_id = a.product_id
+        WHERE p.product_id = #{productId}
+        AND p.product_type = 3 
+        AND p.is_delete = 0
+    </select>
+
+</mapper>
