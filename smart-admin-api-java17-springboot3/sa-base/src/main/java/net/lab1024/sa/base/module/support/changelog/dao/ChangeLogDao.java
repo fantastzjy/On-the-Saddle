@@ -1,15 +1,14 @@
 package net.lab1024.sa.base.module.support.changelog.dao;
 
-import java.util.List;
-
-import net.lab1024.sa.base.module.support.changelog.domain.form.ChangeLogQueryForm;
-import net.lab1024.sa.base.module.support.changelog.domain.vo.ChangeLogVO;
-import net.lab1024.sa.base.module.support.changelog.domain.entity.ChangeLogEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import net.lab1024.sa.base.module.support.changelog.domain.entity.ChangeLogEntity;
+import net.lab1024.sa.base.module.support.changelog.domain.form.ChangeLogQueryForm;
+import net.lab1024.sa.base.module.support.changelog.domain.vo.ChangeLogVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * 系统更新日志 Dao

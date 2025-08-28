@@ -11,7 +11,6 @@ import net.lab1024.sa.base.module.support.helpdoc.domain.vo.HelpDocVO;
 import net.lab1024.sa.base.module.support.helpdoc.domain.vo.HelpDocViewRecordVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 

@@ -5,7 +5,6 @@ import net.lab1024.sa.base.module.support.reload.domain.ReloadResultEntity;
 import net.lab1024.sa.base.module.support.reload.domain.ReloadResultVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 

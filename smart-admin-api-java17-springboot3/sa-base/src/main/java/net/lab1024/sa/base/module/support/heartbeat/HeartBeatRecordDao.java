@@ -7,7 +7,6 @@ import net.lab1024.sa.base.module.support.heartbeat.domain.HeartBeatRecordQueryF
 import net.lab1024.sa.base.module.support.heartbeat.domain.HeartBeatRecordVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -1,13 +1,12 @@
 package net.lab1024.sa.base.module.support.changelog.domain.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import lombok.Data;
 import net.lab1024.sa.base.common.swagger.SchemaEnum;
 import net.lab1024.sa.base.module.support.changelog.constant.ChangeLogTypeEnum;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 系统更新日志 列表VO

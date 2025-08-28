@@ -7,7 +7,6 @@ import net.lab1024.sa.base.module.support.securityprotect.domain.LoginFailQueryF
 import net.lab1024.sa.base.module.support.securityprotect.domain.LoginFailVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 

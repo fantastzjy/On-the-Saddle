@@ -3,7 +3,8 @@ package net.lab1024.sa.base.module.support.codegenerator.service.variable.front;
 import net.lab1024.sa.base.module.support.codegenerator.domain.form.CodeGeneratorConfigForm;
 import net.lab1024.sa.base.module.support.codegenerator.service.variable.CodeGenerateBaseVariableService;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @Author 1024创新实验室-主任:卓大

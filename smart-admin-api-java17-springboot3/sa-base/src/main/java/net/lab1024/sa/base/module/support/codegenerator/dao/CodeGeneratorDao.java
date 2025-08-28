@@ -6,7 +6,6 @@ import net.lab1024.sa.base.module.support.codegenerator.domain.vo.TableColumnVO;
 import net.lab1024.sa.base.module.support.codegenerator.domain.vo.TableVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 

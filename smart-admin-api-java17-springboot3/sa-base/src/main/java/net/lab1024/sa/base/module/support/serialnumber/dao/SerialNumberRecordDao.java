@@ -6,7 +6,6 @@ import net.lab1024.sa.base.module.support.serialnumber.domain.SerialNumberRecord
 import net.lab1024.sa.base.module.support.serialnumber.domain.SerialNumberRecordQueryForm;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;

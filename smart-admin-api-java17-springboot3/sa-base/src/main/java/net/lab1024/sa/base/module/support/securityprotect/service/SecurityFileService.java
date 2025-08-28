@@ -1,7 +1,7 @@
 package net.lab1024.sa.base.module.support.securityprotect.service;
 
-import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;

@@ -7,7 +7,6 @@ import net.lab1024.sa.base.module.support.job.api.domain.SmartJobVO;
 import net.lab1024.sa.base.module.support.job.repository.domain.SmartJobEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
