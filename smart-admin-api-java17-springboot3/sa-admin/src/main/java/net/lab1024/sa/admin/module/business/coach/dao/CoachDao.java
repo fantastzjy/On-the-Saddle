@@ -47,4 +47,41 @@ public interface CoachDao extends BaseMapper<CoachEntity> {
      * 教练列表查询
      */
     List<CoachListVO> queryList(@Param("isValid") Integer isValid, @Param("clubId") Long clubId);
+    
+    // === AI服务专用查询方法 ===
+    
+    /**
+     * 查询前20个教练（AI候选数据用）
+     */
+    List<CoachEntity> selectTop20Coaches(@Param("clubId") Long clubId);
+    
+    /**
+     * 根据教练编号和俱乐部查询教练（重载方法）
+     */
+    CoachEntity selectByCoachNoAndClub(@Param("coachNo") String coachNo, @Param("clubId") Long clubId);
+    
+    /**
+     * 根据教练姓名查询
+     */
+    CoachEntity selectByName(@Param("coachName") String coachName, @Param("clubId") Long clubId);
+    
+    /**
+     * 根据教练姓名模糊查询
+     */
+    CoachEntity selectByFuzzyName(@Param("coachName") String coachName, @Param("clubId") Long clubId);
+    
+    /**
+     * 根据姓氏前缀匹配教练（支持单字姓氏匹配）
+     */
+    CoachEntity selectByNamePrefix(@Param("namePrefix") String namePrefix, @Param("clubId") Long clubId);
+    
+    /**
+     * 查询默认教练（第一个有效教练）
+     */
+    CoachEntity selectDefaultCoach(@Param("clubId") Long clubId);
+    
+    /**
+     * 根据俱乐部ID查询教练（限制数量）
+     */
+    List<CoachEntity> selectByClubIdLimit(@Param("clubId") Long clubId, @Param("limit") int limit);
 }

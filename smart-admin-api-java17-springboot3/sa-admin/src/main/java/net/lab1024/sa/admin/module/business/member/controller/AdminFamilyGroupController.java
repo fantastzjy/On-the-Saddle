@@ -2,21 +2,19 @@ package net.lab1024.sa.admin.module.business.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupQueryForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupUpdateForm;
-import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupCreateForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyMemberAddForm;
-import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO;
 import net.lab1024.sa.admin.module.business.member.service.AdminFamilyGroupService;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.domain.ValidateList;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
-import java.util.List;
 
 /**
  * 家庭组后台管理控制器
@@ -79,5 +77,5 @@ public class AdminFamilyGroupController {
     @PostMapping("/add-family-member")
     public ResponseDTO<String> addFamilyMember(@RequestBody @Valid FamilyMemberAddForm addForm) {
         return adminFamilyGroupService.addFamilyMember(addForm);
-    }
+}
 }

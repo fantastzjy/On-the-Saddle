@@ -157,5 +157,114 @@
         </if>
         ORDER BY c.sort_order ASC, c.create_time DESC
     </select>
+    
+    <!-- === AI服务专用查询 === -->
+    
+    <!-- 查询前20个教练（AI候选数据用） -->
+    <select id="selectTop20Coaches" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT 
+            c.coach_id,
+            c.club_id,
+            c.user_id,
+            c.coach_no,
+            c.actual_name,
+            c.specialties,
+            c.coach_fee,
+            c.entry_date,
+            c.create_time
+        FROM m_coach c
+        WHERE c.is_delete = 0 AND c.is_valid = 1
+        <if test="clubId != null">
+            AND c.club_id = #{clubId}
+        </if>
+        ORDER BY c.sort_order ASC, c.create_time DESC
+        LIMIT 20
+    </select>
+    
+    <!-- 根据教练编号和俱乐部查询教练 -->
+    <select id="selectByCoachNoAndClub" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT 
+            c.*
+        FROM m_coach c
+        WHERE c.coach_no = #{coachNo} 
+        AND c.is_delete = 0 
+        AND c.is_valid = 1
+        <if test="clubId != null">
+            AND c.club_id = #{clubId}
+        </if>
+        LIMIT 1
+    </select>
+    
+    <!-- 根据教练姓名查询 -->
+    <select id="selectByName" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT 
+            c.*
+        FROM m_coach c
+        WHERE c.is_delete = 0 
+        AND c.is_valid = 1
+        AND c.actual_name = #{coachName}
+        <if test="clubId != null">
+            AND c.club_id = #{clubId}
+        </if>
+        LIMIT 1
+    </select>
+    
+    <!-- 根据教练姓名模糊查询 -->
+    <select id="selectByFuzzyName" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT 
+            c.*
+        FROM m_coach c
+        WHERE c.is_delete = 0 
+        AND c.is_valid = 1
+        AND c.actual_name LIKE CONCAT('%', #{coachName}, '%')
+        <if test="clubId != null">
+            AND c.club_id = #{clubId}
+        </if>
+        ORDER BY c.sort_order ASC
+        LIMIT 1
+    </select>
+    
+    <!-- 根据姓氏前缀匹配教练（支持单字姓氏匹配） -->
+    <select id="selectByNamePrefix" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT 
+            c.*
+        FROM m_coach c
+        WHERE c.is_delete = 0 
+        AND c.is_valid = 1
+        AND c.actual_name LIKE CONCAT(#{namePrefix}, '%')
+        <if test="clubId != null">
+            AND c.club_id = #{clubId}
+        </if>
+        ORDER BY c.sort_order ASC, c.create_time ASC
+        LIMIT 1
+    </select>
+    
+    <!-- 查询默认教练（第一个有效教练） -->
+    <select id="selectDefaultCoach" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT 
+            c.*
+        FROM m_coach c
+        WHERE c.is_delete = 0 
+        AND c.is_valid = 1
+        <if test="clubId != null">
+            AND c.club_id = #{clubId}
+        </if>
+        ORDER BY c.sort_order ASC, c.create_time ASC
+        LIMIT 1
+    </select>
+    
+    <!-- 根据俱乐部ID查询教练（限制数量） -->
+    <select id="selectByClubIdLimit" resultType="net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity">
+        SELECT 
+            c.*
+        FROM m_coach c
+        WHERE c.is_delete = 0 
+        AND c.is_valid = 1
+        <if test="clubId != null">
+            AND c.club_id = #{clubId}
+        </if>
+        ORDER BY c.sort_order ASC, c.create_time ASC
+        LIMIT #{limit}
+    </select>
 
 </mapper>

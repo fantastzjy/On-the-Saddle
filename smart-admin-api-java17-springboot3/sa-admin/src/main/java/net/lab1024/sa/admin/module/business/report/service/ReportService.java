@@ -1,11 +1,10 @@
 package net.lab1024.sa.admin.module.business.report.service;
 
+import jakarta.servlet.http.HttpServletResponse;
 import net.lab1024.sa.admin.module.business.report.domain.form.ReportExportForm;
 import net.lab1024.sa.admin.module.business.report.domain.form.ReportGenerateForm;
 import net.lab1024.sa.admin.module.business.report.domain.vo.ReportDataVO;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
-
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 通用报告服务接口

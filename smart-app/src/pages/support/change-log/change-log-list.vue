@@ -1,197 +1,178 @@
 <template>
   <view class="container">
-    <mescroll-body @init="mescrollInit" :down="{ auto: false }" @down="onDown" @up="onUp" :up="{ toTop: { src: '' } }">
-      <!--搜索框-->
-      <uni-nav-bar :border="false" fixed :leftWidth="0" rightWidth="70px">
-        <view class="input">
-          <uni-easyinput
-            :clearable="true"
-            trim="all"
-            v-model="queryForm.keyword"
-            placeholder="搜索： 更新内容 等"
-            @confirm="search"
-            @clear="search"
-          />
-        </view>
-        <template #right>
-          <view class="nav-right" @click="search">
-            <uni-icons type="search" size="30"></uni-icons>
-            <view class="nav-right-name"> 搜索 </view>
-          </view>
-        </template>
-      </uni-nav-bar>
+    <!-- 左上角logo -->
+    <image class="club-logo" src="/static/images/index/鞍境.png" mode="widthFix" />
 
-      <!-- 列表 -->
-      <view class="list-container">
-        <view class="list-item" @click="gotoDetail(item.changeLogId)" v-for="item in listData" :key="item.changeLogId">
-          <view class="list-item-row">
-            <view class="list-item-content bolder"
-              >{{ item.version }}版本{{ $smartEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', item.type) }}</view
-            >
-            <uni-tag
-              :text="$smartEnumPlugin.getDescByValue('CHANGE_LOG_TYPE_ENUM', item.type)"
-              :type="$smartEnumPlugin.getObjectByValue('CHANGE_LOG_TYPE_ENUM', item.type).type"
-            />
-          </view>
-          <view class="list-item-row">
-            <view class="list-item-label">发布日期：{{ item.publicDate }}</view>
-          </view>
-        </view>
-      </view>
-    </mescroll-body>
+    <!-- 俱乐部名称 -->
+    <text class="club-name">上海XXX俱乐部</text>
+
+    <!-- 中间语音按钮 -->
+    <view class="voice-btn-container" @touchstart="startRipple" @touchend="stopRipple" @touchcancel="stopRipple">
+      <image class="voice-icon" src="/static/images/index/圈图.png" mode="aspectFit" />
+
+      <!-- 波纹动画 -->
+      <view class="ripple" v-for="(ripple, index) in ripples" :key="index" :style="{
+        width: '600rpx',
+        height: '600rpx',
+        opacity: ripple.opacity,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%) scale(' + ripple.scale + ')'
+      }" />
+    </view>
+
+    <!-- 底部进入按钮 -->
+    <button class="enter-btn" @click="enterClub">进入俱乐部</button>
   </view>
 </template>
 
-<script setup>
-  import { reactive, ref } from 'vue';
-  import { changeLogApi } from '@/api/support/change-log-api';
-  import { onPageScroll, onReachBottom, onShow } from '@dcloudio/uni-app';
-  import useMescroll from '@/uni_modules/uni-mescroll/hooks/useMescroll';
-  import { smartSentry } from '@/lib/smart-sentry';
-  import _ from 'lodash';
-
-  // --------------------------- 查询 ---------------------------------
-
-  const defaultForm = {
-    keyword: '', //标题、内容
-    pageNum: 1,
-    pageSize: 10,
-  };
-
-  // 查询表单
-  const queryForm = reactive({ ...defaultForm });
-  // 列表数据
-  const listData = ref([]);
-
-  function buildQueryParam(pageNum) {
-    queryForm.pageNum = pageNum;
-    return Object.assign({}, queryForm, { pageNum });
-  }
-
-  async function query(mescroll, isDownFlag, param) {
-    try {
-      let res = await changeLogApi.queryPage(param);
-      if (!isDownFlag) {
-        listData.value = listData.value.concat(res.data.list);
-      } else {
-        listData.value = res.data.list;
-      }
-      mescroll.endSuccess(res.data.list.length, res.data.pages > res.data.pageNum);
-    } catch (e) {
-      smartSentry.captureError(e);
-      //联网失败, 结束加载
-      mescroll.endErr();
+<script>
+export default {
+  data() {
+    return {
+      ripples: [],
+      rippleInterval: null,
+      rippleCounter: 0
     }
+  },
+  methods: {
+    startRipple() {
+      this.ripples = [];
+      this.rippleInterval = setInterval(() => {
+        this.addRipple();
+      }, 300);
+    },
+    stopRipple() {
+      clearInterval(this.rippleInterval);
+      setTimeout(() => {
+        this.ripples = [];
+      }, 1000);
+    },
+    addRipple() {
+      const rippleId = this.rippleCounter++;
+      const newRipple = {
+        id: rippleId,
+        opacity: 0.6,
+        scale: 0.5  // 从0.1倍开始放大
+      };
+      this.ripples.push(newRipple);
+
+      const duration = 1500;
+      const steps = 30;
+      const stepTime = duration / steps;
+      let step = 0;
+
+      const animate = () => {
+        if (step > steps) {
+          // 动画完成后移除该波纹
+          this.ripples = this.ripples.filter(r => r.id !== rippleId);
+          return;
+        }
+
+        const progress = step / steps;
+        this.$nextTick(() => {
+          this.ripples = this.ripples.map(r => {
+            if (r.id === rippleId) {
+              return {
+                ...r,
+                scale: 0.5 + progress * 0.9, // 从0.1放大到1.0
+                opacity: 0.6 * (1 - progress) // 透明度从0.6线性降到0
+              };
+            }
+            return r;
+          });
+        });
+
+        step++;
+        setTimeout(animate, stepTime);
+      };
+
+      animate();
+    },
+    enterClub() {
+      uni.switchTab({
+        url: '/pages/home/index'
+      });
+    }
+  },
+  beforeUnmount() {
+    clearInterval(this.rippleInterval);
   }
-
-  const { mescrollInit, getMescroll } = useMescroll(onPageScroll, onReachBottom);
-
-  /**
-   * 搜索
-   */
-  function search() {
-    query(getMescroll(), true, buildQueryParam(1));
-    uni.pageScrollTo({
-      scrollTop: 0,
-    });
-  }
-
-  /**
-   * 下拉刷新
-   */
-  function onDown(mescroll) {
-    queryForm.pageNum = 1;
-    query(mescroll, true, buildQueryParam(1));
-  }
-
-  /**
-   * 上拉加载更多
-   */
-  function onUp(mescroll) {
-    query(mescroll, false, buildQueryParam(mescroll.num));
-  }
-
-  onShow(() => {
-    search();
-  });
-
-  // --------------------------- 详情 ---------------------------------
-
-  function gotoDetail(id) {
-    uni.navigateTo({ url: '/pages/support/change-log/change-log-detail?changeLogId=' + id });
-  }
+}
 </script>
 
-<style lang="scss" scoped>
-  .container {
-    background-color: #f4f4f4;
-  }
-  .input {
-    width: 100%;
-    height: 60rpx;
-    background: #f7f8f9;
-    border-radius: 4px;
-    margin: 8rpx 0;
-    display: flex;
-    align-items: center;
-  }
+<style>
+/* 所有样式保持不变 */
+.container {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(to top, #000000 0%, #000000 22%, rgba(0, 0, 0, 0.8) 35%, rgba(0, 0, 0, 0.51) 49%, rgba(188, 188, 188, 0.666) 64%, rgba(255, 255, 255, 0.64) 77%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
 
-  .nav-right {
-    width: 140rpx;
-    display: flex;
-    height: 88rpx;
-    flex-direction: row;
-    line-height: 88rpx;
-    .nav-right-name {
-      margin-left: 5px;
-      line-height: 88rpx;
-      font-size: 30rpx;
-    }
-  }
+.club-logo {
+  width: 90rpx;
+  height: 60rpx;
+  position: absolute;
+  top: 120rpx;
+  left: 60rpx;
+}
 
-  .list-container {
-    padding: 10rpx 20rpx;
-    margin-top: 10rpx;
+.club-name {
+  font-weight: 600;
+  font-size: 50rpx;
+  color: #D5BC84;
+  margin-top: 290rpx;
+  margin-bottom: 150rpx;
+}
 
-    .list-item {
-      background: #ffffff;
-      box-shadow: 0px 3px 4px 0px rgba(24, 144, 255, 0.06);
-      margin-bottom: 20rpx;
-      padding: 30rpx 40rpx;
+.voice-btn-container {
+  width: 600rpx;
+  height: 600rpx;
+  position: relative;
+  margin: 100rpx 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-      .list-item-row {
-        display: flex;
-        flex-direction: row;
-        margin-bottom: 16rpx;
-        justify-content: space-between;
+.voice-icon {
+  width: 600rpx;
+  height: 600rpx;
+  z-index: 2;
+}
 
-        .list-item-label {
-          font-size: 30rpx;
-          font-weight: 400;
-          text-align: left;
-          color: $uni-text-color-grey;
-        }
-        .bolder {
-          font-weight: 500 !important;
-          font-size: 34rpx !important;
-        }
-        .list-item-content {
-          font-size: 30rpx;
-          font-weight: 500;
-          text-align: left;
-        }
-        .list-item-content-container {
-          font-size: 30rpx;
-          font-weight: 500;
-          text-align: left;
-          color: #323333;
-          height: 40px;
-        }
-        .list-item-phone {
-          color: $uni-color-primary;
-          margin-left: auto;
-        }
-      }
-    }
-  }
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(213, 188, 132, 0.6);
+  transform-origin: center;
+  z-index: 1;
+  width: 600rpx;
+  height: 600rpx;
+  transition: opacity 0.1s ease-out;
+  /* 添加透明度过渡效果 */
+}
+
+.enter-btn {
+  width: 370rpx;
+  height: 96rpx;
+  background: #B7975E;
+  border-radius: 186rpx;
+  font-weight: 600;
+  font-size: 36rpx;
+  color: #F9EEDA;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 140rpx;
+  border: none;
+}
+
+.enter-btn::after {
+  border: none;
+}
 </style>

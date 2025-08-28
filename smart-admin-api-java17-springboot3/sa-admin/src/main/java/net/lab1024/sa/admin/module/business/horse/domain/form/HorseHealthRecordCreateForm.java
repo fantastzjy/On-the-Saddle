@@ -48,6 +48,6 @@ public class HorseHealthRecordCreateForm {
     @Schema(description = "实际费用")
     private java.math.BigDecimal actualCost;
 
-    @Schema(description = "预算费用") 
+    @Schema(description = "预算费用")
     private java.math.BigDecimal budgetCost;
 }

@@ -2,6 +2,7 @@ package net.lab1024.sa.admin.module.business.product.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
@@ -18,7 +19,6 @@ import net.lab1024.sa.base.common.util.SmartRequestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,10 +40,10 @@ public class ProductController extends SupportBaseController {
 
     @Autowired
     private ProductService productService;
-    
+
     @Autowired
     private DynamicFormConfigService dynamicFormConfigService;
-    
+
     @Autowired
     private PriceCalculationService priceCalculationService;
 
@@ -158,8 +158,8 @@ public class ProductController extends SupportBaseController {
 
     @Operation(summary = "更新商品库存")
     @PostMapping("/stock/update")
-    public ResponseDTO<String> updateProductStock(@RequestParam Long productId, 
-                                                 @RequestParam Integer quantity, 
+    public ResponseDTO<String> updateProductStock(@RequestParam Long productId,
+                                                 @RequestParam Integer quantity,
                                                  @RequestParam String reason) {
         return productService.updateProductStock(productId, quantity, reason, SmartRequestUtil.getRequestUserId());
     }

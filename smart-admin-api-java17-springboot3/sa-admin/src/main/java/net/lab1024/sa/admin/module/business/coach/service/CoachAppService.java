@@ -1,25 +1,22 @@
 package net.lab1024.sa.admin.module.business.coach.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
-import lombok.Data;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
 import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
+import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.RequestCoach;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
 import net.lab1024.sa.admin.module.business.coach.domain.vo.CoachAppInfoVO;
-import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
-import net.lab1024.sa.base.module.support.dict.service.DictService;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartRequestUtil;
+import net.lab1024.sa.base.module.support.dict.service.DictService;
 import org.springframework.stereotype.Service;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 教练小程序业务服务

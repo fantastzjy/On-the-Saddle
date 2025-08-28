@@ -1,15 +1,12 @@
 package net.lab1024.sa.admin.module.business.schedule.service;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
 import net.lab1024.sa.admin.module.business.club.domain.entity.ClubEntity;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
-import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
 import net.lab1024.sa.admin.module.business.horse.dao.HorseDao;
-import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseEntity;
 import net.lab1024.sa.admin.module.business.schedule.constant.ResourceTypeEnum;
 import net.lab1024.sa.admin.module.business.schedule.constant.ScheduleStatusEnum;
 import net.lab1024.sa.admin.module.business.schedule.dao.ResourceScheduleDao;
@@ -31,7 +28,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 资源时间安排服务
@@ -275,7 +271,7 @@ public class ResourceScheduleService {
      * 检查资源可用性
      */
     public ResponseDTO<Boolean> checkResourceAvailability(
-            Long clubId, Integer resourceType, Long resourceId, 
+            Long clubId, Integer resourceType, Long resourceId,
             LocalDate date, LocalTime startTime, LocalTime endTime) {
         try {
             LambdaQueryWrapper<ResourceScheduleEntity> wrapper = new LambdaQueryWrapper<>();
@@ -289,7 +285,7 @@ public class ResourceScheduleService {
                                               .lt(ResourceScheduleEntity::getStartTime, endTime))
                             .or(inner -> inner.gt(ResourceScheduleEntity::getEndTime, startTime)
                                               .le(ResourceScheduleEntity::getEndTime, endTime)));
-            
+
             Long count = resourceScheduleDao.selectCount(wrapper);
             return ResponseDTO.ok(count == 0);
         } catch (Exception e) {
@@ -297,14 +293,14 @@ public class ResourceScheduleService {
             return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "检查资源可用性失败");
         }
     }
-    
+
     /**
      * 占用资源时间段（待支付）
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> occupyResourceTimeSlot(
             String orderNo, Long clubId, Integer resourceType, Long resourceId,
-            LocalDate date, LocalTime startTime, LocalTime endTime, 
+            LocalDate date, LocalTime startTime, LocalTime endTime,
             LocalDateTime expireTime) {
         try {
             ResourceScheduleEntity entity = new ResourceScheduleEntity();
@@ -321,7 +317,7 @@ public class ResourceScheduleService {
             entity.setExpireTime(expireTime);
             entity.setCreatedBy("system");
             entity.setCreateTime(LocalDateTime.now());
-            
+
             resourceScheduleDao.insert(entity);
             log.info("成功占用资源时间段，订单号：{}", orderNo);
             return ResponseDTO.ok();
@@ -330,24 +326,24 @@ public class ResourceScheduleService {
             return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "占用资源时间段失败");
         }
     }
-    
+
     /**
      * 确认资源预约（已支付）
      */
-    @Transactional(rollbackFor = Exception.class) 
+    @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> confirmResourceBooking(String orderNo) {
         try {
             LambdaQueryWrapper<ResourceScheduleEntity> updateWrapper = new LambdaQueryWrapper<>();
             updateWrapper.eq(ResourceScheduleEntity::getOrderNo, orderNo)
                         .eq(ResourceScheduleEntity::getStatus, 5);
-            
+
             ResourceScheduleEntity updateEntity = new ResourceScheduleEntity();
             updateEntity.setStatus(6); // 已确认预约
             updateEntity.setTitle("已确认预约");
             updateEntity.setExpireTime(null);
             updateEntity.setUpdatedBy("system");
             updateEntity.setUpdateTime(LocalDateTime.now());
-            
+
             int updateCount = resourceScheduleDao.update(updateEntity, updateWrapper);
             if (updateCount > 0) {
                 log.info("成功确认资源预约，订单号：{}", orderNo);
@@ -360,7 +356,7 @@ public class ResourceScheduleService {
             return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "确认资源预约失败");
         }
     }
-    
+
     /**
      * 释放资源时间段
      */
@@ -369,7 +365,7 @@ public class ResourceScheduleService {
         try {
             LambdaQueryWrapper<ResourceScheduleEntity> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(ResourceScheduleEntity::getOrderNo, orderNo);
-            
+
             int deleteCount = resourceScheduleDao.delete(wrapper);
             if (deleteCount > 0) {
                 log.info("成功释放资源时间段，订单号：{}", orderNo);
@@ -382,7 +378,7 @@ public class ResourceScheduleService {
             return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "释放资源时间段失败");
         }
     }
-    
+
     /**
      * 获取资源可用时间段
      */
@@ -394,7 +390,7 @@ public class ResourceScheduleService {
             if (club == null) {
                 return ResponseDTO.userErrorParam("俱乐部不存在");
             }
-            
+
             // 2. 获取已占用时间段
             LambdaQueryWrapper<ResourceScheduleEntity> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(ResourceScheduleEntity::getClubId, clubId)
@@ -403,39 +399,39 @@ public class ResourceScheduleService {
                    .eq(ResourceScheduleEntity::getScheduleDate, date)
                    .in(ResourceScheduleEntity::getStatus, Arrays.asList(1,2,3,4,5,6))
                    .orderBy(true, true, ResourceScheduleEntity::getStartTime);
-            
+
             List<ResourceScheduleEntity> occupiedSlots = resourceScheduleDao.selectList(wrapper);
-            
+
             // 3. 计算可用时间段
             List<TimeSlotVO> availableSlots = calculateAvailableSlots(
                     club.getBusinessStartTime(), club.getBusinessEndTime(), occupiedSlots);
-            
+
             return ResponseDTO.ok(availableSlots);
         } catch (Exception e) {
             log.error("获取资源可用时间段失败", e);
             return ResponseDTO.error(SystemErrorCode.SYSTEM_ERROR, "获取资源可用时间段失败");
         }
     }
-    
+
     /**
      * 计算可用时间段
      */
     private List<TimeSlotVO> calculateAvailableSlots(
             LocalTime businessStart, LocalTime businessEnd,
             List<ResourceScheduleEntity> occupiedSlots) {
-        
+
         List<TimeSlotVO> availableSlots = new ArrayList<>();
-        
+
         if (businessStart == null || businessEnd == null) {
             log.warn("俱乐部营业时间未设置，无法计算可用时间段");
             return availableSlots;
         }
-        
+
         // 按开始时间排序占用时间段
         occupiedSlots.sort(Comparator.comparing(ResourceScheduleEntity::getStartTime));
-        
+
         LocalTime currentTime = businessStart;
-        
+
         for (ResourceScheduleEntity occupied : occupiedSlots) {
             // 如果当前时间早于占用开始时间，说明有可用时间段
             if (currentTime.isBefore(occupied.getStartTime())) {
@@ -444,13 +440,13 @@ public class ResourceScheduleService {
                 slot.setEndTime(occupied.getStartTime());
                 availableSlots.add(slot);
             }
-            
+
             // 更新当前时间为占用结束时间
             if (occupied.getEndTime().isAfter(currentTime)) {
                 currentTime = occupied.getEndTime();
             }
         }
-        
+
         // 检查最后一个时间段到营业结束时间
         if (currentTime.isBefore(businessEnd)) {
             TimeSlotVO slot = new TimeSlotVO();
@@ -458,10 +454,10 @@ public class ResourceScheduleService {
             slot.setEndTime(businessEnd);
             availableSlots.add(slot);
         }
-        
+
         return availableSlots;
     }
-    
+
     /**
      * 清理过期的待支付占用
      */
@@ -472,12 +468,12 @@ public class ResourceScheduleService {
             wrapper.eq(ResourceScheduleEntity::getStatus, 5) // 待支付占用
                    .isNotNull(ResourceScheduleEntity::getExpireTime)
                    .lt(ResourceScheduleEntity::getExpireTime, LocalDateTime.now());
-            
+
             int deletedCount = resourceScheduleDao.delete(wrapper);
             if (deletedCount > 0) {
                 log.info("清理过期的待支付占用记录，共{}条", deletedCount);
             }
-            
+
             return ResponseDTO.ok(deletedCount);
         } catch (Exception e) {
             log.error("清理过期的待支付占用失败", e);

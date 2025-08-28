@@ -1,10 +1,9 @@
 package net.lab1024.sa.admin.module.business.member.domain.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 
 /**
  * 家庭组更新表单

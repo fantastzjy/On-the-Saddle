@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberQueryForm;
-import net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.MemberDetailVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.MemberVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

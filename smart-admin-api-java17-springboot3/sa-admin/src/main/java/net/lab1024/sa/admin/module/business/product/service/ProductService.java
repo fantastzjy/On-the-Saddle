@@ -5,18 +5,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
-import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
-import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
-import net.lab1024.sa.admin.module.business.product.dao.ProductPackageDao;
-import net.lab1024.sa.admin.module.business.product.dao.ProductActivityDao;
-import net.lab1024.sa.admin.module.business.product.dao.ProductExperienceDao;
-import net.lab1024.sa.admin.module.business.product.dao.ProductTheoryCourseDao;
-import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
-import net.lab1024.sa.admin.module.business.product.domain.entity.ProductPackageEntity;
-import net.lab1024.sa.admin.module.business.product.domain.entity.ProductActivityEntity;
-import net.lab1024.sa.admin.module.business.product.domain.entity.ProductExperienceEntity;
-import net.lab1024.sa.admin.module.business.product.domain.entity.ProductTheoryCourseEntity;
-import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
+import net.lab1024.sa.admin.module.business.product.dao.*;
+import net.lab1024.sa.admin.module.business.product.domain.entity.*;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductUpdateForm;
@@ -69,7 +59,7 @@ public class ProductService {
 
     @Autowired
     private FileService fileService;
-    
+
     @Autowired
     private IFileStorageService fileStorageService;
 
@@ -84,19 +74,19 @@ public class ProductService {
         try {
             Page<ProductEntity> page = new Page<>(queryForm.getPageNum(), queryForm.getPageSize());
             LambdaQueryWrapper<ProductEntity> queryWrapper = buildQueryWrapper(queryForm);
-            
+
             IPage<ProductEntity> pageResult = productDao.selectPage(page, queryWrapper);
-            
+
             // 创建一个新的Page对象来传递给SmartPageUtil
             Page<ProductEntity> resultPage = new Page<>(pageResult.getCurrent(), pageResult.getSize(), pageResult.getTotal());
             PageResult<ProductListVO> result = SmartPageUtil.convert2PageResult(resultPage, pageResult.getRecords(), ProductListVO.class);
-            
+
             // 补充额外信息
             enhanceProductListData(result.getList());
-            
+
             log.info("查询商品列表成功，共{}条记录", result.getTotal());
             return ResponseDTO.ok(result);
-            
+
         } catch (Exception e) {
             log.error("查询商品列表失败", e);
             return ResponseDTO.userErrorParam("查询商品列表失败");
@@ -112,15 +102,15 @@ public class ProductService {
             if (productEntity == null || productEntity.getIsDelete()) {
                 return ResponseDTO.userErrorParam("商品不存在");
             }
-            
+
             ProductDetailVO detailVO = SmartBeanUtil.copy(productEntity, ProductDetailVO.class);
-            
+
             // 补充详情信息
             enhanceProductDetailData(detailVO);
-            
+
             log.info("获取商品详情成功，商品ID: {}", productId);
             return ResponseDTO.ok(detailVO);
-            
+
         } catch (Exception e) {
             log.error("获取商品详情失败", e);
             return ResponseDTO.userErrorParam("获取商品详情失败");
@@ -137,7 +127,7 @@ public class ProductService {
             if (addForm.getClubId() == null) {
                 addForm.setClubId(1L); // 设置默认俱乐部ID，后续可以从用户信息中获取
             }
-            
+
             // 验证商品编码唯一性，如果为空则自动生成
             if (SmartStringUtil.isBlank(addForm.getProductCode())) {
                 // 自动生成商品编码
@@ -148,7 +138,7 @@ public class ProductService {
                     return ResponseDTO.userErrorParam("商品编码已存在");
                 }
             }
-            
+
             // 构建商品实体
             ProductEntity productEntity = SmartBeanUtil.copy(addForm, ProductEntity.class);
             productEntity.setCreateBy(operatorId.toString());
@@ -157,16 +147,16 @@ public class ProductService {
             productEntity.setUpdateTime(LocalDateTime.now());
             productEntity.setIsValid(true);
             productEntity.setIsDelete(false);
-            
+
             // 保存商品基础信息
             productDao.insert(productEntity);
-            
+
             // 保存商品扩展配置 - 优先使用表单中的直接字段
             saveProductExtendedConfigFromForm(productEntity.getProductId(), addForm);
-            
+
             log.info("新增商品成功，商品ID: {}", productEntity.getProductId());
             return ResponseDTO.ok();
-            
+
         } catch (Exception e) {
             log.error("新增商品失败", e);
             return ResponseDTO.userErrorParam("新增商品失败");
@@ -183,27 +173,27 @@ public class ProductService {
             if (existProduct == null || existProduct.getIsDelete()) {
                 return ResponseDTO.userErrorParam("商品不存在");
             }
-            
+
             // 验证商品编码唯一性
             if (SmartStringUtil.isNotBlank(updateForm.getProductCode())) {
                 if (checkProductCodeExists(updateForm.getProductCode(), existProduct.getClubId(), updateForm.getProductId())) {
                     return ResponseDTO.userErrorParam("商品编码已存在");
                 }
             }
-            
+
             // 更新商品基础信息
             ProductEntity productEntity = SmartBeanUtil.copy(updateForm, ProductEntity.class);
             productEntity.setUpdateBy(operatorId.toString());
             productEntity.setUpdateTime(LocalDateTime.now());
-            
+
             productDao.updateById(productEntity);
-            
+
             // 更新商品扩展配置 - 优先使用表单中的直接字段
             saveProductExtendedConfigFromForm(updateForm.getProductId(), updateForm);
-            
+
             log.info("编辑商品成功，商品ID: {}", updateForm.getProductId());
             return ResponseDTO.ok();
-            
+
         } catch (Exception e) {
             log.error("编辑商品失败", e);
             return ResponseDTO.userErrorParam("编辑商品失败");
@@ -220,23 +210,23 @@ public class ProductService {
             if (productEntity == null || productEntity.getIsDelete()) {
                 return ResponseDTO.userErrorParam("商品不存在");
             }
-            
+
             // 检查商品是否可以删除
             ResponseDTO<String> checkResult = checkProductCanDelete(productId);
             if (!checkResult.getOk()) {
                 return checkResult;
             }
-            
+
             // 软删除商品
             productEntity.setIsDelete(true);
             productEntity.setUpdateBy(operatorId.toString());
             productEntity.setUpdateTime(LocalDateTime.now());
-            
+
             productDao.updateById(productEntity);
-            
+
             log.info("删除商品成功，商品ID: {}", productId);
             return ResponseDTO.ok();
-            
+
         } catch (Exception e) {
             log.error("删除商品失败", e);
             return ResponseDTO.userErrorParam("删除商品失败");
@@ -252,10 +242,10 @@ public class ProductService {
             if (productIds == null || productIds.isEmpty()) {
                 return ResponseDTO.userErrorParam("请选择要删除的商品");
             }
-            
+
             int successCount = 0;
             List<String> failedReasons = new ArrayList<>();
-            
+
             for (Long productId : productIds) {
                 ResponseDTO<String> deleteResult = deleteProduct(productId, operatorId);
                 if (deleteResult.getOk()) {
@@ -264,16 +254,16 @@ public class ProductService {
                     failedReasons.add("商品ID " + productId + ": " + deleteResult.getMsg());
                 }
             }
-            
+
             if (successCount == productIds.size()) {
                 log.info("批量删除商品成功，删除{}个商品", successCount);
                 return ResponseDTO.ok("成功删除" + successCount + "个商品");
             } else {
-                String message = String.format("成功删除%d个商品，失败%d个。失败原因：%s", 
+                String message = String.format("成功删除%d个商品，失败%d个。失败原因：%s",
                     successCount, productIds.size() - successCount, String.join("; ", failedReasons));
                 return ResponseDTO.userErrorParam(message);
             }
-            
+
         } catch (Exception e) {
             log.error("批量删除商品失败", e);
             return ResponseDTO.userErrorParam("批量删除商品失败");
@@ -322,11 +312,11 @@ public class ProductService {
             if (product == null) {
                 return ResponseDTO.userErrorParam("商品不存在");
             }
-            
+
             Map<String, Object> stockInfo = new HashMap<>();
             stockInfo.put("productId", productId);
             stockInfo.put("productType", product.getProductType());
-            
+
             if (product.getProductType() == 2) { // 课时包
                 // 查询课时包库存
                 stockInfo.put("stockQuantity", 100); // 示例数据
@@ -337,9 +327,9 @@ public class ProductService {
                 stockInfo.put("availableQuantity", -1);
                 stockInfo.put("reservedQuantity", 0);
             }
-            
+
             return ResponseDTO.ok(stockInfo);
-            
+
         } catch (Exception e) {
             log.error("获取商品库存失败", e);
             return ResponseDTO.userErrorParam("获取商品库存失败");
@@ -356,14 +346,14 @@ public class ProductService {
             if (product == null) {
                 return ResponseDTO.userErrorParam("商品不存在");
             }
-            
+
             // 这里应该根据商品类型更新对应的库存表
             // 课时包商品更新 m_product_package 表的库存
             // 课程和活动商品不需要库存管理
-            
+
             log.info("更新商品库存成功，商品ID: {}，变更数量: {}，原因: {}", productId, quantity, reason);
             return ResponseDTO.ok();
-            
+
         } catch (Exception e) {
             log.error("更新商品库存失败", e);
             return ResponseDTO.userErrorParam("更新商品库存失败");
@@ -381,32 +371,32 @@ public class ProductService {
      */
     private LambdaQueryWrapper<ProductEntity> buildQueryWrapper(ProductQueryForm queryForm) {
         LambdaQueryWrapper<ProductEntity> wrapper = new LambdaQueryWrapper<>();
-        
+
         wrapper.eq(ProductEntity::getIsDelete, false);
-        
+
         if (queryForm.getClubId() != null) {
             wrapper.eq(ProductEntity::getClubId, queryForm.getClubId());
         }
-        
+
         if (SmartStringUtil.isNotBlank(queryForm.getProductName())) {
             wrapper.like(ProductEntity::getProductName, queryForm.getProductName());
         }
-        
+
         if (SmartStringUtil.isNotBlank(queryForm.getProductCode())) {
             wrapper.like(ProductEntity::getProductCode, queryForm.getProductCode());
         }
-        
+
         if (queryForm.getProductType() != null) {
             wrapper.eq(ProductEntity::getProductType, queryForm.getProductType());
         }
-        
+
         if (SmartStringUtil.isNotBlank(queryForm.getKeyword())) {
             wrapper.and(w -> w.like(ProductEntity::getProductName, queryForm.getKeyword())
                 .or().like(ProductEntity::getProductCode, queryForm.getKeyword()));
         }
-        
+
         wrapper.orderByDesc(ProductEntity::getCreateTime);
-        
+
         return wrapper;
     }
 
@@ -418,11 +408,11 @@ public class ProductService {
         wrapper.eq(ProductEntity::getProductCode, productCode)
             .eq(ProductEntity::getClubId, clubId)
             .eq(ProductEntity::getIsDelete, false);
-        
+
         if (excludeProductId != null) {
             wrapper.ne(ProductEntity::getProductId, excludeProductId);
         }
-        
+
         return productDao.selectCount(wrapper) > 0;
     }
 
@@ -454,20 +444,20 @@ public class ProductService {
                 typePrefix = "PRODUCT";
                 break;
         }
-        
+
         // 时间戳（年月日）
         String dateStr = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
-        
+
         // 尝试生成唯一编码，最多尝试1000次
         for (int sequence = 1; sequence <= 1000; sequence++) {
             String productCode = String.format("%s_%d_%s_%03d", typePrefix, clubId, dateStr, sequence);
-            
+
             // 检查编码是否已存在
             if (!checkProductCodeExists(productCode, clubId, null)) {
                 return productCode;
             }
         }
-        
+
         // 如果1000次都重复，使用时间戳确保唯一性
         long timestamp = System.currentTimeMillis();
         return String.format("%s_%d_%s_%d", typePrefix, clubId, dateStr, timestamp % 10000);
@@ -501,7 +491,7 @@ public class ProductService {
     private void saveProductExtendedConfigByType(Long productId, Integer productType, Object form) {
         try {
             log.info("保存商品扩展配置，商品ID: {}, 类型: {}", productId, productType);
-            
+
             switch (productType) {
                 case 1: // 课程
                     saveCourseConfigFromForm(productId, form);
@@ -534,11 +524,11 @@ public class ProductService {
             LambdaQueryWrapper<ProductCourseEntity> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(ProductCourseEntity::getProductId, productId);
             productCourseDao.delete(deleteWrapper);
-            
+
             // 创建新的课程配置
             ProductCourseEntity courseEntity = new ProductCourseEntity();
             courseEntity.setProductId(productId);
-            
+
             // 从表单对象提取字段值
             if (form instanceof ProductAddForm) {
                 ProductAddForm addForm = (ProductAddForm) form;
@@ -559,15 +549,15 @@ public class ProductService {
                 courseEntity.setHorseFee(updateForm.getHorseFee());
                 courseEntity.setMultiPriceConfig(updateForm.getMultiPriceConfig());
             }
-            
+
             // 计算基础价格：coach_fee + horse_fee
             if (courseEntity.getCoachFee() != null && courseEntity.getHorseFee() != null) {
                 courseEntity.setBasePrice(courseEntity.getCoachFee().add(courseEntity.getHorseFee()));
             }
-            
+
             courseEntity.setCreateTime(LocalDateTime.now());
             courseEntity.setUpdateTime(LocalDateTime.now());
-            
+
             // 只有当有有效数据时才保存
             if (courseEntity.getClassType() != null) {
                 productCourseDao.insert(courseEntity);
@@ -588,11 +578,11 @@ public class ProductService {
             LambdaQueryWrapper<ProductPackageEntity> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(ProductPackageEntity::getProductId, productId);
             productPackageDao.delete(deleteWrapper);
-            
+
             // 创建新的课时包配置
             ProductPackageEntity packageEntity = new ProductPackageEntity();
             packageEntity.setProductId(productId);
-            
+
             // 从表单对象提取字段值
             if (form instanceof ProductAddForm) {
                 ProductAddForm addForm = (ProductAddForm) form;
@@ -609,10 +599,10 @@ public class ProductService {
                 packageEntity.setValidityDays(updateForm.getValidityDays());
                 packageEntity.setStockQuantity(updateForm.getStockQuantity());
             }
-            
+
             packageEntity.setCreateTime(LocalDateTime.now());
             packageEntity.setUpdateTime(LocalDateTime.now());
-            
+
             // 只有当有有效数据时才保存
             if (packageEntity.getDetails() != null && !packageEntity.getDetails().trim().isEmpty()) {
                 productPackageDao.insert(packageEntity);
@@ -633,11 +623,11 @@ public class ProductService {
             LambdaQueryWrapper<ProductActivityEntity> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(ProductActivityEntity::getProductId, productId);
             productActivityDao.delete(deleteWrapper);
-            
+
             // 创建新的活动配置
             ProductActivityEntity activityEntity = new ProductActivityEntity();
             activityEntity.setProductId(productId);
-            
+
             // 从表单对象提取字段值
             if (form instanceof ProductAddForm) {
                 ProductAddForm addForm = (ProductAddForm) form;
@@ -662,10 +652,10 @@ public class ProductService {
                 activityEntity.setRefundRule(updateForm.getRefundRule());
                 activityEntity.setDetailImages(updateForm.getDetailImages());
             }
-            
+
             activityEntity.setCreateTime(LocalDateTime.now());
             activityEntity.setUpdateTime(LocalDateTime.now());
-            
+
             // 只有当有有效数据时才保存
             if (activityEntity.getActivityName() != null && !activityEntity.getActivityName().trim().isEmpty()) {
                 productActivityDao.insert(activityEntity);
@@ -686,11 +676,11 @@ public class ProductService {
             LambdaQueryWrapper<ProductExperienceEntity> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(ProductExperienceEntity::getProductId, productId);
             productExperienceDao.delete(deleteWrapper);
-            
+
             // 创建新的体验课配置
             ProductExperienceEntity experienceEntity = new ProductExperienceEntity();
             experienceEntity.setProductId(productId);
-            
+
             // 从表单对象提取字段值
             if (form instanceof ProductAddForm) {
                 ProductAddForm addForm = (ProductAddForm) form;
@@ -705,10 +695,10 @@ public class ProductService {
                 experienceEntity.setDurationPeriods(updateForm.getDurationPeriods());
                 experienceEntity.setMaxStudents(updateForm.getMaxStudents());
             }
-            
+
             experienceEntity.setCreateTime(LocalDateTime.now());
             experienceEntity.setUpdateTime(LocalDateTime.now());
-            
+
             // 只有当有有效数据时才保存
             if (experienceEntity.getPrice() != null) {
                 productExperienceDao.insert(experienceEntity);
@@ -729,11 +719,11 @@ public class ProductService {
             LambdaQueryWrapper<ProductTheoryCourseEntity> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(ProductTheoryCourseEntity::getProductId, productId);
             productTheoryCourseDao.delete(deleteWrapper);
-            
+
             // 创建新的理论课配置
             ProductTheoryCourseEntity theoryCourseEntity = new ProductTheoryCourseEntity();
             theoryCourseEntity.setProductId(productId);
-            
+
             // 从表单对象提取字段值
             if (form instanceof ProductAddForm) {
                 ProductAddForm addForm = (ProductAddForm) form;
@@ -746,10 +736,10 @@ public class ProductService {
                 theoryCourseEntity.setBasePrice(updateForm.getTheoryCourse_basePrice());
                 theoryCourseEntity.setMaxStudents(updateForm.getTheoryCourse_maxStudents());
             }
-            
+
             theoryCourseEntity.setCreateTime(LocalDateTime.now());
             theoryCourseEntity.setUpdateTime(LocalDateTime.now());
-            
+
             // 只有当有有效数据时才保存
             if (theoryCourseEntity.getBasePrice() != null) {
                 productTheoryCourseDao.insert(theoryCourseEntity);
@@ -785,12 +775,12 @@ public class ProductService {
         if (configDataJson == null || configDataJson.trim().isEmpty()) {
             return;
         }
-        
+
         try {
             // 解析JSON配置
             Map<String, Object> configData = JSON.parseObject(configDataJson, Map.class);
             log.info("保存商品扩展配置，商品ID: {}, 类型: {}, 配置: {}", productId, productType, configDataJson);
-            
+
             // 根据商品类型保存到对应的扩展表
             switch (productType) {
                 case 1: // 课程
@@ -818,7 +808,7 @@ public class ProductService {
             LambdaQueryWrapper<ProductCourseEntity> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(ProductCourseEntity::getProductId, productId);
             productCourseDao.delete(deleteWrapper);
-            
+
             // 创建新的课程配置
             ProductCourseEntity courseEntity = new ProductCourseEntity();
             courseEntity.setProductId(productId);
@@ -829,15 +819,15 @@ public class ProductService {
             courseEntity.setCoachFee(getBigDecimalFromConfig(configData, "coachFee"));
             courseEntity.setHorseFee(getBigDecimalFromConfig(configData, "horseFee"));
             courseEntity.setMultiPriceConfig(getStringFromConfig(configData, "multiPriceConfig"));
-            
+
             // 计算基础价格：coach_fee + horse_fee
             if (courseEntity.getCoachFee() != null && courseEntity.getHorseFee() != null) {
                 courseEntity.setBasePrice(courseEntity.getCoachFee().add(courseEntity.getHorseFee()));
             }
-            
+
             courseEntity.setCreateTime(LocalDateTime.now());
             courseEntity.setUpdateTime(LocalDateTime.now());
-            
+
             productCourseDao.insert(courseEntity);
             log.info("保存课程配置成功，商品ID: {}", productId);
         } catch (Exception e) {
@@ -855,7 +845,7 @@ public class ProductService {
             LambdaQueryWrapper<ProductPackageEntity> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(ProductPackageEntity::getProductId, productId);
             productPackageDao.delete(deleteWrapper);
-            
+
             // 创建新的课时包配置
             ProductPackageEntity packageEntity = new ProductPackageEntity();
             packageEntity.setProductId(productId);
@@ -866,7 +856,7 @@ public class ProductService {
             packageEntity.setStockQuantity(getIntegerFromConfig(configData, "stockQuantity"));
             packageEntity.setCreateTime(LocalDateTime.now());
             packageEntity.setUpdateTime(LocalDateTime.now());
-            
+
             productPackageDao.insert(packageEntity);
             log.info("保存课时包配置成功，商品ID: {}", productId);
         } catch (Exception e) {
@@ -884,7 +874,7 @@ public class ProductService {
             LambdaQueryWrapper<ProductActivityEntity> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(ProductActivityEntity::getProductId, productId);
             productActivityDao.delete(deleteWrapper);
-            
+
             // 创建新的活动配置
             ProductActivityEntity activityEntity = new ProductActivityEntity();
             activityEntity.setProductId(productId);
@@ -899,7 +889,7 @@ public class ProductService {
             activityEntity.setDetailImages(getStringFromConfig(configData, "detailImages"));
             activityEntity.setCreateTime(LocalDateTime.now());
             activityEntity.setUpdateTime(LocalDateTime.now());
-            
+
             productActivityDao.insert(activityEntity);
             log.info("保存活动配置成功，商品ID: {}", productId);
         } catch (Exception e) {
@@ -957,7 +947,7 @@ public class ProductService {
         for (ProductListVO product : productList) {
             // 设置类型名称
             product.setProductTypeName(getProductTypeName(product.getProductType()));
-            
+
             // 设置价格信息和库存信息（示例）
             product.setPriceInfo("¥200起");
             product.setStockInfo(product.getProductType() == 2 ? "库存100" : "无限");
@@ -970,7 +960,7 @@ public class ProductService {
     private void enhanceProductDetailData(ProductDetailVO productDetail) {
         // 设置类型名称
         productDetail.setProductTypeName(getProductTypeName(productDetail.getProductType()));
-        
+
         // 根据商品类型查询详细配置
         switch (productDetail.getProductType()) {
             case 1: // 课程
@@ -1013,7 +1003,7 @@ public class ProductService {
             LambdaQueryWrapper<ProductCourseEntity> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(ProductCourseEntity::getProductId, productId);
             ProductCourseEntity courseEntity = productCourseDao.selectOne(wrapper);
-            
+
             Map<String, Object> courseDetails = new HashMap<>();
             if (courseEntity != null) {
                 courseDetails.put("classType", courseEntity.getClassType());
@@ -1025,7 +1015,7 @@ public class ProductService {
                 courseDetails.put("basePrice", courseEntity.getBasePrice());
                 courseDetails.put("multiPriceConfig", courseEntity.getMultiPriceConfig());
             }
-            
+
             return courseDetails;
         } catch (Exception e) {
             log.error("获取课程详情失败，商品ID: {}", productId, e);
@@ -1041,7 +1031,7 @@ public class ProductService {
             LambdaQueryWrapper<ProductPackageEntity> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(ProductPackageEntity::getProductId, productId);
             ProductPackageEntity packageEntity = productPackageDao.selectOne(wrapper);
-            
+
             Map<String, Object> packageDetails = new HashMap<>();
             if (packageEntity != null) {
                 packageDetails.put("details", packageEntity.getDetails());
@@ -1050,7 +1040,7 @@ public class ProductService {
                 packageDetails.put("validityDays", packageEntity.getValidityDays());
                 packageDetails.put("stockQuantity", packageEntity.getStockQuantity());
             }
-            
+
             return packageDetails;
         } catch (Exception e) {
             log.error("获取课时包详情失败，商品ID: {}", productId, e);
@@ -1066,7 +1056,7 @@ public class ProductService {
             LambdaQueryWrapper<ProductActivityEntity> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(ProductActivityEntity::getProductId, productId);
             ProductActivityEntity activityEntity = productActivityDao.selectOne(wrapper);
-            
+
             Map<String, Object> activityDetails = new HashMap<>();
             if (activityEntity != null) {
                 activityDetails.put("activityName", activityEntity.getActivityName());
@@ -1077,7 +1067,7 @@ public class ProductService {
                 activityDetails.put("price", activityEntity.getPrice());
                 activityDetails.put("maxParticipants", activityEntity.getMaxParticipants());
                 activityDetails.put("refundRule", activityEntity.getRefundRule());
-                
+
                 // 🔧 修复：将JSON字符串转换为数组格式
                 String detailImagesJson = activityEntity.getDetailImages();
                 log.info("活动详情图片原始数据 - 商品ID: {}, detailImages: {}", productId, detailImagesJson);
@@ -1095,7 +1085,7 @@ public class ProductService {
                     activityDetails.put("detailImages", new ArrayList<>());
                 }
             }
-            
+
             return activityDetails;
         } catch (Exception e) {
             log.error("获取活动详情失败，商品ID: {}", productId, e);
@@ -1111,7 +1101,7 @@ public class ProductService {
             LambdaQueryWrapper<ProductExperienceEntity> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(ProductExperienceEntity::getProductId, productId);
             ProductExperienceEntity experienceEntity = productExperienceDao.selectOne(wrapper);
-            
+
             Map<String, Object> experienceDetails = new HashMap<>();
             if (experienceEntity != null) {
                 experienceDetails.put("price", experienceEntity.getPrice());
@@ -1119,7 +1109,7 @@ public class ProductService {
                 experienceDetails.put("durationPeriods", experienceEntity.getDurationPeriods());
                 experienceDetails.put("maxStudents", experienceEntity.getMaxStudents());
             }
-            
+
             return experienceDetails;
         } catch (Exception e) {
             log.error("获取体验课详情失败，商品ID: {}", productId, e);
@@ -1135,14 +1125,14 @@ public class ProductService {
             LambdaQueryWrapper<ProductTheoryCourseEntity> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(ProductTheoryCourseEntity::getProductId, productId);
             ProductTheoryCourseEntity theoryCourseEntity = productTheoryCourseDao.selectOne(wrapper);
-            
+
             Map<String, Object> theoryCourseDetails = new HashMap<>();
             if (theoryCourseEntity != null) {
                 theoryCourseDetails.put("durationPeriods", theoryCourseEntity.getDurationPeriods());
                 theoryCourseDetails.put("basePrice", theoryCourseEntity.getBasePrice());
                 theoryCourseDetails.put("maxStudents", theoryCourseEntity.getMaxStudents());
             }
-            
+
             return theoryCourseDetails;
         } catch (Exception e) {
             log.error("获取理论课详情失败，商品ID: {}", productId, e);

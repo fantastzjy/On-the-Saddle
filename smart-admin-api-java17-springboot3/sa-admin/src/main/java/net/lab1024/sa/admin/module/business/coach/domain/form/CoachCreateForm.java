@@ -1,11 +1,11 @@
 package net.lab1024.sa.admin.module.business.coach.domain.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -80,17 +80,17 @@ public class CoachCreateForm {
     private Integer coachStarLevel;
     @Schema(description = "教练星级证书图片JSON")
     private String coachStarCertImages;
-    
+
     @Schema(description = "教练场地障碍星级：0-无证书，1-5星")
     private Integer coachShowJumpingLevel;
     @Schema(description = "教练场地障碍证书图片JSON")
     private String coachShowJumpingImages;
-    
+
     @Schema(description = "教练盛装舞步星级：0-无证书，1-5星")
     private Integer coachDressageLevel;
     @Schema(description = "教练盛装舞步证书图片JSON")
     private String coachDressageImages;
-    
+
     @Schema(description = "教练三项赛星级：0-无证书，1-5星")
     private Integer coachEventingLevel;
     @Schema(description = "教练三项赛证书图片JSON")
@@ -101,12 +101,12 @@ public class CoachCreateForm {
     private Integer riderShowJumpingLevel;
     @Schema(description = "骑手场地障碍证书图片JSON")
     private String riderShowJumpingImages;
-    
+
     @Schema(description = "骑手盛装舞步等级：0-无证书，1-10级")
     private Integer riderDressageLevel;
     @Schema(description = "骑手盛装舞步证书图片JSON")
     private String riderDressageImages;
-    
+
     @Schema(description = "骑手三项赛等级：0-无证书，1-10级")
     private Integer riderEventingLevel;
     @Schema(description = "骑手三项赛证书图片JSON")

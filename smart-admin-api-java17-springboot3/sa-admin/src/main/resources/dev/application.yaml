@@ -34,3 +34,10 @@ wechat:
     connect-timeout: 5000
     # 读取超时时间，单位毫秒（可选，默认10000）
     read-timeout: 10000
+
+# 硅基流动AI配置
+siliconflow:
+  api:
+    url: https://api.siliconflow.cn/v1/chat/completions
+    token: sk-tkdlvlgotnfobazdxeaclggycxfnzuuruwpuhxavpisqhodc
+    model: Qwen/Qwen2.5-72B-Instruct

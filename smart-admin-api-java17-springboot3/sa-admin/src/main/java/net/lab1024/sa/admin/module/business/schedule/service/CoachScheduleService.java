@@ -16,7 +16,6 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,7 +43,7 @@ public class CoachScheduleService {
         TIME_PERIODS.put("afternoon", new String[]{"13:00", "14:00", "15:00", "16:00", "17:00", "18:00"});
         TIME_PERIODS.put("evening", new String[]{"19:00", "20:00"});
     }
-    
+
     // 完整时间点列表（包含13点）
     private static final String[] ALL_TIME_SLOTS = {
         "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"

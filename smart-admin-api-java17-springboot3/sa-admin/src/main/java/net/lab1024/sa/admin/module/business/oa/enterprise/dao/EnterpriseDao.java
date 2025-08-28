@@ -9,7 +9,6 @@ import net.lab1024.sa.admin.module.business.oa.enterprise.domain.vo.EnterpriseLi
 import net.lab1024.sa.admin.module.business.oa.enterprise.domain.vo.EnterpriseVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 

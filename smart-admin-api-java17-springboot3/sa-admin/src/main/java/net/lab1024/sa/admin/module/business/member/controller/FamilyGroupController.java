@@ -2,16 +2,15 @@ package net.lab1024.sa.admin.module.business.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import net.lab1024.sa.admin.module.business.member.domain.form.JoinFamilyGroupForm;
-import net.lab1024.sa.admin.module.business.member.domain.form.SetGuardianForm;
 import net.lab1024.sa.admin.module.business.member.domain.form.RemoveFamilyMemberForm;
+import net.lab1024.sa.admin.module.business.member.domain.form.SetGuardianForm;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
 import net.lab1024.sa.admin.module.business.member.service.FamilyGroupService;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.annotation.Resource;
-import jakarta.validation.Valid;
 
 /**
  * 家庭组管理控制器
@@ -52,8 +51,8 @@ public class FamilyGroupController {
     @Operation(summary = "设置监护人")
     @PostMapping("/set-guardian")
     public ResponseDTO<String> setGuardian(@RequestBody @Valid SetGuardianForm setGuardianForm) {
-        return familyGroupService.setGuardian(setGuardianForm.getFamilyGroupId(), 
-                                             setGuardianForm.getMemberId(), 
+        return familyGroupService.setGuardian(setGuardianForm.getFamilyGroupId(),
+                                             setGuardianForm.getMemberId(),
                                              setGuardianForm.getIsGuardian());
     }
 

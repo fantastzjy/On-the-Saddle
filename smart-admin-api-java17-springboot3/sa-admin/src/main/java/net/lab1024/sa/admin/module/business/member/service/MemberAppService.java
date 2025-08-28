@@ -3,6 +3,7 @@ package net.lab1024.sa.admin.module.business.member.service;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.club.dao.ClubDao;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
@@ -11,8 +12,14 @@ import net.lab1024.sa.admin.module.business.member.dao.MemberDao;
 import net.lab1024.sa.admin.module.business.member.domain.RequestMember;
 import net.lab1024.sa.admin.module.business.member.domain.entity.MemberEntity;
 import net.lab1024.sa.admin.module.business.member.domain.form.MemberAppUpdateForm;
-import net.lab1024.sa.admin.module.business.member.domain.vo.*;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.MemberAppInfoVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.MembershipStatusVO;
 import net.lab1024.sa.admin.util.MemberRequestUtil;
+import net.lab1024.sa.base.common.code.UserErrorCode;
+import net.lab1024.sa.base.common.domain.ResponseDTO;
+import net.lab1024.sa.base.common.util.SmartBeanUtil;
+import net.lab1024.sa.base.common.util.SmartRequestUtil;
 import net.lab1024.sa.base.module.support.dict.service.DictService;
 import net.lab1024.sa.base.module.support.file.constant.FileFolderTypeEnum;
 import net.lab1024.sa.base.module.support.file.dao.FileDao;
@@ -20,20 +27,14 @@ import net.lab1024.sa.base.module.support.file.domain.entity.FileEntity;
 import net.lab1024.sa.base.module.support.file.domain.vo.FileUploadVO;
 import net.lab1024.sa.base.module.support.file.service.FileService;
 import net.lab1024.sa.base.module.support.file.service.IFileStorageService;
-import net.lab1024.sa.base.common.code.UserErrorCode;
-import net.lab1024.sa.base.common.domain.ResponseDTO;
-import net.lab1024.sa.base.common.util.SmartBeanUtil;
-import net.lab1024.sa.base.common.util.SmartRequestUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 会员小程序业务服务

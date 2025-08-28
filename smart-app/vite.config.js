@@ -7,7 +7,7 @@ const pathResolve = (dir) => {
 };
 
 export default defineConfig({
-  transpileDependencies:['@dcloudio/uni-ui'],
+  transpileDependencies: ['@dcloudio/uni-ui'],
   plugins: [
     uni(),
   ],
@@ -25,13 +25,42 @@ export default defineConfig({
       },
     ],
   },
-  // 发布时删除console
-  build: {
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-      },
-    },
+  // 添加针对微信小程序的配置
+  define: {
+    __VUE_OPTIONS_API__: true,
+    __VUE_PROD_DEVTOOLS__: false,
   },
+  // 优化微信小程序构建
+  optimizeDeps: {
+    exclude: ['@dcloudio/uni-app']
+  },
+  // 添加Babel配置解决statuses模块问题
+  esbuild: {
+    target: 'es2015',
+    supported: {
+      'top-level-await': true
+    }
+  },
+  // 合并后的build配置
+  build: {
+    target: 'es2015',
+    minify: false,
+    rollupOptions: {
+      external: ['../lib/statuses'],
+      output: {
+        globals: {
+          '../lib/statuses': 'statuses'
+        }
+      }
+    }
+  },
+  // 添加针对微信小程序的特殊配置
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // 移除全局导入以避免循环导入问题
+        // additionalData: '@import "@/theme/index.scss";'
+      }
+    }
+  }
 })

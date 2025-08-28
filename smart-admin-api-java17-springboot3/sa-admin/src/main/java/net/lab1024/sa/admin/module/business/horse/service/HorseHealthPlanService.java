@@ -1,6 +1,7 @@
 package net.lab1024.sa.admin.module.business.horse.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.horse.dao.HorseHealthPlanDao;
 import net.lab1024.sa.admin.module.business.horse.domain.entity.HorseHealthPlanEntity;
@@ -17,7 +18,6 @@ import net.lab1024.sa.base.module.support.datatracer.service.DataTracerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -144,7 +144,7 @@ public class HorseHealthPlanService {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nextDate = null;
-        
+
         // 根据周期天数计算下次执行时间
         if (entity.getCycleDays() != null && entity.getCycleDays() > 0) {
             nextDate = now.plusDays(entity.getCycleDays());

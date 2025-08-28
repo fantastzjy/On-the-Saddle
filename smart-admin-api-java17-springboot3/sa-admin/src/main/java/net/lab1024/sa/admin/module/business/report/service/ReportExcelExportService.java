@@ -1,5 +1,6 @@
 package net.lab1024.sa.admin.module.business.report.service;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.report.domain.vo.ReportDataVO;
 import net.lab1024.sa.admin.module.business.report.domain.vo.ReportSectionVO;
@@ -9,7 +10,6 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
@@ -36,7 +36,7 @@ public class ReportExcelExportService {
             // 设置响应头
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.setCharacterEncoding("UTF-8");
-            
+
             // 对文件名进行URL编码以支持中文
             String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
             response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName + ".xlsx");
@@ -118,18 +118,18 @@ public class ReportExcelExportService {
             Cell headerCell1 = headerRow.createCell(0);
             headerCell1.setCellValue("指标项目");
             headerCell1.setCellStyle(headerStyle);
-            
+
             Cell headerCell2 = headerRow.createCell(1);
             headerCell2.setCellValue("数值");
             headerCell2.setCellStyle(headerStyle);
 
             for (Map.Entry<String, Object> entry : reportData.getSummary().entrySet()) {
                 Row dataRow = sheet.createRow(rowIndex++);
-                
+
                 Cell keyCell = dataRow.createCell(0);
                 keyCell.setCellValue(entry.getKey());
                 keyCell.setCellStyle(dataStyle);
-                
+
                 Cell valueCell = dataRow.createCell(1);
                 valueCell.setCellValue(entry.getValue().toString());
                 valueCell.setCellStyle(dataStyle);
@@ -147,7 +147,7 @@ public class ReportExcelExportService {
      */
     private void createSectionSheet(Workbook workbook, ReportSectionVO section,
                                    CellStyle titleStyle, CellStyle headerStyle, CellStyle dataStyle) {
-        String sheetName = section.getTitle().length() > 30 ? 
+        String sheetName = section.getTitle().length() > 30 ?
             section.getTitle().substring(0, 30) : section.getTitle();
         Sheet sheet = workbook.createSheet(sheetName);
 
@@ -224,7 +224,7 @@ public class ReportExcelExportService {
                         Map<String, Object> column = table.getColumns().get(i);
                         String dataIndex = (String) column.get("dataIndex");
                         Object value = row.get(dataIndex);
-                        
+
                         Cell dataCell = dataRow.createCell(i);
                         dataCell.setCellValue(value != null ? value.toString() : "-");
                         dataCell.setCellStyle(dataStyle);
@@ -279,17 +279,17 @@ public class ReportExcelExportService {
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
-        
+
         // 设置边框
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
-        
+
         // 设置背景色
         style.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        
+
         return style;
     }
 
@@ -304,13 +304,13 @@ public class ReportExcelExportService {
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
-        
+
         // 设置边框
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
-        
+
         return style;
     }
 }

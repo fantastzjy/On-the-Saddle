@@ -9,9 +9,11 @@ import net.lab1024.sa.admin.module.business.schedule.domain.vo.CoachMonthViewVO;
 import net.lab1024.sa.admin.module.business.schedule.domain.vo.CoachWeekViewVO;
 import net.lab1024.sa.admin.module.business.schedule.service.CoachScheduleService;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
-import net.lab1024.sa.base.common.util.SmartRequestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 
 /**

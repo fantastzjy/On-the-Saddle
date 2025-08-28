@@ -37,7 +37,10 @@
                     "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
                     "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
                     "<uses-feature android:name=\"android.hardware.camera\"/>",
-                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
+                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>",
+                    "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>"
                 ]
             },
             /* ios打包配置 */
@@ -50,11 +53,58 @@
     "quickapp" : {},
     /* 小程序特有相关 */
     "mp-weixin" : {
-        "appid" : "wx2f5032ef5c4adae4",
+        "appid" : "wx3916d4e79759fd78",
         "setting" : {
-            "urlCheck" : false
+            "urlCheck" : false,
+            "postcss" : true,
+            "es6" : false,
+            "minified" : false,
+            "enhance" : false,
+            "preloadBackgroundData" : false,
+            "newFeature" : false,
+            "coverView" : true,
+            "nodeModules" : false,
+            "autoAudits" : false,
+            "showShadowRootInWxmlPanel" : true,
+            "scopeDataCheck" : false,
+            "uglifyFileName" : false,
+            "checkInvalidKey" : true,
+            "checkSiteMap" : true,
+            "uploadWithSourceMap" : false,
+            "compileHotReLoad" : false,
+            "lazyloadPlaceholderEnable" : false,
+            "useMultiFrameRuntime" : false,
+            "useApiHook" : false,
+            "useApiHostProcess" : false,
+            "enableEngineNative" : false,
+            "useIsolateContext" : false,
+            "userConfirmedBundleSwitch" : false,
+            "packNpmManually" : false,
+            "packNpmRelationList" : [],
+            "minifyWXSS" : false,
+            "disableUseStrict" : true,
+            "minifyWXML" : false,
+            "showES6CompileOption" : false,
+            "useCompilerPlugins" : false
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+        "plugins" : {
+            "WechatSI" : {
+                "version" : "0.3.4",
+                "provider" : "wx069ba97219f66d99"
+            }
+        },
+        "requiredPrivateInfos": [
+            "getLocation",
+            "chooseAddress"
+        ],
+        "permission" : {
+            "scope.record" : {
+                "desc" : "需要使用您的麦克风权限进行语音录制和识别"
+            }
+        },
+        "requiredBackgroundModes": ["audio"],
+        "lazyCodeLoading" : "requiredComponents"
     },
     "mp-alipay" : {
         "usingComponents" : true
@@ -65,8 +115,8 @@
     "mp-toutiao" : {
         "usingComponents" : true
     },
-    "uniStatistics": {  
-        "enable": false
+    "uniStatistics" : {
+        "enable" : false
     },
     "vueVersion" : "3"
 }

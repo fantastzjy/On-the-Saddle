@@ -81,7 +81,7 @@ public class HorseHealthRecordService {
         HorseHealthRecordEntity entity = SmartBeanUtil.copy(createForm, HorseHealthRecordEntity.class);
         entity.setIsValid(1);
         entity.setIsDelete(0);
-        
+
         // 如果关联了健康计划，从计划中获取并设置计划类型
         if (createForm.getPlanId() != null) {
             HorseHealthPlanEntity plan = horseHealthPlanDao.selectById(createForm.getPlanId());
@@ -89,7 +89,7 @@ public class HorseHealthRecordService {
                 entity.setPlanType(plan.getPlanType());
             }
         }
-        
+
         horseHealthRecordDao.insert(entity);
 
         // 如果关联了健康计划且设置了下次执行日期，更新计划的下次执行时间
@@ -125,7 +125,7 @@ public class HorseHealthRecordService {
             orderForm.setRelatedHealthRecordId(record.getId());
             orderForm.setRemark("健康服务执行完成，系统自动生成订单");
             orderForm.setPaymentMethod("cash"); // 默认现金支付
-            
+
             ResponseDTO<Long> result = orderService.createOrder(orderForm);
             if (result.getOk()) {
                 log.info("健康服务订单生成成功，订单ID：{}, 健康记录ID：{}", result.getData(), record.getId());

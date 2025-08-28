@@ -11,11 +11,13 @@ import { USER_TOKEN } from '@/constants/local-storage-key-const';
 import { DATA_TYPE_ENUM } from '@/constants/common-const';
 import { decryptData, encryptData } from './encrypt';
 import { useUserStore } from '@/store/modules/system/user';
+import { BaseURL } from './config';
 
-const baseUrl = import.meta.env.VITE_APP_API_URL;
+// const baseUrl = import.meta.env.VITE_APP_API_URL;
+const baseUrl = BaseURL;
 
 function getUserToken() {
-  let token = uni.getStorageSync(USER_TOKEN);
+  let token = uni.getStorageSync('token');
   if (token) {
     return token;
   }
@@ -67,7 +69,8 @@ export const request = function (url, method, data) {
       data: data,
       method: method,
       header: {
-        'Authorization':'Bearer ' + getUserToken(),
+        Authorization: 'Bearer' + getUserToken(),
+        'Content-Type': 'application/json',
       },
       success: (response) => {
         handleResponse(response, resolve, reject);
@@ -110,7 +113,7 @@ export const uploadRequest = function (filePath, folder) {
       url: baseUrl + '/support/file/upload',
       filePath,
       header: {
-        'Authorization':'Bearer ' +  getUserToken(),
+        Authorization: 'Bearer ' + getUserToken(),
       },
       name: 'file',
       formData: {

@@ -13,7 +13,6 @@ import net.lab1024.sa.admin.module.business.oa.notice.domain.vo.NoticeViewRecord
 import net.lab1024.sa.admin.module.business.oa.notice.domain.vo.NoticeVisibleRangeVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 

@@ -7,6 +7,7 @@
  * @Email:     lab1024@163.com
  * @Copyright  1024创新实验室 （ https://1024lab.net ），Since 2012
  */
+import request from '@/lib/request';
 import { getRequest, postRequest } from '@/lib/smart-request';
 
 export const loginApi = {
@@ -14,14 +15,21 @@ export const loginApi = {
    * 登录 @author 卓大
    */
   login: (param) => {
-    return postRequest('/login', param);
+    return request({
+      url: '/app/member/login/wxLogin',
+      param,
+      method: 'POST',
+    });
   },
 
   /**
    * 退出登录 @author 卓大
    */
   logout: () => {
-    return getRequest('/login/logout');
+    return request({
+      url: '/app/member/login/wxLogin',
+      method: 'GET',
+    });
   },
 
   /**
@@ -37,17 +45,16 @@ export const loginApi = {
   getLoginInfo: () => {
     return getRequest('/login/getLoginInfo');
   },
-   /**
+  /**
    * 获取双因子登录标识 @author 卓大
    */
-   getTwoFactorLoginFlag: () => {
+  getTwoFactorLoginFlag: () => {
     return getRequest('/login/getTwoFactorLoginFlag');
   },
-    /**
+  /**
    * 获取邮箱登录验证码 @author 卓大
    */
-    sendLoginEmailCode: (loginName) => {
-      return getRequest(`/login/sendEmailCode/${loginName}`);
-    },
-  
+  sendLoginEmailCode: (loginName) => {
+    return getRequest(`/login/sendEmailCode/${loginName}`);
+  },
 };

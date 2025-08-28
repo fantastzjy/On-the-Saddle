@@ -1,366 +1,368 @@
 <template>
-  <view class="container">
-    <view class="top-view">
-      <view class="login"> 登录 </view>
-      <view class="logo">
-        <image src="@/static/images/login/login-logo.png" />
+  <view class="login-container" :style="{ background: bgGradient }">
+    <!-- Logo -->
+    <view class="logo-box">
+      <text class="app-name">{{ appName }}</text>
+      <image class="logo" :src="logoUrl" mode="aspectFit" />
+
+    </view>
+
+    <!-- 登录选项 -->
+    <view class="login-options">
+      <view style="margin-bottom: 20rpx;display: flex;justify-content: center;">
+        <uni-data-checkbox selectedColor="#b7975e" selectedTextColor="#b7975e" v-model="role" :localdata="range"
+          @change="change" />
+      </view>
+      <!-- 微信登录 -->
+      <button class="login-btn wechat-btn" open-type="getUserInfo" @getuserinfo="onWechatLogin">
+        <!-- <image src="/static/images/wechat-icon.png" class="btn-icon"/> -->
+        微信授权登录
+      </button>
+
+      <!-- 手机号登录 -->
+      <!-- <button>
+        <image src="/static/images/phone-icon.png" class="btn-icon"/>
+        手机号验证登录
+      </button> -->
+      <view class="phone-btn" @click="navToPhoneLogin">
+        手机验证码登录
       </view>
     </view>
-    <view class="bottom-view">
-      <view class="input-view smart-margin-top10">
-        <image src="@/static/images/login/login-username.png"></image>
-        <uni-easyinput
-          class="input"
-          placeholder="请输入用户名"
-          :clearable="true"
-          placeholderStyle="color:#CCCCCC"
-          border="none"
-          v-model="loginForm.loginName"
-        />
-      </view>
 
-      <view class="input-view smart-margin-top10" v-if="emailCodeShowFlag">
-        <image src="@/static/images/login/login-password.png"></image>
-        <uni-easyinput
-          class="input"
-          placeholder="请输入邮箱验证码"
-          :clearable="true"
-          placeholderStyle="color:#CCCCCC"
-          border="none"
-          v-model="loginForm.emailCode"
-        />
-        <button @click="sendSmsCode" class="code-btn" :disabled="emailCodeButtonDisabled">
-              {{ emailCodeTips }}
-        </button>
-      </view>
-
-      <view class="input-view smart-margin-top10">
-        <image src="@/static/images/login/login-password.png"></image>
-        <uni-easyinput
-          class="input"
-          placeholder="请输入密码"
-          :clearable="true"
-          :password="true"
-          placeholderStyle="color:#CCCCCC"
-          border="none"
-          v-model="loginForm.password"
-        />
-      </view>
-
-      <view class="input-view smart-margin-top10">
-        <image src="@/static/images/login/login-password.png"></image>
-        <uni-easyinput
-          class="input captcha-input"
-          placeholder="请输入验证码"
-          :clearable="true"
-          :password="false"
-          placeholderStyle="color:#CCCCCC"
-          border="none"
-          v-model="loginForm.captchaCode"
-        />
-        <img class="captcha-img" :src="captchaBase64Image" @click="getCaptcha" />
-      </view>
-
-      <view class="code-login-view smart-margin-top10">
-        <text class="code-text">验证码登录</text>
-        <text class="forget-text">忘记密码？</text>
-      </view>
-
-      <view @click="login" class="button login-btn smart-margin-top20"> 登录 </view>
-      <view @click="login" class="button register-btn smart-margin-top20"> 创建账号 </view>
-      <OtherWayBox />
-      <LoginCheckBox class="login-check-box" ref="loginCheckBoxRef" />
+    <!-- 用户协议 -->
+    <view class="agreement">
+      <label class="checkbox" @click="toggleAgreementManual">
+        <!-- 使用自定义圆形复选框 -->
+        <view class="custom-checkbox" :class="{ checked: agreed }" />
+        <text>我已阅读并同意</text>
+      </label>
+      <text class="link" @click="navToAgreement('user')">《用户注册服务协议》</text>
+      <text>与</text>
+      <text class="link" @click="navToAgreement('privacy')">《隐私政策》</text>
     </view>
   </view>
 </template>
-<script setup>
-  import { reactive, ref } from 'vue';
-  import { onShow } from '@dcloudio/uni-app';
-  import OtherWayBox from './components/other-way-box.vue';
-  import LoginCheckBox from './components/login-check-box.vue';
-  import { loginApi } from '@/api/system/login-api';
-  import { LOGIN_DEVICE_ENUM } from '@/constants/system/login-device-const';
-  import { encryptData } from '@/lib/encrypt';
-  import { useUserStore } from '@/store/modules/system/user';
-  import { smartSentry } from '@/lib/smart-sentry';
 
-  const loginForm = reactive({
-    loginName: 'admin',
-    password: '123456',
-    captchaCode: '',
-    captchaUuid: '',
-    loginDevice: LOGIN_DEVICE_ENUM.H5.value,
-  });
-
-  const loginCheckBoxRef = ref();
-  async function login() {
-    if (!loginCheckBoxRef.value.agreeFlag) {
-      uni.showToast({
-        icon: 'none',
-        title: '请阅读并同意《用户协议》、《隐私政策》',
-      });
-      return;
+<script>
+import { getLoginUserInfo } from '@/api/system/login';
+export default {
+  data() {
+    return {
+      // 从后台获取的数据
+      bgGradient: 'linear-gradient( 180deg, #000000 0%, #000000 22%, rgba(0,0,0,0.8) 35%, rgba(0,0,0,0.51) 49%, rgba(188,188,188,0.666) 64%, rgba(255,255,255,0.64) 77%)', // 默认值，会被后台数据覆盖
+      logoUrl: '/static/logo.png',
+      appName: '上海XXX俱乐部',
+      role: "usr",
+      range: [{ "value": "usr", "text": "用户" }, { "value": 'cc', "text": "教练" }],
+      // 用户协议状态
+      agreed: false
     }
-    if (!loginForm.loginName) {
-      uni.showToast({
-        icon: 'none',
-        title: '请输入用户名',
-      });
-      return;
-    }
-    if (!loginForm.password) {
-      uni.showToast({
-        icon: 'none',
-        title: '请输入密码',
-      });
-      return;
-    }
+  },
+  onLoad() {
+    // this.getLoginConfig()
+  },
+  methods: {
+    change(e) {
+      console.log('e:', e);
+      this.role = e.detail.value
+    },
+    // 从后台获取登录配置
+    async getLoginConfig() {
+      try {
+        const res = await uni.request({
+          url: 'https://your-api.com/login/config',
+          method: 'GET'
+        })
 
-    try {
-      uni.showLoading({ title: '登录中' });
-      // 密码加密
-      let encryptPasswordForm = Object.assign({}, loginForm, {
-        password: encryptData(loginForm.password),
-      });
-      const res = await loginApi.login(encryptPasswordForm);
-      stopRefreshCaptchaInterval();
-      uni.showToast({ title: '登录成功' });
-      //更新用户信息到 pinia
-      useUserStore().setUserLoginInfo(res.data);
+        const data = res[1].data.data
+        this.bgGradient = `linear-gradient(to bottom, ${data.colorStart}, ${data.colorEnd})`
+        this.logoUrl = data.logoUrl
+        this.appName = data.appName
 
-      uni.switchTab({ url: '/pages/home/index' });
-    } catch (e) {
-      if (e.data && e.data.code !== 0) {
-        loginForm.captchaCode = '';
-        getCaptcha();
+      } catch (err) {
+        console.error('获取登录配置失败:', err)
+        uni.showToast({ title: '加载配置失败', icon: 'none' })
       }
-      smartSentry.captureError(e);
-      uni.hideLoading();
-    }
-  }
+    },
 
-  //--------------------- 验证码 ---------------------------------
+    // 微信登录
+    // 微信登录 - 优化后的逻辑
+    async onWechatLogin(e) {
+      // 防止重复点击
+      if (this.isLogging) return;
 
-  const captchaBase64Image = ref('');
-
-  async function getCaptcha() {
-    try {
-      let captchaResult = await loginApi.getCaptcha();
-      captchaBase64Image.value = captchaResult.data.captchaBase64Image;
-      console.log(captchaResult.data.captchaBase64Image, 2);
-      loginForm.captchaUuid = captchaResult.data.captchaUuid;
-      beginRefreshCaptchaInterval(captchaResult.data.expireSeconds);
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  let refreshCaptchaInterval = null;
-
-  function beginRefreshCaptchaInterval(expireSeconds) {
-    if (refreshCaptchaInterval === null) {
-      refreshCaptchaInterval = setInterval(getCaptcha, (expireSeconds - 5) * 1000);
-    }
-  }
-
-  function stopRefreshCaptchaInterval() {
-    if (refreshCaptchaInterval != null) {
-      clearInterval(refreshCaptchaInterval);
-      refreshCaptchaInterval = null;
-    }
-  }
-
-  const emailCodeShowFlag = ref(false);
-  let emailCodeTips = ref('获取邮箱验证码');
-  let emailCodeButtonDisabled = ref(false);
-  // 定时器
-  let countDownTimer = null;
-  // 开始倒计时
-  function runCountDown() {
-    emailCodeButtonDisabled.value = true;
-    let countDown = 60;
-    emailCodeTips.value = `${countDown}秒后重新获取`;
-    countDownTimer = setInterval(() => {
-      if (countDown > 1) {
-        countDown--;
-        emailCodeTips.value = `${countDown}秒后重新获取`;
-      } else {
-        clearInterval(countDownTimer);
-        emailCodeButtonDisabled.value = false;
-        emailCodeTips.value = '获取验证码';
+      if (!this.agreed) {
+        return uni.showToast({ title: '请先同意用户协议', icon: 'none' })
       }
-    }, 1000);
-  }
 
-  // 获取双因子登录标识
-  async function getTwoFactorLoginFlag() {
-    try {
-      let result = await loginApi.getTwoFactorLoginFlag();
-      emailCodeShowFlag.value = result.data;
-    } catch (e) {
-      smartSentry.captureError(e);
+      this.isLogging = true;
+      uni.showLoading({ title: '登录中...', mask: true });
+
+      try {
+        // 1. 获取微信登录code
+        const loginRes = await this.getWechatCode();
+
+        console.log(loginRes);
+        // 2. 获取用户信息
+        let userInfo = {};
+        try {
+          userInfo = e.detail.userInfo;
+        } catch (error) {
+          console.warn('获取用户信息失败，使用默认信息:', error);
+          userInfo = {
+            avatarUrl: '/static/images/default-avatar.png',
+            nickName: '微信用户',
+          };
+        }
+
+        // 3. 调用登录API
+        const res = await this.callLoginApi(loginRes.code, userInfo);
+
+        const loginResult = res.data
+        console.log(res);
+        uni.showToast({ title: JSON.stringify(res), icon: 'none' });
+        // 4. 处理登录结果
+        if (res.code === 0) {
+          // 存储token
+          uni.setStorageSync('token', loginResult.token);
+          uni.setStorageSync('userInfo', loginResult || userInfo);
+
+          // 显示登录成功提示
+          uni.showToast({ title: '登录成功', icon: 'success' });
+
+          // 跳转到首页
+          setTimeout(() => {
+            uni.navigateTo({ url: '/pages/support/change-log/change-log-list' });
+          }, 1500);
+        } else {
+          // 登录失败处理
+          this.handleLoginError(loginResult.message || '登录失败');
+        }
+      } catch (error) {
+        console.error('登录异常:', error);
+        this.handleLoginError(error.message || '登录异常');
+      } finally {
+        this.isLogging = false;
+        uni.hideLoading();
+      }
+    },
+
+    // 获取微信登录code
+    getWechatCode() {
+      return new Promise((resolve, reject) => {
+        uni.login({
+          provider: 'weixin',
+          success: resolve,
+          fail: reject
+        });
+      });
+    },
+
+    // 调用登录API
+    async callLoginApi(code, userInfo) {
+      // const res = await uni.request({
+      //   url: 'http://192.168.43.220:61812/app/member/login/wxLogin',
+      //   method: 'POST',
+      //   data: {
+      //     "code": code,
+      //   }
+      // });
+      // console.log(res);
+      // return res.data;
+
+      const res = await getLoginUserInfo({
+        code: code,
+        role: this.role
+      });
+      return res;
+      // try {
+      //   // 优先使用API模块
+      // if (loginApi && loginApi.login) {
+      // const res = await loginApi.login({
+      //   "code": code
+      // });
+      // return res.data;
+      //   } else {
+      //     // 备用方案：直接请求
+      //     const res = await uni.request({
+      //       url: 'https://192.168.43.220:61812/app/member/wxLogin',
+      //       method: 'POST',
+      //       data: {
+      //         code: "demoData",
+      //         userInfo: userInfo
+      //       }
+      //     });
+      //     return res[1].data;
+      //   }
+      // } catch (error) {
+      //   console.error('API请求失败:', error);
+      //   throw new Error('网络请求失败', error);
+      // }
+    },
+
+    // 处理登录错误
+    handleLoginError(message) {
+      uni.showToast({
+        title: message,
+        icon: 'none',
+        duration: 3000
+      });
+
+      // 如果是token失效等特定错误，可以跳转到特定页面
+      if (message.includes('失效') || message.includes('过期')) {
+        setTimeout(() => {
+          uni.navigateTo({ url: '/pages/login/index' });
+        }, 2000);
+      }
+    },
+
+    // 跳转手机号登录
+    navToPhoneLogin() {
+
+      uni.navigateTo({ url: '/pages/phone/phone' })
+    },
+
+    // 切换协议状态
+    toggleAgreement(e) {
+      this.agreed = e.detail.value.length > 0
+    },
+    toggleAgreementManual() {
+      this.agreed = !this.agreed;
+    },
+    // 查看协议
+    navToAgreement(type) {
+      const url = type === 'user'
+        ? '/pages/agreement/user'
+        : '/pages/agreement/privacy'
+      uni.navigateTo({ url })
     }
   }
-  // 发送邮箱验证码
-  async function sendSmsCode() {
-  try {
-    uni.showLoading();
-    let result = await loginApi.sendLoginEmailCode(loginForm.loginName);
-    message.success('验证码发送成功!请登录邮箱查看验证码~');
-    runCountDown();
-  } catch (e) {
-    smartSentry.captureError(e);
-  } finally {
-    uni.hideLoading();
-  }
-  }
-  onShow(()=>{
-    getCaptcha()
-    getTwoFactorLoginFlag();
-  });
+}
 </script>
-<style lang="scss" scoped>
-  .bottom-view {
-    box-sizing: border-box;
-    margin-top: -280rpx;
-    border-radius: 20rpx 20rpx 0 0;
-    width: 100%;
-    background-color: white;
-    padding: 0 60rpx;
-    .input-view {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      background-color: $page-bg-color;
-      border-radius: 4px;
-      height: 100rpx;
-      .captcha-img {
-        margin-left: 5px;
-        height: 100rpx;
-        width: 40%;
-      }
-      image {
-        margin-left: 30rpx;
-        width: 44rpx;
-        height: 44rpx;
-      }
-      .input {
-        margin: 0 16rpx;
-        background-color: $page-bg-color;
-      }
-      .captcha-input {
-        width: 50%;
-      }
-    }
-    .code-login-view {
-      margin: 50rpx 0 0;
-      height: 40rpx;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      .code-text {
-        height: 40rpx;
-        font-size: $main-size;
-        font-weight: 400;
-        text-align: left;
-        color: $main-font-color;
-      }
-      .forget-text {
-        height: 40rpx;
-        font-size: $main-size;
-        font-weight: 400;
-        text-align: right;
-        color: $second-font-color;
+
+<style lang="scss">
+.agreement {
+
+  .custom-checkbox {
+    display: inline-block;
+    width: 24rpx;
+    /* 调整为更小尺寸 */
+    height: 24rpx;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    /* 圆形 */
+    margin-right: 10rpx;
+    position: relative;
+    vertical-align: middle;
+    transition: all 0.3s;
+
+    &.checked {
+      background-color: #07C160;
+      border-color: #07C160;
+
+      &::after {
+        content: "";
+        position: absolute;
+        left: 7rpx;
+        top: 3rpx;
+        width: 6rpx;
+        height: 12rpx;
+        border: solid white;
+        border-width: 0 2rpx 2rpx 0;
+        transform: rotate(45deg);
       }
     }
   }
-  .button {
-    flex-shrink: 0;
-    width: 100%;
-    height: 90rpx;
-    border-radius: 4px;
-    box-shadow: 0px 5px 8px 0px rgba(58, 121, 255, 0.2);
+}
+
+.login-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 60rpx;
+  box-sizing: border-box;
+  transition: background 0.5s;
+
+  .logo-box {
+    margin-top: 338rpx;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: $main-size;
-
-    &.disabled {
-      opacity: 0.4;
-    }
-    &.login-btn {
-      background: $main-color;
-      color: #ffffff;
-    }
-
-    &.register-btn {
-      background: white;
-      color: $main-color;
-      border: 0.5px solid $main-color;
-      border-color: rgba(26, 154, 255, 0.3);
-    }
-  }
-
-  .logo {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: row;
-    height: 220rpx;
-
-    image {
-      width: 208rpx;
-      height: 220rpx;
-    }
-  }
-
-  ::v-deep .uni-easyinput__content {
-    background-color: transparent !important;
-  }
-  ::v-deep .is-input-border {
-    border: none;
-  }
-  .container {
-    display: flex;
-    align-items: center;
     flex-direction: column;
-    min-height: 100vh;
-    width: 100vw;
-    .back-icon {
-      width: 18px;
-      height: 18px;
+    align-items: center;
+
+    .logo {
+      width: 124rpx;
+      height: 124rpx;
+      margin-top: 240rpx;
     }
-    .top-view {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      height: 720rpx;
-      background-image: url('~@/static/images/login/login-top-back.png');
-      .login {
-        font-weight: bold;
-        margin-top: 70rpx;
-      }
-      .logo {
-        width: 260rpx;
-        height: 260rpx;
-      }
+
+    .app-name {
+      margin-top: 30rpx;
+      font-size: 60rpx;
+      color: #d5bc84;
+      font-weight: bold;
+      font-family: 'Alibaba PuHuiTi 2.0-65 Me';
     }
   }
 
-  .login-check-box {
-    flex-shrink: 0;
-    margin-top: 150rpx;
-    margin-bottom: 120rpx;
-    align-self: flex-start;
+  .login-options {
+    width: 100%;
+    margin-top: 364rpx;
+
+    .login-btn {
+      width: 414rpx;
+      height: 96rpx;
+      border-radius: 45rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40rpx;
+      color: #fff;
+      margin-bottom: 40rpx;
+      border: none;
+
+      .btn-icon {
+        width: 40rpx;
+        height: 40rpx;
+        margin-right: 15rpx;
+      }
+
+      &.wechat-btn {
+        background: #b7975e;
+        font-size: 36rpx;
+      }
+
+    }
+
+    .phone-btn {
+      text-align: center;
+      color: #999;
+      font-size: 26rpx;
+      // background: #d5d5d5 // border: 1rpx solid rgba(255, 255, 255, 0.5);
+    }
   }
-  .code-btn{
-    width: 240rpx;
+
+  .agreement {
+    position: absolute;
+    bottom: 100rpx;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    color: #999;
     font-size: 24rpx;
-    margin-right: 20rpx;
-    background-color: $main-color;
-    color: #fff;
+
+    .checkbox {
+      display: flex;
+      align-items: center;
+      margin-right: 5rpx;
+    }
+
+    .link {
+      color: #a0762c;
+      // text-decoration: underline;
+      margin: 0 5rpx;
+    }
   }
+}
 </style>

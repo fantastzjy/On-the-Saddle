@@ -67,4 +67,26 @@ public interface ProductDao extends BaseMapper<ProductEntity> {
      * 检查商品编码是否存在
      */
     int checkProductCodeExists(@Param("productCode") String productCode, @Param("clubId") Long clubId, @Param("excludeId") Long excludeId);
+    
+    // === AI服务专用查询方法 ===
+    
+    /**
+     * 查询课程类产品（AI候选数据用）
+     */
+    List<ProductEntity> selectCourseProducts(@Param("clubId") Long clubId);
+    
+    /**
+     * 根据课程编码查询产品
+     */
+    ProductEntity selectByCourseCode(@Param("courseCode") String courseCode, @Param("clubId") Long clubId);
+    
+    /**
+     * 根据课程名称查询产品
+     */
+    ProductEntity selectByCourseName(@Param("courseName") String courseName, @Param("clubId") Long clubId);
+    
+    /**
+     * 根据课程名称模糊查询产品
+     */
+    ProductEntity selectByFuzzyCourseName(@Param("courseName") String courseName, @Param("clubId") Long clubId);
 }

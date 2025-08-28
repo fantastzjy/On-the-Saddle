@@ -59,7 +59,7 @@ public class AdminFamilyGroupService {
     @OperateLog
     public ResponseDTO<String> create(FamilyGroupCreateForm createForm) {
         log.info("开始创建家庭组，参数: {}", createForm);
-        
+
         if (createForm.getGuardianMemberId() == null) {
             log.warn("监护人会员ID为空");
             return ResponseDTO.userErrorParam("监护人会员ID不能为空");
@@ -68,7 +68,7 @@ public class AdminFamilyGroupService {
         // 检查监护人是否存在
         MemberEntity guardianMember = memberDao.selectById(createForm.getGuardianMemberId());
         log.info("查询到监护人会员信息: {}", guardianMember);
-        
+
         if (guardianMember == null || guardianMember.getIsDelete() == 1) {
             log.warn("监护人会员不存在或已删除，guardianMember: {}", guardianMember);
             return ResponseDTO.userErrorParam("监护人会员不存在");
@@ -77,7 +77,7 @@ public class AdminFamilyGroupService {
         // 检查监护人是否已经属于其他家庭组
         Long existingFamilyGroupId = familyMemberRelationDao.getFamilyGroupIdByMemberId(createForm.getGuardianMemberId());
         log.info("监护人已存在的家庭组ID: {}", existingFamilyGroupId);
-        
+
         if (existingFamilyGroupId != null) {
             log.warn("该会员已属于其他家庭组，existingFamilyGroupId: {}", existingFamilyGroupId);
             return ResponseDTO.userErrorParam("该会员已属于其他家庭组");
@@ -99,7 +99,7 @@ public class AdminFamilyGroupService {
         familyGroup.setCreateTime(LocalDateTime.now());
         familyGroup.setIsValid(1);
         familyGroup.setIsDelete(0);
-        
+
         log.info("准备插入的家庭组数据: {}", familyGroup);
         familyGroupDao.insert(familyGroup);
         log.info("家庭组插入成功，生成的ID: {}", familyGroup.getFamilyGroupId());
@@ -114,7 +114,7 @@ public class AdminFamilyGroupService {
         guardianRelation.setCreateTime(LocalDateTime.now());
         guardianRelation.setIsValid(1);
         guardianRelation.setIsDelete(0);
-        
+
         log.info("准备插入的监护人关系数据: {}", guardianRelation);
         familyMemberRelationDao.insert(guardianRelation);
         log.info("监护人关系插入成功，ID: {}", guardianRelation.getId());
@@ -131,13 +131,13 @@ public class AdminFamilyGroupService {
      */
     public ResponseDTO<PageResult<FamilyGroupListVO>> pageQuery(FamilyGroupQueryForm queryForm) {
         log.info("开始分页查询家庭组列表，参数: {}", queryForm);
-        
+
         Page<?> page = SmartPageUtil.convert2PageQuery(queryForm);
         List<FamilyGroupListVO> list = familyGroupDao.queryFamilyGroupList(page, queryForm);
         PageResult<FamilyGroupListVO> pageResult = SmartPageUtil.convert2PageResult(page, list);
-        
+
         log.info("查询到{}条家庭组记录", pageResult.getTotal());
-        
+
         return ResponseDTO.ok(pageResult);
     }
 
@@ -146,7 +146,7 @@ public class AdminFamilyGroupService {
      */
     public ResponseDTO<FamilyGroupDetailVO> getDetail(Long familyGroupId) {
         log.info("开始获取家庭组详情，familyGroupId: {}", familyGroupId);
-        
+
         if (familyGroupId == null) {
             return ResponseDTO.userErrorParam("家庭组ID不能为空");
         }
@@ -173,7 +173,7 @@ public class AdminFamilyGroupService {
     @OperateLog
     public ResponseDTO<String> update(FamilyGroupUpdateForm updateForm) {
         log.info("开始更新家庭组信息，参数: {}", updateForm);
-        
+
         if (updateForm.getFamilyGroupId() == null) {
             return ResponseDTO.userErrorParam("家庭组ID不能为空");
         }
@@ -210,7 +210,7 @@ public class AdminFamilyGroupService {
     @OperateLog
     public ResponseDTO<String> batchDelete(List<Long> familyGroupIds) {
         log.info("开始批量删除家庭组，IDs: {}", familyGroupIds);
-        
+
         if (familyGroupIds == null || familyGroupIds.isEmpty()) {
             return ResponseDTO.userErrorParam("家庭组ID列表不能为空");
         }
@@ -235,7 +235,7 @@ public class AdminFamilyGroupService {
     @OperateLog
     public ResponseDTO<String> batchRestore(List<Long> familyGroupIds) {
         log.info("开始批量恢复家庭组，IDs: {}", familyGroupIds);
-        
+
         if (familyGroupIds == null || familyGroupIds.isEmpty()) {
             return ResponseDTO.userErrorParam("家庭组ID列表不能为空");
         }
@@ -258,14 +258,14 @@ public class AdminFamilyGroupService {
      */
     public ResponseDTO<FamilyGroupDetailVO> getMemberFamily(Long memberId) {
         log.info("根据会员ID查询家庭信息，memberId: {}", memberId);
-        
+
         if (memberId == null) {
             return ResponseDTO.userErrorParam("会员ID不能为空");
         }
 
         // 查询会员所在的家庭组
         FamilyGroupDetailVO familyDetail = familyGroupDao.getFamilyByMemberId(memberId);
-        
+
         if (familyDetail != null) {
             log.info("查询到家庭信息: {}", familyDetail);
             return ResponseDTO.ok(familyDetail);
@@ -282,7 +282,7 @@ public class AdminFamilyGroupService {
     @OperateLog
     public ResponseDTO<String> addFamilyMember(FamilyMemberAddForm addForm) {
         log.info("开始创建新会员并加入家庭组，参数: {}", addForm);
-        
+
         try {
             // 1. 参数验证
             if (addForm.getFamilyGroupId() == null) {
@@ -291,7 +291,7 @@ public class AdminFamilyGroupService {
             if (addForm.getClubId() == null) {
                 return ResponseDTO.userErrorParam("俱乐部ID不能为空");
             }
-            
+
             // 2. 检查家庭组是否存在
             FamilyGroupEntity familyGroup = familyGroupDao.selectById(addForm.getFamilyGroupId());
             if (familyGroup == null || familyGroup.getIsDelete() == 1) {
@@ -368,11 +368,11 @@ public class AdminFamilyGroupService {
                 dataTracerService.insert(relation.getId(), DataTracerTypeEnum.CLUB_FAMILY_GROUP);
             } catch (Exception e) {
                 log.warn("数据变更日志记录失败，但不影响主流程，error={}", e.getMessage());
-            }
+}
 
             log.info("创建新会员并加入家庭组成功，会员ID: {}, 姓名: {}", newMember.getMemberId(), newMember.getActualName());
             return ResponseDTO.ok("创建会员并加入家庭组成功");
-            
+
         } catch (Exception e) {
             log.error("创建新会员并加入家庭组失败", e);
             throw e; // 重新抛出异常，触发事务回滚

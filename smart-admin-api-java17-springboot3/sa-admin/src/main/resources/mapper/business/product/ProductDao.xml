@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.product.dao.ProductDao">
+
+    <!-- 根据俱乐部ID查询商品列表 -->
+    <select id="selectByClubId" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
+        SELECT * FROM m_product
+        WHERE club_id = #{clubId} AND is_delete = 0
+        ORDER BY sort_order ASC, create_time DESC
+    </select>
+
+    <!-- 根据商品类型查询商品列表 -->
+    <select id="selectByProductType" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
+        SELECT * FROM m_product
+        WHERE product_type = #{productType} AND is_delete = 0
+        ORDER BY sort_order ASC, create_time DESC
+    </select>
+
+    <!-- 根据商品编码查询 -->
+    <select id="selectByProductCode" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
+        SELECT * FROM m_product
+        WHERE club_id = #{clubId} AND product_code = #{productCode} AND is_delete = 0
+        LIMIT 1
+    </select>
+
+    <!-- === AI服务专用查询 === -->
+    
+    <!-- 查询课程类产品（AI候选数据用） -->
+    <select id="selectCourseProducts" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
+        SELECT 
+            product_id,
+            club_id,
+            product_code,
+            product_name,
+            product_type,
+            sub_type,
+            create_time
+        FROM m_product
+        WHERE is_delete = 0 
+        AND is_valid = 1
+        AND product_type IN (1, 2, 3, 4, 5, 6)  -- 课程类产品类型
+        <if test="clubId != null">
+            AND club_id = #{clubId}
+        </if>
+        ORDER BY create_time DESC
+        LIMIT 50
+    </select>
+    
+    <!-- 根据课程编码查询产品 -->
+    <select id="selectByCourseCode" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
+        SELECT * FROM m_product
+        WHERE product_code = #{courseCode} 
+        AND is_delete = 0 
+        AND is_valid = 1
+        <if test="clubId != null">
+            AND club_id = #{clubId}
+        </if>
+        LIMIT 1
+    </select>
+    
+    <!-- 根据课程名称查询产品 -->
+    <select id="selectByCourseName" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
+        SELECT * FROM m_product
+        WHERE product_name = #{courseName} 
+        AND is_delete = 0 
+        AND is_valid = 1
+        <if test="clubId != null">
+            AND club_id = #{clubId}
+        </if>
+        LIMIT 1
+    </select>
+    
+    <!-- 根据课程名称模糊查询产品 -->
+    <select id="selectByFuzzyCourseName" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
+        SELECT * FROM m_product
+        WHERE product_name LIKE CONCAT('%', #{courseName}, '%')
+        AND is_delete = 0 
+        AND is_valid = 1
+        <if test="clubId != null">
+            AND club_id = #{clubId}
+        </if>
+        ORDER BY 
+            CASE 
+                WHEN product_name = #{courseName} THEN 1
+                WHEN product_name LIKE CONCAT(#{courseName}, '%') THEN 2
+                ELSE 3
+            END,
+            product_name
+        LIMIT 1
+    </select>
+
+</mapper>

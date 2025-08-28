@@ -1,11 +1,11 @@
 package net.lab1024.sa.admin.module.business.horse.domain.form;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
 /**

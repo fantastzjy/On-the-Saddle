@@ -3,10 +3,9 @@ package net.lab1024.sa.admin.module.system.position.domain.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
 import java.time.LocalDateTime;
-
-import lombok.Data;
 
 /**
  * 职务表 实体类

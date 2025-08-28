@@ -4,20 +4,20 @@
 
     <!-- 查询教练时间冲突的预约 -->
     <select id="findCoachTimeConflicts" resultType="net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity">
-        SELECT * FROM m_booking 
+        SELECT * FROM m_booking
         WHERE coach_id = #{coachId}
-        AND booking_status = 2 
+        AND booking_status = 2
         AND booking_id != #{excludeBookingId}
         AND (
             (start_time &lt;= #{startTime} AND end_time &gt; #{startTime}) OR
-            (start_time &lt; #{endTime} AND end_time &gt;= #{endTime}) OR  
+            (start_time &lt; #{endTime} AND end_time &gt;= #{endTime}) OR
             (start_time &gt;= #{startTime} AND end_time &lt;= #{endTime})
         )
     </select>
 
     <!-- 查询马匹时间冲突的预约 -->
     <select id="findHorseTimeConflicts" resultType="net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity">
-        SELECT * FROM m_booking 
+        SELECT * FROM m_booking
         WHERE horse_id = #{horseId}
         AND booking_status = 2
         AND booking_id != #{excludeBookingId}
@@ -30,7 +30,7 @@
 
     <!-- 根据订单ID列表批量查询预约 -->
     <select id="selectByOrderIds" resultType="net.lab1024.sa.admin.module.business.booking.domain.entity.BookingEntity">
-        SELECT * FROM m_booking 
+        SELECT * FROM m_booking
         WHERE order_id IN
         <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
             #{orderId}
@@ -40,7 +40,7 @@
 
     <!-- 简化查询预约列表 - 用于列表视图 -->
     <select id="selectSimpleBookingList" resultType="net.lab1024.sa.admin.module.business.booking.domain.vo.BookingSimpleListVO">
-        SELECT 
+        SELECT
             b.booking_id as bookingId,
             p.product_name as courseName,
             m.actual_name as memberName,

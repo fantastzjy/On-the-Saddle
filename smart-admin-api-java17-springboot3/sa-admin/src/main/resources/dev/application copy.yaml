@@ -1,0 +1,36 @@
+#############################################################################################################
+#                                                                                                           #
+# 为了减少重复配置，本配置文件为此sa-admin的独有配置，更多配置请查看 sa-base 项目中的 sa-base.yaml 通用配置文件。      #
+# 其中此文件中配置可以覆盖 sa-base.yaml 中的通用配置，具体实现类请看类：YamlProcessor.java                          #
+#                                                                                                           #
+#############################################################################################################
+
+# 项目配置: 名称、日志目录
+project:
+  name: sa-admin
+  log-directory: ${localPath:/data}/logs/on_the_saddle/${project.name}/${spring.profiles.active}
+
+# 项目端口和url根路径
+server:
+  port: 61812
+  servlet:
+    context-path: /
+
+# 环境
+spring:
+  profiles:
+    active: '@profiles.active@'
+
+
+wechat:
+  miniapp:
+    # 小程序AppID（必填）
+    app-id: wx3916d4e79759fd78
+    # 小程序AppSecret（必填）
+    app-secret: 845d67857dd5bbb0127215d5e8ec9236
+    # 微信服务器域名（可选，默认为微信官方域名） todo
+    server-domain: https://api.weixin.qq.com
+    # 连接超时时间，单位毫秒（可选，默认5000）
+    connect-timeout: 5000
+    # 读取超时时间，单位毫秒（可选，默认10000）
+    read-timeout: 10000

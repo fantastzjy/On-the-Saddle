@@ -1,6 +1,5 @@
 package net.lab1024.sa.admin.module.system.employee.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.system.employee.dao.EmployeeEducationDao;
 import net.lab1024.sa.admin.module.system.employee.domain.entity.EmployeeEducationEntity;
@@ -54,12 +53,12 @@ public class EmployeeEducationService {
         entity.setDeletedFlag(false);
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
-        
+
         // 如果没有设置排序，则自动设置
         if (entity.getSortOrder() == null) {
             entity.setSortOrder(0);
         }
-        
+
         // 如果没有设置是否毕业，默认为已毕业
         if (entity.getIsGraduated() == null) {
             entity.setIsGraduated(true);

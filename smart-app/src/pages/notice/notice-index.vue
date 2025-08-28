@@ -1,224 +1,138 @@
 <template>
-  <view>
-    <mescroll-body @init="mescrollInit" :down="{ auto: false }" @down="onDown" @up="onUp">
-      <!--搜索框-->
-      <uni-nav-bar :border="false" fixed :leftWidth="0" rightWidth="70px">
-        <view class="input">
-          <uni-easyinput
-            prefixIcon="search"
-            :clearable="true"
-            trim="all"
-            v-model="queryForm.keywords"
-            placeholder="搜索：标题、作者、来源等"
-            @confirm="search"
-            @clear="search"
-          />
+  <view class="container">
+    <!-- 标题 -->
+    <!-- <view class="header">
+      <text class="title">设置</text>
+    </view> -->
+
+    <!-- 绑定手机号模块 -->
+    <view class="section">
+      <view class="card" @click="handleBindPhone">
+        <text class="card-text">绑定手机号</text>
+        <uni-icons type="right" size="20" />
+      </view>
+    </view>
+
+    <!-- 账号管理模块 -->
+    <view class="section">
+      <view class="card" @click="handleCancelAccount">
+        <text class="card-text">注销账号</text>
+        <uni-icons type="right" size="20" />
+      </view>
+      <view class="card" @click="handleCheckUpdate">
+        <text class="card-text">检查更新</text>
+        <view style="display: flex;">
+          <view class="version">V1.0</view>
+          <uni-icons type="right" size="20" />
         </view>
-        <template #right>
-          <view class="nav-right" @click="showQueryFormPopUp">
-            <uni-icons type="settings" size="30"></uni-icons>
-            <view class="nav-right-name"> 筛选 </view>
-          </view>
-        </template>
-      </uni-nav-bar>
+      </view>
+    </view>
 
-      <!--筛选条件提示-->
-      <uni-notice-bar
-        @close="onCloseQueryFormTips"
-        v-if="showQueryFormTipsFlag"
-        class="query-bar"
-        background-color="#007aff"
-        color="white"
-        show-close
-        single
-        :text="queryFormTips"
-      />
-
-      <!-- 筛选条件表单弹窗 -->
-      <NoticeQueryFormPopUp ref="noticeQueryFormPopUpRef" @close="onCloseQueryFormPopUp" />
-
-      <!-- 列表 -->
-      <NoticeList :list="noticeListData" :margin-top="queryFormTipsMarginTop" />
-    </mescroll-body>
+    <!-- 用户协议模块 -->
+    <view class="section">
+      <view class="card" @click="handleUserAgreement">
+        <text class="card-text">用户协议及隐私政策</text>
+        <uni-icons type="right" size="20" />
+      </view>
+      <view class="card logout" @click="handleLogout">
+        <text class="card-text">退出登录</text>
+        <uni-icons type="right" size="20" />
+      </view>
+    </view>
   </view>
 </template>
 
-<script setup>
-  import { reactive, ref } from 'vue';
-  import NoticeQueryFormPopUp from './components/notice-query-form-popup.vue';
-  import { noticeApi } from '@/api/business/oa/notice-api';
-  import { onPageScroll, onReachBottom } from '@dcloudio/uni-app';
-  import useMescroll from '@/uni_modules/uni-mescroll/hooks/useMescroll';
-  import { smartSentry } from '@/lib/smart-sentry';
-  import NoticeList from './components/notice-list.vue';
-  import _ from 'lodash';
-
-  // --------------------------- 筛选条件弹窗 ---------------------------------
-  const noticeQueryFormPopUpRef = ref();
-
-  /**
-   * 显示 筛选弹窗
-   */
-  function showQueryFormPopUp() {
-    noticeQueryFormPopUpRef.value.show();
-  }
-
-  /**
-   * 监听 筛选弹窗 关闭
-   */
-  function onCloseQueryFormPopUp(param) {
-    if (param === null) {
-      return;
-    }
-    Object.assign(queryForm, param);
-    showOrHideQueryFormTips();
-    query(getMescroll(), true, buildQueryParam(1));
-    uni.pageScrollTo({
-      scrollTop: 0,
-    });
-  }
-
-  // --------------------------- 筛选条件tips ---------------------------------
-  const queryFormTips = ref(null);
-  const showQueryFormTipsFlag = ref(false);
-  const queryFormTipsMarginTop = ref('0px');
-
-  /**
-   * 查询提示
-   */
-  function buildQueryFormTips() {
-    let tips = null;
-    if (queryForm.keywords) {
-      tips = '搜索：' + queryForm.keywords;
-    }
-    if (queryForm.noticeTypeName) {
-      tips = tips ? tips + '，' : '';
-      tips = tips + '类型：' + queryForm.noticeTypeName;
-    }
-    if (queryForm.publishTimeBegin) {
-      tips = tips ? tips + '，' : '';
-      tips = tips + '发布开始时间：' + queryForm.publishTimeBegin;
-    }
-    if (queryForm.publishTimeEnd) {
-      tips = tips ? tips + '，' : '';
-      tips = tips + '发布截止时间：' + queryForm.publishTimeEnd;
-    }
-    return tips;
-  }
-
-  /**
-   * 显示或者隐藏tips
-   */
-  function showOrHideQueryFormTips() {
-    let tips = buildQueryFormTips();
-    queryFormTipsMarginTop.value = _.isEmpty(tips) ? '0px' : '50rpx';
-    showQueryFormTipsFlag.value = !_.isEmpty(tips);
-    queryFormTips.value = tips;
-  }
-
-  /**
-   * 关闭筛选条件 tips，清空搜索条件
-   */
-  function onCloseQueryFormTips() {
-    Object.assign(queryForm, defaultForm);
-    queryFormTipsMarginTop.value = '0px';
-    showQueryFormTipsFlag.value = false;
-    queryFormTips.value = '';
-    search();
-  }
-
-  // --------------------------- 查询 ---------------------------------
-
-  const defaultForm = {
-    noticeTypeId: undefined, //分类
-    noticeTypeName: undefined, //分类名称
-    keywords: '', //标题、作者、来源
-    publishTimeBegin: null, //发布-开始时间
-    publishTimeEnd: null, //发布-截止时间
-    pageNum: 1,
-    pageSize: 10,
-  };
-
-  // 查询表单
-  const queryForm = reactive({ ...defaultForm });
-  // 通知列表数据
-  const noticeListData = ref([]);
-
-  function buildQueryParam(pageNum) {
-    queryForm.pageNum = pageNum;
-    return Object.assign({}, queryForm, { pageNum });
-  }
-
-  async function query(mescroll, isDownFlag, param) {
-    try {
-      let res = await noticeApi.queryEmployeeNotice(param);
-      if (!isDownFlag) {
-        noticeListData.value = noticeListData.value.concat(res.data.list);
-      } else {
-        noticeListData.value = res.data.list;
-      }
-      mescroll.endSuccess(res.data.list.length, res.data.pages > res.data.pageNum);
-    } catch (e) {
-      smartSentry.captureError(e);
-      //联网失败, 结束加载
-      mescroll.endErr();
+<script>
+export default {
+  methods: {
+    handleBindPhone() {
+      uni.showToast({ title: '点击绑定手机号', icon: 'none' });
+    },
+    handleCancelAccount() {
+      uni.showToast({ title: '点击注销账号', icon: 'none' });
+    },
+    handleCheckUpdate() {
+      uni.showToast({ title: '当前已是最新版本', icon: 'none' });
+    },
+    handleUserAgreement() {
+      uni.navigateTo({ url: '/pages/agreement/index' });
+    },
+    handleLogout() {
+      uni.showModal({
+        title: '提示',
+        content: '确定要退出登录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showToast({ title: '退出成功', icon: 'success' });
+            uni.navigateTo({ url: '/pages/login/login' });
+          }
+        }
+      });
     }
   }
-
-  const { mescrollInit, getMescroll } = useMescroll(onPageScroll, onReachBottom);
-
-  /**
-   * 搜索
-   */
-  function search() {
-    showOrHideQueryFormTips();
-    query(getMescroll(), true, buildQueryParam(1));
-    uni.pageScrollTo({
-      scrollTop: 0,
-    });
-  }
-
-  /**
-   * 下拉刷新
-   */
-  function onDown(mescroll) {
-    queryForm.pageNum = 1;
-    query(mescroll, true, buildQueryParam(1));
-  }
-
-  /**
-   * 上拉加载更多
-   */
-  function onUp(mescroll) {
-    query(mescroll, false, buildQueryParam(mescroll.num));
-  }
+}
 </script>
 
-<style lang="scss" scoped>
-  .input {
-    width: 100%;
-    height: 72rpx;
-    background: #f7f8f9;
-    border-radius: 4px;
-    margin: 8rpx 0;
-    display: flex;
-    align-items: center;
-  }
+<style>
+.container {
+  background-color: #f6f6f6;
+  min-height: 100vh;
+  padding: 32rpx;
+}
 
-  .nav-right {
-    width: 140px;
-    display: flex;
-    height: 88rpx;
-    flex-direction: row;
-    line-height: 88rpx;
-    .nav-right-name {
-      margin-left: 5px;
-      line-height: 88rpx;
-      font-size: 30rpx;
-    }
-  }
+.header {
+  margin-bottom: 48rpx;
+}
 
-  .query-bar {
-    position: fixed;
-  }
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.section {
+  margin-bottom: 40rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 32rpx;
+  color: #999;
+  margin-bottom: 24rpx;
+  padding-left: 16rpx;
+}
+
+.card {
+  width: 640rpx;
+  height: 100rpx;
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.card-text {
+  font-size: 28rpx;
+  color: #666666;
+  line-height: 40rpx;
+}
+
+.arrow {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.version {
+  font-size: 28rpx;
+  color: #999999;
+  margin-right: 15rpx;
+  padding-left: 32rpx;
+}
+
+.logout {
+  margin-top: 40rpx;
+}
 </style>

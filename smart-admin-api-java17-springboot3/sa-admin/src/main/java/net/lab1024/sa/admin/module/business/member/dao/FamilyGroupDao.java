@@ -4,11 +4,10 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.lab1024.sa.admin.module.business.member.domain.entity.FamilyGroupEntity;
 import net.lab1024.sa.admin.module.business.member.domain.form.FamilyGroupQueryForm;
-import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupSearchVO;
-import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupDetailVO;
-import net.lab1024.sa.base.common.domain.PageResult;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyGroupSearchVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.FamilyInfoVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -42,8 +41,8 @@ public interface FamilyGroupDao extends BaseMapper<FamilyGroupEntity> {
     /**
      * 搜索家庭组
      */
-    List<FamilyGroupSearchVO> searchFamilyGroups(@Param("searchType") String searchType, 
-                                                @Param("keyword") String keyword, 
+    List<FamilyGroupSearchVO> searchFamilyGroups(@Param("searchType") String searchType,
+                                                @Param("keyword") String keyword,
                                                 @Param("clubId") Long clubId);
 
     /**

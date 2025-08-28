@@ -1,29 +1,23 @@
 package net.lab1024.sa.admin.module.business.coach.service;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import net.lab1024.sa.admin.module.business.coach.constant.CoachCertificateConstant;
 import net.lab1024.sa.admin.module.business.coach.dao.CoachDao;
 import net.lab1024.sa.admin.module.business.coach.domain.entity.CoachEntity;
 import net.lab1024.sa.admin.module.business.coach.domain.form.CoachCreateForm;
 import net.lab1024.sa.admin.module.business.coach.domain.form.CoachQueryForm;
 import net.lab1024.sa.admin.module.business.coach.domain.form.CoachUpdateForm;
-import net.lab1024.sa.admin.module.business.coach.domain.vo.CertificateVO;
 import net.lab1024.sa.admin.module.business.coach.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.coach.domain.vo.CoachVO;
 import net.lab1024.sa.admin.module.system.employee.dao.EmployeeDao;
 import net.lab1024.sa.admin.module.system.employee.domain.entity.EmployeeEntity;
 import net.lab1024.sa.admin.module.system.employee.domain.form.EmployeeByRoleQueryForm;
 import net.lab1024.sa.admin.module.system.employee.domain.vo.EmployeeVO;
-import net.lab1024.sa.admin.module.system.role.service.RoleEmployeeService;
 import net.lab1024.sa.admin.module.system.role.domain.form.RoleEmployeeUpdateForm;
-import java.util.Set;
+import net.lab1024.sa.admin.module.system.role.service.RoleEmployeeService;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
@@ -32,16 +26,15 @@ import net.lab1024.sa.base.common.util.SmartStringUtil;
 import net.lab1024.sa.base.module.support.datatracer.constant.DataTracerTypeEnum;
 import net.lab1024.sa.base.module.support.datatracer.service.DataTracerService;
 import net.lab1024.sa.base.module.support.operatelog.annotation.OperateLog;
-import org.apache.commons.lang3.StringUtils;
 import net.lab1024.sa.base.module.support.securityprotect.service.SecurityPasswordService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

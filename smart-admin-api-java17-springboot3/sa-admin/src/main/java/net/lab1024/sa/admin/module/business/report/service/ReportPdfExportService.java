@@ -1,12 +1,12 @@
 package net.lab1024.sa.admin.module.business.report.service;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.report.domain.vo.ReportDataVO;
 import net.lab1024.sa.admin.module.business.report.domain.vo.ReportSectionVO;
 import net.lab1024.sa.admin.module.business.report.domain.vo.ReportTableVO;
 import org.springframework.stereotype.Service;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
@@ -34,7 +34,7 @@ public class ReportPdfExportService {
             // 设置响应头
             response.setContentType("text/html; charset=UTF-8");
             response.setCharacterEncoding("UTF-8");
-            
+
             // 对文件名进行URL编码以支持中文
             String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString());
             response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName + ".html");
