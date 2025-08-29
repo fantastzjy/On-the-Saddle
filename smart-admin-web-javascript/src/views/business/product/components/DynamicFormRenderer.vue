@@ -13,21 +13,26 @@
       </div>
       
       <a-form v-else :model="formData" :rules="dynamicRules" ref="formRef" v-bind="formProps">
-        <template v-for="field in formConfig" :key="field.key">
-          <!-- 分组标题 -->
-          <a-divider v-if="field.type === 'group'" orientation="left">
-            <span class="group-title">{{ field.label }}</span>
-          </a-divider>
-          
-          <!-- 表单项 -->
-          <a-form-item 
-            v-else
-            :label="field.label"
-            :name="field.key"
-            :required="field.required"
-            :help="field.help"
-            :extra="field.extra"
-          >
+        <!-- 将字段按行分组 -->
+        <template v-for="(rowFields, rowIndex) in groupedFields" :key="rowIndex">
+          <a-row :gutter="16">
+            <template v-for="field in rowFields" :key="field.key">
+              <!-- 分组标题 -->
+              <a-col :span="24" v-if="field.type === 'group'">
+                <a-divider orientation="left">
+                  <span class="group-title">{{ field.label }}</span>
+                </a-divider>
+              </a-col>
+              
+              <!-- 表单项 -->
+              <a-col :span="getFieldSpan(field)" v-else>
+                <a-form-item 
+                  :label="field.label"
+                  :name="field.key"
+                  :required="field.required"
+                  :help="field.help"
+                  :extra="field.extra"
+                >
             <!-- 输入框 -->
             <a-input
               v-if="field.type === FORM_FIELD_TYPE_ENUM.INPUT"
@@ -36,6 +41,7 @@
               :maxlength="field.maxlength"
               :disabled="field.disabled"
               :allowClear="field.allowClear !== false"
+              :class="getFieldClass(field)"
             />
             
             <!-- 数字输入框 -->
@@ -50,7 +56,7 @@
               :disabled="field.disabled"
               :formatter="field.formatter"
               :parser="field.parser"
-              style="width: 100%"
+              :class="getFieldClass(field)"
             />
             
             <!-- 选择器 -->
@@ -63,6 +69,7 @@
               :allowClear="field.allowClear !== false"
               :showSearch="field.showSearch"
               :filterOption="field.filterOption"
+              :class="getFieldClass(field)"
             >
               <a-select-option 
                 v-for="option in field.options" 
@@ -95,7 +102,7 @@
               :showTime="field.showTime !== false"
               :disabled="field.disabled"
               :allowClear="field.allowClear !== false"
-              style="width: 100%"
+              :class="getFieldClass(field)"
             />
             
             <!-- 开关 -->
@@ -188,7 +195,10 @@
                 show-icon 
               />
             </div>
-          </a-form-item>
+                </a-form-item>
+              </a-col>
+            </template>
+          </a-row>
         </template>
       </a-form>
     </a-spin>
@@ -233,6 +243,47 @@ const formData = reactive({});
 const isInitializing = ref(false); // 标记是否正在初始化
 
 // ======================== 计算属性 ========================
+// 将字段按行分组（根据span值）
+const groupedFields = computed(() => {
+  if (!props.formConfig || props.formConfig.length === 0) {
+    return [];
+  }
+  
+  const rows = [];
+  let currentRow = [];
+  let currentRowSpan = 0;
+  
+  props.formConfig.forEach(field => {
+    const fieldSpan = getFieldSpan(field); // 使用getFieldSpan计算实际span值
+    
+    // 如果当前行加上新字段会超过24，或者是分组类型，则开始新行
+    if (currentRowSpan + fieldSpan > 24 || field.type === 'group') {
+      if (currentRow.length > 0) {
+        rows.push(currentRow);
+        currentRow = [];
+        currentRowSpan = 0;
+      }
+    }
+    
+    currentRow.push(field);
+    currentRowSpan += fieldSpan;
+    
+    // 如果当前行已满或者是分组类型，则结束当前行
+    if (currentRowSpan >= 24 || field.type === 'group') {
+      rows.push(currentRow);
+      currentRow = [];
+      currentRowSpan = 0;
+    }
+  });
+  
+  // 添加最后一行
+  if (currentRow.length > 0) {
+    rows.push(currentRow);
+  }
+  
+  return rows;
+});
+
 const dynamicRules = computed(() => {
   const rules = {};
   
@@ -309,10 +360,14 @@ watch(() => props.formConfig, (newConfig) => {
   if (newConfig && newConfig.length > 0) {
     isInitializing.value = true;
     initFormData();
-    // 初始化完成后，稍微延迟一下再重置标记
+    // 初始化完成后，延迟验证确保DOM完全更新
     nextTick(() => {
       setTimeout(() => {
         isInitializing.value = false;
+        // 配置切换完成后，重新验证表单
+        setTimeout(() => {
+          checkFormValid();
+        }, 50);
       }, 100);
     });
   }
@@ -388,19 +443,25 @@ function validateField(key) {
   if (formRef.value) {
     formRef.value.validateFields([key]).then(() => {
       checkFormValid();
-    }).catch(() => {
+    }).catch((error) => {
+      console.warn(`字段 ${key} 验证失败:`, error.message || error);
       checkFormValid();
     });
   }
 }
 
-function checkFormValid() {
-  if (formRef.value) {
-    formRef.value.validate().then(() => {
+async function checkFormValid() {
+  try {
+    if (formRef.value && props.config && props.config.length > 0) {
+      await formRef.value.validate();
       emit('validate', true);
-    }).catch(() => {
+    } else {
       emit('validate', false);
-    });
+    }
+  } catch (error) {
+    // 配置切换时可能出现验证错误，这是正常现象
+    console.warn('表单验证出现问题，可能是配置切换导致的:', error.message || error);
+    emit('validate', false);
   }
 }
 
@@ -457,13 +518,53 @@ function getRangeMessage(label, min, max) {
   return '';
 }
 
-function getBasePrice() {
-  // 计算基础价格：教练费 + 马匹费
+// 根据字段类型计算合适的栅格span值
+function getFieldSpan(field) {
+  const spanConfig = {
+    [FORM_FIELD_TYPE_ENUM.NUMBER]: 24,       // 数字输入：独占整行
+    [FORM_FIELD_TYPE_ENUM.INPUT]: 24,        // 文本输入：独占整行
+    [FORM_FIELD_TYPE_ENUM.SELECT]: 24,       // 下拉选择：独占整行
+    [FORM_FIELD_TYPE_ENUM.TEXTAREA]: 24,     // 文本域：独占整行
+    [FORM_FIELD_TYPE_ENUM.DATETIME]: 24,     // 日期选择：独占整行
+    [FORM_FIELD_TYPE_ENUM.SWITCH]: 24,       // 开关：独占整行
+    [FORM_FIELD_TYPE_ENUM.CHECKBOX]: 24,     // 多选框：独占整行
+    [FORM_FIELD_TYPE_ENUM.RADIO]: 24,        // 单选框：独占整行
+    [FORM_FIELD_TYPE_ENUM.UPLOAD]: 24,       // 上传组件：独占整行
+    [FORM_FIELD_TYPE_ENUM.ACTIVITY_DETAIL_IMAGES]: 24, // 图片上传：独占整行
+    'multi-price-config': 24                 // 价格配置：独占整行
+  };
+  
+  // 如果字段明确指定了span，使用字段的设置，否则使用类型默认值
+  return field.span || spanConfig[field.type] || 24;
+}
+
+// 根据字段类型返回CSS样式类
+function getFieldClass(field) {
+  const classConfig = {
+    [FORM_FIELD_TYPE_ENUM.NUMBER]: 'number-input',
+    [FORM_FIELD_TYPE_ENUM.INPUT]: 'text-input',
+    [FORM_FIELD_TYPE_ENUM.SELECT]: 'select-input',
+    [FORM_FIELD_TYPE_ENUM.DATETIME]: 'datetime-input'
+  };
+  
+  return classConfig[field.type] || '';
+}
+
+// 计算基础价格：教练费 + 马匹费（改为计算属性避免重复调用）
+const basePrice = computed(() => {
   const coachFee = Number(formData.coachFee || 0);
   const horseFee = Number(formData.horseFee || 0);
-  const basePrice = coachFee + horseFee;
-  console.log('DynamicFormRenderer getBasePrice:', { coachFee, horseFee, basePrice });
-  return basePrice;
+  const calculatedPrice = coachFee + horseFee;
+  return {
+    coachFee,
+    horseFee,
+    basePrice: calculatedPrice
+  };
+});
+
+// 保持向后兼容的getBasePrice函数
+function getBasePrice() {
+  return basePrice.value.basePrice;
 }
 
 // ======================== 暴露方法 ========================
@@ -501,6 +602,38 @@ defineExpose({
 
 .unknown-field-type {
   padding: 8px 0;
+}
+
+/* 输入框宽度控制样式 */
+.number-input {
+  width: 100%;
+  max-width: 200px; /* 数字输入框适中宽度，移除!important */
+}
+
+.text-input {
+  width: 100%;
+  max-width: 300px; /* 文本输入框适中宽度，移除!important */
+}
+
+.select-input {
+  width: 100%;
+  max-width: 250px; /* 选择器适中宽度，移除!important */
+}
+
+.datetime-input {
+  width: 100%;
+  max-width: 280px; /* 日期时间选择器宽度，移除!important */
+}
+
+/* 响应式设计：小屏幕下输入框占用更多宽度 */
+@media (max-width: 768px) {
+  .number-input,
+  .text-input,
+  .select-input,
+  .datetime-input {
+    max-width: none;
+    width: 100%;
+  }
 }
 
 :deep(.ant-form-item-label > label) {

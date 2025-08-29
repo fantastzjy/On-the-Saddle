@@ -237,7 +237,7 @@ public class PriceCalculationService {
         BigDecimal unitPrice = basePrice;
 
         if (classType == 2 && participantCount != null && participantCount > 1) {
-            // 多人课价格计算 - 使用 multi_price_config JSON配置
+            // 小组课价格计算 - 使用 multi_price_config JSON配置
             String multiPriceConfig = (String) courseConfig.get("multiPriceConfig");
             unitPrice = calculateMultiPersonPriceFromConfig(multiPriceConfig, coachId, participantCount, basePrice);
         }
@@ -287,7 +287,7 @@ public class PriceCalculationService {
     }
 
     /**
-     * 根据多人课价格配置计算价格
+     * 根据小组课价格配置计算价格
      * 严格按照数据库设计：multi_price_config JSON格式
      * 格式：{"coaches":[{"coach_id":1,"prices":{"2":150.00,"3":200.00,"4":240.00}}]}
      */
@@ -320,10 +320,10 @@ public class PriceCalculationService {
     }
 
     /**
-     * 计算多人课价格（旧版本兼容方法）
+     * 计算小组课价格（旧版本兼容方法）
      */
     private BigDecimal calculateMultiPersonPrice(Long productId, Long coachId, Integer participantCount) {
-        // 获取多人课价格配置
+        // 获取小组课价格配置
         Map<String, Object> multiPriceConfig = getMultiPersonPriceConfig(productId, coachId);
 
         if (multiPriceConfig.containsKey(participantCount.toString())) {
@@ -554,7 +554,7 @@ public class PriceCalculationService {
 
                 Integer classType = extractInteger(dynamicConfig, "classType", 1);
                 if (classType == 2) {
-                    // 多人课处理
+                    // 小组课处理
                     String multiPriceConfig = (String) dynamicConfig.get("multiPriceConfig");
                     Integer participantCount = extractInteger(priceParams, "participantCount", 2);
                     finalPrice = calculateMultiPersonPriceFromConfig(multiPriceConfig, null, participantCount, basePrice);

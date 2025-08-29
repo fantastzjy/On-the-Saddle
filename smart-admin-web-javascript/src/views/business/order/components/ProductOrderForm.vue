@@ -23,7 +23,7 @@
         placeholder="请选择课程类型"
       >
         <a-select-option value="single_class">单人课</a-select-option>
-        <a-select-option value="multi_class">多人课</a-select-option>
+        <a-select-option value="multi_class">小组课</a-select-option>
       </a-select>
     </a-form-item>
     

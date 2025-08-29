@@ -729,6 +729,8 @@ public class ScheduleService {
 
     /**
      * 从ProductEntity获取商品类型名称（支持字符串和数字类型）
+     *
+     * // TODO 检查这块逻辑
      */
     private String getProductTypeNameFromEntity(ProductEntity product) {
         if (product.getProductType() == null) {
@@ -748,7 +750,7 @@ public class ScheduleService {
             mainType = normalizeProductTypeName(typeStr);
         }
 
-        // 如果是课程类型，尝试获取子类型（单人课/多人课）
+        // 如果是课程类型，尝试获取子类型（单人课/小组课）
         if ("课程".equals(mainType) || mainType.contains("课程")) {
             String subType = getCourseSubType(product.getProductId());
             if (SmartStringUtil.isNotBlank(subType)) {
@@ -760,7 +762,7 @@ public class ScheduleService {
     }
 
     /**
-     * 获取课程子类型（单人课/多人课）
+     * 获取课程子类型（单人课/小组课）
      */
     private String getCourseSubType(Long productId) {
         try {
@@ -773,7 +775,7 @@ public class ScheduleService {
                     case 1:
                         return "单人课";
                     case 2:
-                        return "多人课";
+                        return "小组课";
                     default:
                         return null;
                 }
@@ -804,7 +806,7 @@ public class ScheduleService {
         if (lowerType.contains("活动") || lowerType.contains("activity")) {
             return "活动";
         }
-        if (lowerType.contains("多人") || lowerType.contains("团体")) {
+        if (lowerType.contains("小组") || lowerType.contains("团体")) {
             return "课程";
         }
 

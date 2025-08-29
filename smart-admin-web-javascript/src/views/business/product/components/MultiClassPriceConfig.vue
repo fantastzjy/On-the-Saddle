@@ -7,7 +7,7 @@
 -->
 <template>
   <div class="multi-class-price-config">
-    <a-card size="small" title="多人课价格配置">
+    <a-card size="small" title="小组课价格配置">
       <template #extra>
         <a-space>
           <a-button type="link" size="small" @click="resetToBasePrice">

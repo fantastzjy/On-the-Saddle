@@ -24,22 +24,13 @@
           allowClear
         >
           <a-select-option
-            v-for="item in Object.values(PRODUCT_TYPE_ENUM)"
+            v-for="item in Object.values(PRODUCT_MANAGEMENT_TYPE_ENUM)"
             :key="item.value"
             :value="item.value"
           >
             {{ item.desc }}
           </a-select-option>
         </a-select>
-      </a-form-item>
-
-
-      <a-form-item label="创建时间" class="smart-query-form-item">
-        <a-range-picker
-          style="width: 240px"
-          v-model:value="queryForm.createTimeRange"
-          :ranges="defaultTimeRanges"
-        />
       </a-form-item>
 
       <a-form-item class="smart-query-form-item smart-margin-left10">
@@ -175,25 +166,15 @@ import {
 import { useRouter } from 'vue-router';
 import { productApi } from '/@/api/business/product/product-api';
 import {
-  PRODUCT_TYPE_ENUM,
+  PRODUCT_MANAGEMENT_TYPE_ENUM,
   PRODUCT_TABLE_COLUMNS,
   PRODUCT_SEARCH_FORM
 } from '/@/constants/business/product/product-const';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
 import TableOperator from '/@/components/support/table-operator/index.vue';
-import dayjs from 'dayjs';
 
 const router = useRouter();
-
-// ======================== 时间范围配置 ========================
-const defaultTimeRanges = {
-  今天: [dayjs().startOf('day'), dayjs().endOf('day')],
-  昨天: [dayjs().subtract(1, 'day').startOf('day'), dayjs().subtract(1, 'day').endOf('day')],
-  本周: [dayjs().startOf('week'), dayjs().endOf('week')],
-  本月: [dayjs().startOf('month'), dayjs().endOf('month')],
-  上月: [dayjs().subtract(1, 'month').startOf('month'), dayjs().subtract(1, 'month').endOf('month')]
-};
 
 // ======================== 响应式数据 ========================
 const queryForm = reactive({ ...PRODUCT_SEARCH_FORM, pageNum: 1, pageSize: 10 });
@@ -222,10 +203,7 @@ async function ajaxQuery() {
   try {
     tableLoading.value = true;
     const params = {
-      ...queryForm,
-      createStartTime: queryForm.createTimeRange?.[0]?.format('YYYY-MM-DD HH:mm:ss'),
-      createEndTime: queryForm.createTimeRange?.[1]?.format('YYYY-MM-DD HH:mm:ss'),
-      createTimeRange: undefined
+      ...queryForm
     };
 
     console.log('查询参数:', params);
@@ -241,7 +219,12 @@ async function ajaxQuery() {
       const records = response.data.records || response.data.list || response.data || [];
       const totalCount = response.data.total || response.data.totalCount || 0;
 
-      tableData.value = records;
+      // 过滤掉活动类型(3)的产品，只保留课程(1)和课时包(2)
+      // 注：后端已经过滤，这里作为双重保障
+      const filteredRecords = records.filter(record => [1, 2].includes(record.productType));
+
+      tableData.value = filteredRecords;
+      // 使用原始总数，因为分页信息需要基于后端过滤后的实际数据
       total.value = totalCount;
 
       console.log('解析后的表格数据:', tableData.value);
@@ -305,15 +288,13 @@ async function remove(productId) {
 
 // ======================== 辅助方法 ========================
 function getProductTypeDesc(value) {
-  return Object.values(PRODUCT_TYPE_ENUM).find(item => item.value === value)?.desc || '-';
+  return Object.values(PRODUCT_MANAGEMENT_TYPE_ENUM).find(item => item.value === value)?.desc || '-';
 }
 
 function getProductTypeColor(value) {
   const colorMap = {
-    [PRODUCT_TYPE_ENUM.COURSE.value]: 'blue',
-    [PRODUCT_TYPE_ENUM.PACKAGE.value]: 'green',
-    [PRODUCT_TYPE_ENUM.ACTIVITY.value]: 'purple',
-    [PRODUCT_TYPE_ENUM.EXPERIENCE.value]: 'orange'
+    [PRODUCT_MANAGEMENT_TYPE_ENUM.COURSE.value]: 'blue',
+    [PRODUCT_MANAGEMENT_TYPE_ENUM.PACKAGE.value]: 'green'
   };
   return colorMap[value] || 'default';
 }

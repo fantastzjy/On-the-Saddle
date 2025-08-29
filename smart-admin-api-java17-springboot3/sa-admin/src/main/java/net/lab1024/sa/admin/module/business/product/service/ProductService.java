@@ -365,6 +365,9 @@ public class ProductService {
         LambdaQueryWrapper<ProductEntity> wrapper = new LambdaQueryWrapper<>();
 
         wrapper.eq(ProductEntity::getIsDelete, false);
+        
+        // 产品管理只支持课程(1)和课时包(2)，过滤掉活动类型(3)
+        wrapper.in(ProductEntity::getProductType, 1, 2);
 
         if (queryForm.getClubId() != null) {
             wrapper.eq(ProductEntity::getClubId, queryForm.getClubId());
@@ -379,7 +382,10 @@ public class ProductService {
         }
 
         if (queryForm.getProductType() != null) {
-            wrapper.eq(ProductEntity::getProductType, queryForm.getProductType());
+            // 确保只允许查询课程(1)和课时包(2)
+            if (queryForm.getProductType() == 1 || queryForm.getProductType() == 2) {
+                wrapper.eq(ProductEntity::getProductType, queryForm.getProductType());
+            }
         }
 
         if (SmartStringUtil.isNotBlank(queryForm.getKeyword())) {

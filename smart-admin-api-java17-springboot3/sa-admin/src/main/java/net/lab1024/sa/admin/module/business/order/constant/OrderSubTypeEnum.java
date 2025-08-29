@@ -11,7 +11,7 @@ public enum OrderSubTypeEnum {
 
     // 课程订单子类型（复用现有CourseSubTypeEnum）
     SINGLE_CLASS("single_class", "单人课", 1),
-    MULTI_CLASS("multi_class", "多人课", 1),
+    MULTI_CLASS("multi_class", "小组课", 1),
     
     // 补差费订单子类型
     EXTRA_COACH_FEE("extra_coach_fee", "教练费补差", 4),

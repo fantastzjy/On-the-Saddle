@@ -16,6 +16,9 @@
 
     <template #extra>
       <a-space>
+        <a-typography-text type="secondary" style="font-size: 12px;">
+          活动管理请前往专门的活动管理页面
+        </a-typography-text>
         <a-button @click="goBack">取消</a-button>
         <a-button @click="resetForm">重置</a-button>
         <a-button type="primary" @click="onSubmit" :loading="submitLoading">
@@ -34,78 +37,138 @@
     >
       <!-- 基础信息 -->
       <a-card size="small" title="基础信息" class="form-section">
+        <!-- 第一行：课程类型 + 课程分类 -->
         <a-row :gutter="24">
-          <a-col :span="12">
-            <a-form-item label="课程名称" name="productName">
-              <a-input v-model:value="formData.productName" placeholder="请输入课程名称" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="课程编码" name="productCode">
-              <a-input v-model:value="formData.productCode" placeholder="留空自动生成" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-
-        <a-row :gutter="24">
-          <a-col :span="12">
-            <a-form-item label="课程类型" name="productType">
-              <a-select 
-                v-model:value="formData.productType" 
-                placeholder="请选择课程类型"
-                @change="onProductTypeChange"
-              >
-                <a-select-option 
-                  v-for="item in Object.values(PRODUCT_TYPE_ENUM)" 
+          <a-col :span="16">
+            <a-form-item label="课程类型" name="productType" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+              <a-radio-group v-model:value="formData.productType" @change="onProductTypeChange">
+                <a-radio 
+                  v-for="item in Object.values(PRODUCT_MANAGEMENT_TYPE_ENUM)" 
                   :key="item.value" 
                   :value="item.value"
                 >
                   {{ item.desc }}
-                </a-select-option>
-              </a-select>
+                </a-radio>
+              </a-radio-group>
             </a-form-item>
           </a-col>
         </a-row>
-
+        
+        <!-- 第二行：课程分类（仅当选择课程时显示） -->
+        <a-row :gutter="24" v-if="formData.productType === 1">
+          <a-col :span="16">
+            <a-form-item label="课程分类" name="classType" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+              <a-radio-group v-model:value="formData.dynamicConfig.classType">
+                <a-radio 
+                  v-for="item in Object.values(COURSE_CLASS_TYPE_ENUM)" 
+                  :key="item.value" 
+                  :value="item.value"
+                >
+                  {{ item.desc }}
+                </a-radio>
+              </a-radio-group>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        
+        <!-- 第三行：课程名称 -->
+        <a-row :gutter="24">
+          <a-col :span="16">
+            <a-form-item label="课程名称" name="productName" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+              <a-input v-model:value="formData.productName" placeholder="请输入课程名称" />
+            </a-form-item>
+          </a-col>
+        </a-row>
       </a-card>
 
       <!-- 动态表单配置 -->
       <a-card size="small" :title="configSectionTitle" class="form-section" v-if="formData.productType">
-        <DynamicFormRenderer
-          v-model:value="formData.dynamicConfig"
-          :form-config="dynamicFormConfig"
-          :loading="configLoading"
-          :form-props="{ labelCol: { span: 3 }, wrapperCol: { span: 21 } }"
-          @validate="onDynamicFormValidate"
-          @change="onDynamicFormChange"
-        />
+        <!-- 体验课特殊布局 -->
+        <div v-if="isExperienceClass" class="experience-form-layout">
+          <a-row :gutter="24">
+            <a-col :span="8">
+              <a-form-item label="课程时长（分钟）" name="dynamicConfig.durationMinutes">
+                <a-input-number 
+                  v-model:value="formData.dynamicConfig.durationMinutes" 
+                  placeholder="请输入课程时长" 
+                  :min="30" 
+                  :max="300" 
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item label="最大人数" name="dynamicConfig.maxStudents">
+                <a-input-number 
+                  v-model:value="formData.dynamicConfig.maxStudents" 
+                  placeholder="请输入最大人数" 
+                  :min="1" 
+                  :max="10" 
+                  style="width: 100%"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="24">
+            <a-col :span="8">
+              <a-form-item label="教练费" name="dynamicConfig.coachFee">
+                <a-input-number 
+                  v-model:value="formData.dynamicConfig.coachFee" 
+                  placeholder="请输入教练费" 
+                  :min="0" 
+                  :max="9999" 
+                  style="width: 100%"
+                  :formatter="value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                  :parser="value => value.replace(/¥\s?|(,*)/g, '')"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item label="马匹费用" name="dynamicConfig.horseFee">
+                <a-input-number 
+                  v-model:value="formData.dynamicConfig.horseFee" 
+                  placeholder="请输入马匹费用" 
+                  :min="0" 
+                  :max="9999" 
+                  style="width: 100%"
+                  :formatter="value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                  :parser="value => value.replace(/¥\s?|(,*)/g, '')"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </div>
+        
+        <!-- 正常课程和课时包布局 -->
+        <div v-else class="normal-form-layout">
+          <DynamicFormRenderer
+            v-model:value="formData.dynamicConfig"
+            :form-config="dynamicFormConfig"
+            :loading="configLoading"
+            :form-props="{ labelCol: { span: 6 }, wrapperCol: { span: 18 } }"
+            @validate="onDynamicFormValidate"
+            @change="onDynamicFormChange"
+          />
+        </div>
       </a-card>
 
-      <!-- 价格预览 -->
-      <a-card size="small" title="价格预览" class="form-section" v-if="showPricePreview">
-        <PricePreview
-          :product-data="formData"
-          :dynamic-config="formData.dynamicConfig"
-          @price-change="onPriceChange"
-        />
-      </a-card>
     </a-form>
   </a-card>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue';
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { message, Modal } from 'ant-design-vue';
 import { ArrowLeftOutlined } from '@ant-design/icons-vue';
 import { productApi } from '/@/api/business/product/product-api';
 import { 
-  PRODUCT_TYPE_ENUM, 
+  PRODUCT_MANAGEMENT_TYPE_ENUM, 
   PRODUCT_FORM_RULES, 
-  PRODUCT_DEFAULT_CONFIG 
+  PRODUCT_DEFAULT_CONFIG,
+  COURSE_CLASS_TYPE_ENUM 
 } from '/@/constants/business/product/product-const';
 import DynamicFormRenderer from './components/DynamicFormRenderer.vue';
-import PricePreview from './components/PricePreview.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -166,26 +229,20 @@ const isEdit = computed(() => {
   return route.params.id && route.params.id !== 'add';
 });
 
-const showPricePreview = computed(() => {
-  // 活动类型和体验课不显示价格预览
-  if (formData.productType === 3 || formData.productType === 4) {
-    return false;
-  }
-  
-  return formData.productType && formData.dynamicConfig && Object.keys(formData.dynamicConfig).length > 0;
-});
-
 const configSectionTitle = computed(() => {
   switch (formData.productType) {
     case 1:
       return '课程配置';
     case 2:
       return '课时包配置';
-    case 3:
-      return '活动配置';
     default:
       return '商品配置';
   }
+});
+
+// 检测是否为体验课
+const isExperienceClass = computed(() => {
+  return formData.productType === 1 && formData.productName && formData.productName.includes('体验课');
 });
 
 // ======================== 初始化 ========================
@@ -196,9 +253,36 @@ onMounted(() => {
 });
 
 // ======================== 监听器 ========================
-watch(() => formData.productType, (newType) => {
-  if (newType) {
-    loadFormConfig(newType);
+// 移除productType的watch监听器，避免与onProductTypeChange重复调用
+// watch(() => formData.productType, (newType) => {
+//   if (newType) {
+//     loadFormConfig(newType);
+//   }
+// });
+
+// 监听课程分类变化，简化条件确保首次选择也能触发
+watch(() => formData.dynamicConfig.classType, (newClassType, oldClassType) => {
+  // 课程类型下，当classType发生变化时重新加载配置（移除过于严格的条件）
+  if (formData.productType === 1 && newClassType && newClassType !== oldClassType) {
+    console.log('课程分类切换:', { oldClassType, newClassType });
+    // 课程类型内部分类切换，重新加载详细配置
+    loadDetailedFormConfig(formData.productType, newClassType);
+  }
+});
+
+// 监听课程名称变化，检测体验课并动态调整时间字段
+watch(() => formData.productName, (newName, oldName) => {
+  if (formData.productType === 1 && newName !== oldName) {
+    // 检测是否为体验课
+    const isExperienceClass = newName && newName.includes('体验课');
+    const wasExperienceClass = oldName && oldName.includes('体验课');
+    
+    // 只有在体验课状态真正发生变化，且不是在配置加载过程中时才重新加载
+    if (isExperienceClass !== wasExperienceClass && !configLoading.value) {
+      // 体验课状态发生变化，进行数据转换和重新加载配置
+      handleTimeFieldConversion(isExperienceClass, wasExperienceClass);
+      loadFormConfigWithExperienceDetection();
+    }
   }
 });
 
@@ -208,6 +292,19 @@ async function loadProductDetail() {
     const response = await productApi.getProductDetail(route.params.id);
     if (response.ok) {
       const product = response.data;
+      
+      // 检查是否为活动类型产品
+      if (product.productType === 3) {
+        Modal.info({
+          title: '活动类型产品',
+          content: '此产品为活动类型，请前往活动管理页面进行编辑。产品管理页面仅支持课程和课时包的管理。',
+          okText: '知道了',
+          onOk: () => {
+            goBack();
+          }
+        });
+        return;
+      }
       
       // 先设置基础信息（不包括dynamicConfig和productType）
       Object.assign(formData, {
@@ -239,38 +336,6 @@ async function loadProductDetail() {
           totalSessions: product.packageDetails.totalSessions,
           validityDays: product.packageDetails.validityDays,
           stockQuantity: product.packageDetails.stockQuantity
-        };
-      } else if (product.productType === 3 && product.activityDetails && Object.keys(product.activityDetails).length > 0) {
-        // 活动类型：从activityDetails获取数据
-        dynamicConfig = {
-          activityName: product.activityDetails.activityName,
-          activityDetails: product.activityDetails.activityDetails,
-          startTime: product.activityDetails.startTime,
-          endTime: product.activityDetails.endTime,
-          activityLocation: product.activityDetails.activityLocation,
-          price: product.activityDetails.price,
-          maxParticipants: product.activityDetails.maxParticipants,
-          refundRule: product.activityDetails.refundRule,
-          detailImages: (() => {
-            try {
-              if (product.activityDetails.detailImages) {
-                // 如果是字符串，则解析为数组
-                if (typeof product.activityDetails.detailImages === 'string') {
-                  const parsed = JSON.parse(product.activityDetails.detailImages);
-                  return Array.isArray(parsed) ? parsed : [];
-                }
-                // 如果已经是数组，直接返回
-                if (Array.isArray(product.activityDetails.detailImages)) {
-                  return product.activityDetails.detailImages;
-                }
-              }
-              return [];
-            } catch (error) {
-              console.warn('解析活动详情图片失败:', error);
-              console.warn('原始数据:', product.activityDetails.detailImages);
-              return [];
-            }
-          })()
         };
       } else {
         // 如果没有详情数据，尝试从旧的dynamicConfig字段获取
@@ -403,16 +468,127 @@ async function loadDetailedFormConfig(productType, classType) {
   }
 }
 
-function onDynamicFormChange(newData) {
-  // 检查classType是否发生变化
-  if (needsDetailedConfig.value && 
-      newData.classType && 
-      newData.classType !== currentClassType.value &&
-      formData.productType === 1) { // 只有课程类型才需要处理
+// 带体验课检测的动态加载表单配置
+async function loadFormConfigWithExperienceDetection() {
+  try {
+    configLoading.value = true;
     
-    // classType发生变化，需要重新加载详细配置
-    loadDetailedFormConfig(formData.productType, newData.classType);
+    // 检测是否为体验课
+    const isExperience = isExperienceClass.value;
+    
+    console.log('动态加载表单配置:', {
+      productName: formData.productName,
+      isExperience: isExperience,
+      productType: formData.productType,
+      classType: formData.dynamicConfig.classType
+    });
+    
+    if (isExperience) {
+      // 体验课：生成以分钟为单位的表单配置
+      await loadExperienceClassFormConfig();
+    } else {
+      // 正常课程：按照正常流程加载
+      if (formData.dynamicConfig.classType) {
+        await loadDetailedFormConfig(formData.productType, formData.dynamicConfig.classType);
+      } else {
+        await loadFormConfig(formData.productType);
+      }
+    }
+    
+  } catch (error) {
+    message.error('加载动态表单配置失败');
+    console.error('加载动态表单配置失败:', error);
+  } finally {
+    configLoading.value = false;
   }
+}
+
+// 加载体验课表单配置
+async function loadExperienceClassFormConfig() {
+  // 直接在前端生成体验课配置，以分钟为单位
+  const experienceFields = [
+    {
+      key: 'durationMinutes',
+      label: '课程时长（分钟）',
+      type: 'number',
+      required: true,
+      min: 30,
+      max: 300,
+      defaultValue: 60,
+      placeholder: '请输入课程时长，单位：分钟'
+    },
+    {
+      key: 'maxStudents',
+      label: '最大人数',
+      type: 'number',
+      required: true,
+      min: 1,
+      max: 10,
+      defaultValue: 1
+    },
+    {
+      key: 'coachFee',
+      label: '教练费',
+      type: 'number',
+      required: true,
+      min: 0,
+      max: 9999,
+      defaultValue: 150
+    },
+    {
+      key: 'horseFee',
+      label: '马匹费用',
+      type: 'number',
+      required: true,
+      min: 0,
+      max: 9999,
+      defaultValue: 80
+    }
+  ];
+  
+  dynamicFormConfig.value = experienceFields;
+  needsDetailedConfig.value = false;
+  
+  console.log('体验课配置加载完成:', experienceFields);
+}
+
+// 处理时间字段转换（鞍时 <-> 分钟）
+function handleTimeFieldConversion(isExperienceClass, wasExperienceClass) {
+  const currentConfig = formData.dynamicConfig;
+  
+  if (isExperienceClass && !wasExperienceClass) {
+    // 从正常课程转为体验课：鞍时 -> 分钟
+    if (currentConfig.durationPeriods) {
+      // 1鞍时 ≈ 60分钟
+      const minutes = Math.round(currentConfig.durationPeriods * 60);
+      currentConfig.durationMinutes = minutes;
+      currentConfig.durationPeriods = null; // 清空鞍时字段
+      
+      console.log(`时间字段转换: ${currentConfig.durationPeriods}鞍时 -> ${minutes}分钟`);
+    }
+    
+    // 体验课不需要课程分类
+    currentConfig.classType = null;
+    
+  } else if (!isExperienceClass && wasExperienceClass) {
+    // 从体验课转为正常课程：分钟 -> 鞍时
+    if (currentConfig.durationMinutes) {
+      // 60分钟 ≈ 1鞍时
+      const periods = Math.round((currentConfig.durationMinutes / 60) * 2) / 2; // 四舍五入到0.5的倍数
+      currentConfig.durationPeriods = Math.max(0.5, Math.min(5.0, periods)); // 限制在合理范围内
+      currentConfig.durationMinutes = null; // 清空分钟字段
+      
+      console.log(`时间字段转换: ${currentConfig.durationMinutes}分钟 -> ${currentConfig.durationPeriods}鞍时`);
+    }
+    
+    // 正常课程需要课程分类，默认为单人课
+    currentConfig.classType = currentConfig.classType || 1;
+  }
+}
+
+function onDynamicFormChange(newData) {
+  // 课程分类现在在基础信息中选择，不再从动态表单中监听classType变化
+  // 如果需要重新加载配置，应该监听基础信息中的classType变化
   
   // 手动触发验证检查
   setTimeout(() => {
@@ -429,11 +605,22 @@ function checkRequiredFields(data) {
   
   if (formData.productType === 1) {
     // 课程类型必填字段检查
-    return data.classType && 
-           data.durationPeriods && 
-           data.maxStudents && 
-           data.coachFee !== null && data.coachFee !== undefined &&
-           data.horseFee !== null && data.horseFee !== undefined;
+    const isExperience = isExperienceClass.value;
+    
+    if (isExperience) {
+      // 体验课：检查分钟字段
+      return data.durationMinutes && 
+             data.maxStudents && 
+             data.coachFee !== null && data.coachFee !== undefined &&
+             data.horseFee !== null && data.horseFee !== undefined;
+    } else {
+      // 正常课程：检查鞍时字段
+      return data.classType && 
+             data.durationPeriods && 
+             data.maxStudents && 
+             data.coachFee !== null && data.coachFee !== undefined &&
+             data.horseFee !== null && data.horseFee !== undefined;
+    }
   } else if (formData.productType === 2) {
     // 课时包类型必填字段检查
     return data.details && 
@@ -441,35 +628,44 @@ function checkRequiredFields(data) {
            data.totalSessions &&
            data.validityDays &&
            data.stockQuantity !== null && data.stockQuantity !== undefined;
-  } else if (formData.productType === 3) {
-    // 活动类型必填字段检查
-    return data.activityName &&
-           data.activityDetails &&
-           data.startTime &&
-           data.endTime &&
-           data.activityLocation &&
-           data.price !== null && data.price !== undefined &&
-           data.maxParticipants &&
-           data.refundRule;
   }
   
   return false;
 }
 
-function onProductTypeChange(productType) {
-  // 切换商品类型时重置动态配置
+function onProductTypeChange(e) {
+  const productType = e.target.value;
+  
+  // 切换商品类型时重置动态配置和状态，确保数据清洁
   formData.dynamicConfig = {};
   dynamicFormValid.value = false;
+  
+  // 统一处理不同商品类型的配置加载
+  if (productType === 1) {
+    // 课程类型：默认选中单人课，然后加载详细配置
+    formData.dynamicConfig.classType = 1;
+    needsDetailedConfig.value = true; // 确保状态正确，允许watch触发
+    nextTick(() => {
+      // 确保验证状态重置，避免旧数据验证错误
+      dynamicFormValid.value = false;
+      loadDetailedFormConfig(productType, 1);
+    });
+  } else {
+    needsDetailedConfig.value = false; // 仅在非课程类型时重置
+    if (productType === 2) {
+      // 课时包类型：直接加载基础配置，不需要classType
+      nextTick(() => {
+        // 重置验证状态
+        dynamicFormValid.value = false;
+        loadFormConfig(productType);
+      });
+    }
+  }
 }
 
 function onDynamicFormValidate(valid) {
   dynamicFormValid.value = valid;
   console.log('动态表单验证状态:', valid);
-}
-
-function onPriceChange(priceData) {
-  // 价格变化时可以做一些处理，比如显示提示信息
-  console.log('价格变化:', priceData);
 }
 
 async function onSubmit() {
@@ -522,20 +718,7 @@ async function onSubmit() {
         totalSessions: formData.dynamicConfig.totalSessions,
         validityDays: formData.dynamicConfig.validityDays,
         stockQuantity: formData.dynamicConfig.stockQuantity
-      }),
-      
-      // 活动商品字段 (productType=3)
-      ...(formData.productType === 3 && {
-        activityName: formData.dynamicConfig.activityName,
-        activityDetails: formData.dynamicConfig.activityDetails,
-        startTime: formData.dynamicConfig.startTime,
-        endTime: formData.dynamicConfig.endTime,
-        activityLocation: formData.dynamicConfig.activityLocation,
-        price: formData.dynamicConfig.price,
-        maxParticipants: formData.dynamicConfig.maxParticipants,
-        refundRule: formData.dynamicConfig.refundRule,
-        detailImages: JSON.stringify(formData.dynamicConfig.detailImages)
-      }),
+      })
       
     };
 
@@ -590,18 +773,7 @@ function resetForm() {
       price: null,
       totalSessions: null,
       validityDays: null,
-      stockQuantity: null,
-      
-      // 活动字段 m_product_activity (productType=3)
-      activityName: '',
-      activityDetails: '',
-      startTime: null,
-      endTime: null,
-      activityLocation: '',
-      price: null,
-      maxParticipants: null,
-      refundRule: '',
-      detailImages: []
+      stockQuantity: null
     }
   });
   dynamicFormConfig.value = [];
@@ -628,5 +800,26 @@ function goBack() {
 
 .form-section:last-child {
   margin-bottom: 0;
+}
+
+/* 单选框样式优化 */
+.ant-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ant-radio-wrapper {
+  margin-right: 0;
+}
+
+/* 体验课表单布局优化 */
+.experience-form-layout .ant-input-number {
+  width: 100%;
+}
+
+/* 正常表单布局优化 */
+.normal-form-layout {
+  /* 可以添加额外的样式 */
 }
 </style>

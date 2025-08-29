@@ -22,6 +22,18 @@ export const PRODUCT_TYPE_ENUM = {
   }
 };
 
+// ==================== 产品管理页面专用类型（排除活动） ====================
+export const PRODUCT_MANAGEMENT_TYPE_ENUM = {
+  COURSE: {
+    value: 1,
+    desc: '课程'
+  },
+  PACKAGE: {
+    value: 2,
+    desc: '课时包'
+  }
+};
+
 // ==================== 课程状态 ====================
 export const PRODUCT_STATUS_ENUM = {
   ONLINE: {
@@ -210,8 +222,6 @@ export const PRODUCT_FORM_RULES = {
 export const PRODUCT_SEARCH_FORM = {
   keywords: '',
   productType: null,
-  status: null,
-  createTimeRange: []
 };
 
 // ==================== 文件上传配置 ====================

@@ -10,7 +10,7 @@ package net.lab1024.sa.base.enums;
 public enum CourseSubTypeEnum {
 
     SINGLE_CLASS("single_class", "单人课"),
-    MULTI_CLASS("multi_class", "多人课");
+    MULTI_CLASS("multi_class", "小组课");
 
     private final String code;
     private final String desc;

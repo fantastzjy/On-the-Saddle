@@ -72,7 +72,7 @@
         </h4>
         <a-descriptions :column="2" bordered>
           <a-descriptions-item label="课程类型">
-            {{ productDetail.courseDetails?.classType === 1 ? '单人课' : '多人课' }}
+            {{ productDetail.courseDetails?.classType === 1 ? '单人课' : '小组课' }}
           </a-descriptions-item>
           <a-descriptions-item label="鞍时数">
             {{ productDetail.courseDetails?.durationPeriods || '-' }} 鞍时
@@ -91,7 +91,7 @@
               ¥{{ (Number(productDetail.courseDetails?.coachFee || 0) + Number(productDetail.courseDetails?.horseFee || 0)).toFixed(2) }}
             </span>
           </a-descriptions-item>
-          <a-descriptions-item v-if="productDetail.courseDetails?.classType === 2" label="多人课价格配置" :span="2">
+          <a-descriptions-item v-if="productDetail.courseDetails?.classType === 2" label="小组课价格配置" :span="2">
             <div v-if="getMultiPriceDetails().length > 0">
               <div style="margin-bottom: 8px;">
                 <span style="color: #666;">基础价格：¥{{ (Number(productDetail.courseDetails?.coachFee || 0) + Number(productDetail.courseDetails?.horseFee || 0)).toFixed(2) }}</span>
@@ -110,7 +110,7 @@
                 价格区间：{{ getMultiPriceRange() }}
               </div>
             </div>
-            <span v-else style="color: #999;">未配置多人课价格</span>
+            <span v-else style="color: #999;">未配置小组课价格</span>
           </a-descriptions-item>
         </a-descriptions>
       </div>
@@ -370,7 +370,7 @@ const getMultiPriceDetails = () => {
     // 按人数排序
     return details.sort((a, b) => a.people - b.people);
   } catch (e) {
-    console.warn('解析多人课价格配置失败:', e);
+    console.warn('解析小组课价格配置失败:', e);
     return [];
   }
 };

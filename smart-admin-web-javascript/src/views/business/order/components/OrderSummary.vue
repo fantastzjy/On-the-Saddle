@@ -107,7 +107,7 @@ const orderTypeText = computed(() => {
 const subTypeText = computed(() => {
   const subTypeMap = {
     'single_class': '单人课',
-    'multi_class': '多人课',
+    'multi_class': '小组课',
     'extra_coach_fee': '教练费补差',
     'extra_lesson_fee': '课时费补差', 
     'extra_horse_fee': '马匹费补差',
