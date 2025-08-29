@@ -587,7 +587,7 @@ const getLessonTypeColor = (type) => {
   if (type.includes('课时包')) return 'green';
   if (type.includes('活动')) return 'orange';
   if (type.includes('单人课')) return 'purple';
-  if (type.includes('多人课')) return 'cyan';
+  if (type.includes('小组课')) return 'cyan';
   return 'default';
 };
 
