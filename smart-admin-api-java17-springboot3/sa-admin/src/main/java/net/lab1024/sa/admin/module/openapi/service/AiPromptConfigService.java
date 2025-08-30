@@ -244,7 +244,7 @@ public class AiPromptConfigService {
             
             **提取参数：**
             - coachName: 教练姓名（如：张三、李四、王五）
-            - courseType: 课程类型（如：基础课程、体验课程、进阶课程）
+            - courseType: 课程类型（如：基础课程、进阶课程、专业课程）
             - appointmentTime: 约课时间（格式：yyyy-MM-dd HH:mm:ss）
             
             **时间解析规则：**
