@@ -93,14 +93,8 @@ export default {
       apiBase: BaseURL, // 使用统一配置的API基础地址
 
       selectedTag: null,
-      tags: [
-        '自定义活动1',
-        '自定义活动2',
-        '自定义活动3',
-        '自定义活动4',
-        '自定义活动5',
-        '自定义活动6'
-      ]
+      tags: [], // 改为空数组，从接口获取
+      activityList: [] // 存储完整活动数据
     }
   },
   created() {
@@ -113,6 +107,9 @@ export default {
     uni.onAppRoute((res) => {
       this.updateCurrentByRoute();
     });
+    
+    // 获取活动列表
+    this.loadActivityList();
     
     console.log('🚀 [组件初始化] CustomTabbar 组件初始化完成');
     console.log('🚀 [组件初始化] 当前环境检查:', {
@@ -1007,9 +1004,17 @@ export default {
 
     confirmSelection() {
       if (this.selectedTag !== null) {
-        uni.navigateTo({
-          url: `/pages/eventDetails/eventDetails?activity=${this.tags[this.selectedTag]}`
-        });
+        const selectedActivity = this.activityList[this.selectedTag];
+        if (selectedActivity) {
+          uni.navigateTo({
+            url: `/pages/eventDetails/eventDetails?activityId=${selectedActivity.activityId || selectedActivity.id || this.selectedTag}`
+          });
+        } else {
+          // 兜底方案，使用索引作为参数
+          uni.navigateTo({
+            url: `/pages/eventDetails/eventDetails?activityIndex=${this.selectedTag}`
+          });
+        }
         this.closeFeaturedPopup();
       } else {
         uni.showToast({
@@ -1017,6 +1022,50 @@ export default {
           icon: 'none'
         });
       }
+    },
+
+    // 新增方法：获取活动列表
+    async loadActivityList() {
+      try {
+        console.log('🎪 [活动加载] 开始获取活动列表');
+        
+        // 动态导入API模块
+        const { getActivityList } = await import('../../api/home/index.js');
+        const res = await getActivityList({});
+        
+        console.log('🎪 [活动加载] API响应:', res);
+        
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
+          this.activityList = res.data;
+          this.tags = res.data.map(item => item.activityName || item.name || `活动${item.id || '未知'}`);
+          
+          console.log('🎪 [活动加载] ✅ 成功加载活动:', {
+            count: this.activityList.length,
+            tags: this.tags
+          });
+        } else {
+          console.warn('🎪 [活动加载] ⚠️ 活动数据为空或格式错误，使用默认数据');
+          this.setDefaultActivities();
+        }
+      } catch (error) {
+        console.error('🎪 [活动加载] ❌ 获取活动列表失败:', error);
+        this.setDefaultActivities();
+      }
+    },
+
+    // 设置默认活动数据
+    setDefaultActivities() {
+      this.activityList = [
+        { activityId: 1, activityName: '马术体验课程' },
+        { activityId: 2, activityName: '青少年马术训练' },
+        { activityId: 3, activityName: '成人马术进阶' },
+        { activityId: 4, activityName: '马术比赛训练' },
+        { activityId: 5, activityName: '马术夏令营' },
+        { activityId: 6, activityName: '马术表演活动' }
+      ];
+      this.tags = this.activityList.map(item => item.activityName);
+      
+      console.log('🎪 [活动加载] 使用默认活动数据:', this.tags);
     }
   }
 }

@@ -45,6 +45,8 @@
 </template>
 
 <script>
+import { USER_TOKEN } from '@/constants/local-storage-key-const';
+
 export default {
   data() {
     return {
@@ -92,7 +94,7 @@ export default {
         if (res[1].data.code === 200) {
           uni.showToast({ title: '登录成功', icon: 'success' })
           // 存储token
-          uni.setStorageSync('token', res[1].data.token)
+          uni.setStorageSync(USER_TOKEN, res[1].data.token)
           // 跳转到首页
           uni.switchTab({ url: '/pages/home/index' })
         } else {

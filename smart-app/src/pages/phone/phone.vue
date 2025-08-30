@@ -59,6 +59,8 @@
 </template>
 
 <script>
+import { USER_TOKEN } from '@/constants/local-storage-key-const';
+
 export default {
   data() {
     return {
@@ -96,7 +98,7 @@ export default {
   methods: {
     // 检查登录状态
     checkLoginStatus() {
-      const token = uni.getStorageSync('token')
+      const token = uni.getStorageSync(USER_TOKEN)
       // if (token) {
       //   uni.switchTab({ url: '/pages/home/index' })
       // }
@@ -284,7 +286,7 @@ export default {
     // 登录成功处理
     handleLoginSuccess(data) {
       // 存储token和用户信息
-      uni.setStorageSync('token', data.token)
+      uni.setStorageSync(USER_TOKEN, data.token)
       if (data.userInfo) {
         uni.setStorageSync('userInfo', data.userInfo)
       }

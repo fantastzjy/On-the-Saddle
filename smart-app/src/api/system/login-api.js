@@ -16,7 +16,7 @@ export const loginApi = {
    */
   login: (param) => {
     return request({
-      url: '/app/member/login/wxLogin',
+      url: '/app/login/wxLogin',
       param,
       method: 'POST',
     });
@@ -26,10 +26,14 @@ export const loginApi = {
    * 退出登录 @author 卓大
    */
   logout: () => {
-    return request({
-      url: '/app/member/login/wxLogin',
-      method: 'GET',
-    });
+    return postRequest('/app/login/logout');
+  },
+
+  /**
+   * 检查注册状态 @author Claude Code
+   */
+  checkRegistration: (unionId, role) => {
+    return getRequest(`/app/login/checkRegistration?unionId=${unionId}&role=${role}`);
   },
 
   /**
@@ -40,10 +44,10 @@ export const loginApi = {
   },
 
   /**
-   * 获取登录信息 @author 卓大
+   * 获取登录信息 @author Claude Code (修改为会员专用接口)
    */
   getLoginInfo: () => {
-    return getRequest('/login/getLoginInfo');
+    return postRequest('/app/member/info/info', {});
   },
   /**
    * 获取双因子登录标识 @author 卓大

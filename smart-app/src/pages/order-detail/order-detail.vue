@@ -24,6 +24,14 @@
       <view class="info-item">
         <text class="info-label">服务信息</text>
       </view>
+      
+      <!-- 显示选中的家庭成员 -->
+      <view class="info-item" v-if="form.selectedMemberName">
+        <text class="info-label">服务对象</text>
+        <text class="info-value">{{ form.selectedMemberName }}</text>
+        <text v-if="form.isGuardianPurchase" class="guardian-tag">监护人</text>
+      </view>
+      
       <view class="info-item">
         <text class="info-label">场地障碍和救援</text>
         <text class="info-value1">
@@ -56,11 +64,12 @@
       <view class="info-item">
         <text class="info-label">服务时间</text>
         <view>
-          <view v-if="form.times && form.times.length > 0 && form.times[0].timeSlots" 
-                v-for="(item, index) in form.times[0].timeSlots" :key="index">
-            <text class="info-value">{{ item }}</text>
-            <uni-icons type="right" color="#333" size="13" />
-          </view>
+          <template v-if="form.times && form.times.length > 0 && form.times[0].timeSlots">
+            <view v-for="(item, index) in form.times[0].timeSlots" :key="index">
+              <text class="info-value">{{ item }}</text>
+              <uni-icons type="right" color="#333" size="13" />
+            </view>
+          </template>
           <view v-else>
             <text class="info-value">请选择服务时间</text>
             <uni-icons type="right" color="#333" size="13" />
@@ -126,6 +135,7 @@
 
 <script>
 import { getByCoach, addOrder } from '@/api/home/index';
+import { createWechatPayment, queryPaymentStatus } from '@/api/payment/wechat-pay.js';
 export default {
   data() {
     return {
@@ -452,21 +462,36 @@ export default {
         console.log('🎯 [订单提交] 后端响应:', res);
         
         if (res.code === 0) {
-          // 4. 订单创建成功，跳转支付页面
-          const orderId = res.data.orderId || res.data.id;
-          console.log('🎯 [订单提交] ✅ 订单创建成功，订单ID:', orderId);
+          // 4. 订单创建成功，直接发起微信支付
+          const orderId = res.data.orderId;  // 现在后端已经返回orderId字段
+          const orderNo = res.data.orderNo;
+          console.log('🎯 [订单提交] ✅ 订单创建成功，订单ID:', orderId, '订单号:', orderNo);
           
-          uni.hideLoading();
-          uni.showToast({
-            title: '订单创建成功',
-            icon: 'success',
-            duration: 1500
+          // 验证必要字段是否存在
+          if (!orderId || !orderNo) {
+            uni.hideLoading();
+            uni.showModal({
+              title: '订单创建异常',
+              content: '订单数据不完整，请重试',
+              showCancel: false,
+              confirmText: '确定'
+            });
+            return;
+          }
+          
+          // 更新加载提示
+          uni.showLoading({
+            title: '发起支付中...',
+            mask: true
           });
           
-          // 跳转到支付页面
-          setTimeout(() => {
-            this.navigateToPayment(orderId);
-          }, 1500);
+          // 直接调用微信支付
+          await this.initiateWechatPayment({
+            orderId: orderId,
+            orderNo: orderNo,
+            amount: this.form.totalAmount,
+            description: `马术课程预约-${this.getDisplayCoachName()}`
+          });
           
         } else {
           // 5. 订单创建失败
@@ -547,18 +572,42 @@ export default {
       
       console.log('🎯 [订单构建] 构建times数据:', bookingTimes);
       
+      // 获取当前登录会员ID
+      const currentMemberId = uni.getStorageSync('memberId');
+      if (!currentMemberId) {
+        throw new Error('用户未登录，无法创建订单');
+      }
+      
+      // 根据订单来源设置source值
+      let orderSource = 1; // 默认手动下单
+      let remarks = '手动下单订单';
+      
+      // 判断是否为语音约课（通过form中的source字段或其他标识）
+      if (this.form.source === 2 || this.form.remarks === '语音约课订单') {
+        orderSource = 2;
+        remarks = '语音约课订单';
+      }
+      
       return {
-        clubCode: this.form.clubCode || 'DEMO_CLUB_001',
-        memberId: uni.getStorageSync('memberId') || 11,
+        clubCode: this.form.clubCode,
+        memberId: currentMemberId,
         coachNo: this.form.coachNo,
         courseCode: this.form.courseCode,
-        courseName: this.form.courseName || '基础课程',
-        times: bookingTimes, // 修复：使用正确的BookingTimeVO格式
-        totalAmount: this.form.totalAmount || 0,
-        coachFee: this.form.coachFee || 0,
-        baseFee: this.form.baseFee || 0,
-        remarks: '语音约课订单',
-        source: 'VOICE_BOOKING'
+        courseName: this.form.courseName,
+        times: bookingTimes,
+        totalAmount: this.form.totalAmount,
+        coachFee: this.form.coachFee,
+        baseFee: this.form.baseFee,
+        
+        // 家庭成员信息
+        selectedMemberId: this.form.selectedMemberId,
+        selectedMemberNo: this.form.selectedMemberNo,
+        selectedMemberName: this.form.selectedMemberName,
+        selectedMemberPhone: this.form.selectedMemberPhone,
+        isGuardianPurchase: this.form.isGuardianPurchase,
+        
+        remarks: remarks,
+        source: orderSource
       };
     },
     
@@ -623,6 +672,283 @@ export default {
       return Object.keys(params)
         .map(key => `${key}=${encodeURIComponent(params[key])}`)
         .join('&');
+    },
+    
+    /**
+     * 发起微信支付
+     */
+    async initiateWechatPayment(paymentData) {
+      try {
+        console.log('🎯 [微信支付] 开始创建支付订单:', paymentData);
+        
+        // 1. 获取用户openid（从缓存或登录接口获取）
+        const openid = await this.getUserOpenid();
+        if (!openid) {
+          uni.hideLoading();
+          uni.showModal({
+            title: '支付失败',
+            content: '获取用户信息失败，请重新登录',
+            showCancel: false,
+            confirmText: '确定'
+          });
+          return;
+        }
+
+        // 2. 调用后端创建微信支付订单
+        const createPaymentRes = await createWechatPayment({
+          orderId: paymentData.orderId,
+          orderNo: paymentData.orderNo,
+          description: paymentData.description,
+          amount: paymentData.amount,
+          openid: openid,
+          userIp: '127.0.0.1', // 小程序环境下可使用默认值
+          expireMinutes: 30
+        });
+
+        console.log('🎯 [微信支付] 后端创建支付订单响应:', createPaymentRes);
+
+        if (createPaymentRes.code !== 0) {
+          uni.hideLoading();
+          uni.showModal({
+            title: '支付失败',
+            content: createPaymentRes.message || '创建支付订单失败',
+            showCancel: false,
+            confirmText: '确定'
+          });
+          return;
+        }
+
+        // 3. 调用微信小程序支付接口
+        const payParams = createPaymentRes.data;
+        console.log('🎯 [微信支付] 调用wx.requestPayment:', payParams);
+        
+        uni.hideLoading();
+        
+        // 检查是否为Mock模式
+        if (this.isMockMode(payParams)) {
+          // Mock模式：模拟支付流程
+          this.handleMockPayment(payParams);
+        } else {
+          // 真实模式：调用微信支付
+          uni.requestPayment({
+            provider: 'wxpay',
+            timeStamp: payParams.timeStamp,
+            nonceStr: payParams.nonceStr,
+            package: payParams.packageValue,
+            signType: payParams.signType || 'RSA',
+            paySign: payParams.paySign || '', // 前端不需要自己生成签名
+            success: (res) => {
+              console.log('🎯 [微信支付] ✅ 支付成功:', res);
+              this.handlePaymentSuccess(payParams.paymentNo);
+            },
+            fail: (err) => {
+              console.error('🎯 [微信支付] ❌ 支付失败:', err);
+              this.handlePaymentFail(err, payParams.paymentNo);
+            }
+          });
+        }
+
+      } catch (error) {
+        console.error('🎯 [微信支付] ❌ 发起支付异常:', error);
+        uni.hideLoading();
+        uni.showModal({
+          title: '支付异常',
+          content: '发起支付时出现异常，请重试',
+          showCancel: true,
+          cancelText: '取消',
+          confirmText: '重试',
+          success: (res) => {
+            if (res.confirm) {
+              this.initiateWechatPayment(paymentData);
+            }
+          }
+        });
+      }
+    },
+
+    /**
+     * 获取用户openid
+     */
+    async getUserOpenid() {
+      try {
+        // 优先从缓存获取
+        let openid = uni.getStorageSync('user_openid');
+        if (openid) {
+          console.log('🎯 [微信支付] 从缓存获取openid:', openid);
+          return openid;
+        }
+
+        // 从用户信息中获取
+        const userInfo = uni.getStorageSync('userInfo');
+        if (userInfo && userInfo.openid) {
+          console.log('🎯 [微信支付] 从用户信息获取openid:', userInfo.openid);
+          return userInfo.openid;
+        }
+
+        // 如果没有openid，提示用户重新登录
+        console.error('🎯 [微信支付] 未找到用户openid');
+        return null;
+
+      } catch (error) {
+        console.error('🎯 [微信支付] 获取openid异常:', error);
+        return null;
+      }
+    },
+
+    /**
+     * 处理支付成功
+     */
+    async handlePaymentSuccess(paymentNo) {
+      try {
+        console.log('🎯 [微信支付] 支付成功，支付单号:', paymentNo);
+        
+        uni.showLoading({
+          title: '支付完成，请稍候...',
+          mask: true
+        });
+
+        // 延迟查询支付状态（给回调处理时间）
+        setTimeout(async () => {
+          try {
+            // 查询支付状态确认
+            const statusRes = await queryPaymentStatus(paymentNo);
+            console.log('🎯 [微信支付] 查询支付状态:', statusRes);
+
+            uni.hideLoading();
+            
+            uni.showModal({
+              title: '支付成功',
+              content: '课程预约已完成，您可以在"我的订单"中查看详情',
+              showCancel: false,
+              confirmText: '查看订单',
+              success: (res) => {
+                if (res.confirm) {
+                  // 跳转到订单列表或我的页面
+                  uni.switchTab({
+                    url: '/pages/mine/mine',
+                    fail: () => {
+                      uni.switchTab({ url: '/pages/home/index' });
+                    }
+                  });
+                } else {
+                  uni.switchTab({ url: '/pages/home/index' });
+                }
+              }
+            });
+
+          } catch (error) {
+            console.error('🎯 [微信支付] 查询支付状态失败:', error);
+            uni.hideLoading();
+            // 即使查询失败，也认为支付成功
+            uni.showToast({
+              title: '支付成功',
+              icon: 'success',
+              duration: 2000
+            });
+            setTimeout(() => {
+              uni.switchTab({ url: '/pages/home/index' });
+            }, 2000);
+          }
+        }, 2000);
+
+      } catch (error) {
+        console.error('🎯 [微信支付] 处理支付成功异常:', error);
+        uni.hideLoading();
+        uni.showToast({
+          title: '支付成功',
+          icon: 'success'
+        });
+      }
+    },
+
+    /**
+     * 判断是否为Mock模式
+     */
+    isMockMode(payParams) {
+      // 根据支付单号前缀判断是否为Mock模式
+      return payParams.paymentNo && payParams.paymentNo.startsWith('MOCK_PAY_');
+    },
+
+    /**
+     * 处理Mock支付
+     */
+    handleMockPayment(payParams) {
+      console.log('🎭 [Mock支付] 进入模拟支付流程');
+      
+      // 显示Mock支付确认弹窗
+      uni.showModal({
+        title: '🎭 Mock支付确认',
+        content: `这是模拟支付环境\n支付单号: ${payParams.paymentNo}\n支付金额: ¥${this.form.totalAmount}\n\n选择模拟支付结果：`,
+        cancelText: '支付失败',
+        confirmText: '支付成功',
+        success: (res) => {
+          if (res.confirm) {
+            // 模拟支付成功
+            console.log('🎭 [Mock支付] 用户选择支付成功');
+            uni.showLoading({
+              title: 'Mock支付处理中...',
+              mask: true
+            });
+            
+            // 模拟1秒延迟后支付成功
+            setTimeout(() => {
+              uni.hideLoading();
+              this.handlePaymentSuccess(payParams.paymentNo);
+            }, 1000);
+            
+          } else {
+            // 模拟支付失败
+            console.log('🎭 [Mock支付] 用户选择支付失败');
+            this.handlePaymentFail({ errMsg: 'mock_cancel' }, payParams.paymentNo);
+          }
+        }
+      });
+    },
+
+    /**
+     * 处理支付失败
+     */
+    handlePaymentFail(error, paymentNo) {
+      console.error('🎯 [微信支付] 支付失败:', error, '支付单号:', paymentNo);
+      
+      // 根据错误类型显示不同提示
+      let title = '支付失败';
+      let content = '支付过程中出现问题，请重试';
+      
+      if (error.errMsg) {
+        if (error.errMsg.includes('cancel')) {
+          title = '支付已取消';
+          content = '您已取消支付，可稍后在订单中重新支付';
+        } else if (error.errMsg.includes('timeout')) {
+          title = '支付超时';
+          content = '支付超时，请重新发起支付';
+        } else if (error.errMsg.includes('network')) {
+          title = '网络异常';
+          content = '网络连接异常，请检查网络后重试';
+        }
+      }
+      
+      uni.showModal({
+        title: title,
+        content: content,
+        showCancel: true,
+        cancelText: '稍后再试',
+        confirmText: '重新支付',
+        success: (res) => {
+          if (res.confirm) {
+            // 重新发起支付
+            this.initiateWechatPayment({
+              orderId: this.form.orderId,
+              orderNo: this.form.orderNo,
+              amount: this.form.totalAmount,
+              description: `马术课程预约-${this.getDisplayCoachName()}`
+            });
+          } else {
+            // 返回首页
+            uni.switchTab({ url: '/pages/home/index' });
+          }
+        }
+      });
     }
   }
 }
@@ -871,5 +1197,15 @@ export default {
   font-size: 36rpx;
   font-weight: 600;
   margin-right: 20rpx;
+}
+
+/* 监护人标签样式 */
+.guardian-tag {
+  background-color: #ff9500;
+  color: white;
+  font-size: 20rpx;
+  padding: 4rpx 8rpx;
+  border-radius: 8rpx;
+  margin-left: 10rpx;
 }
 </style>

@@ -15,34 +15,43 @@ import { smartSentry } from '@/lib/smart-sentry';
 import {messageApi} from "@/api/support/message-api";
 
 const defaultUserInfo = {
+  // 基础登录信息
   token: '',
-  //员工id
-  employeeId: '',
-  // 头像
-  avatar: '',
-  //登录名
-  loginName: '',
-  //姓名
+  role: '', // usr=会员, cc=教练
+  isFirstLogin: false,
+  
+  // 详细用户信息（从/app/member/info/info获取）
+  memberNo: '',
   actualName: '',
-  //手机号
+  nickname: '',
   phone: '',
-  //部门id
-  departmentId: '',
-  //部门名词
-  departmentName: '',
-  //是否需要修改密码
+  email: '',
+  avatar: '',
+  avatarUrl: '',
+  gender: null,
+  birthDate: null,
+  clubCode: '',
+  clubName: '',
+  registrationStatus: 0,
+  isMembership: 0,
+  membershipStatus: null,
+  membershipExpireDate: null,
+  idCardNo: '',
+  riderCertNo: '',
+  createdByGuardian: 0,
+  defaultCoachNo: '',
+  defaultCoachName: '',
+  defaultCourseLevel: '',
+  defaultCourseLevelName: '',
+  lastLoginTime: null,
+  profileData: '',
+  
+  // 其他系统字段
   needUpdatePwdFlag: false,
-  //是否为超级管理员
-  administratorFlag: true,
-  //上次登录ip
+  administratorFlag: false,
   lastLoginIp: '',
-  //上次登录ip地区
   lastLoginIpRegion: '',
-  //上次登录 设备
   lastLoginUserAgent: '',
-  //上次登录时间
-  lastLoginTime: '',
-  // 未读消息数量
   unreadMessageCount: 0,
 };
 
@@ -54,6 +63,15 @@ export const useUserStore = defineStore({
   getters: {
     getToken(state) {
       return uni.getStorageSync(USER_TOKEN);
+    },
+    isLoggedIn(state) {
+      return !!this.getToken;
+    },
+    isMember(state) {
+      return state.role === 'usr';
+    },
+    isCoach(state) {
+      return state.role === 'cc';
     },
   },
 
@@ -74,9 +92,21 @@ export const useUserStore = defineStore({
       if(!token){
         return;
       }
-      let res = await loginApi.getLoginInfo();
-      this.setUserLoginInfo(res.data);
+      try {
+        let res = await loginApi.getLoginInfo();
+        console.log('🔐 [Store] 获取会员信息成功:', res);
+        
+        // 使用会员信息设置Store状态
+        if (res && res.data) {
+          this.setDetailUserInfo(res.data);
+        }
+      } catch (error) {
+        console.error('🔐 [Store] 获取会员信息失败:', error);
+        // 获取失败时清除登录信息
+        this.clearUserLoginInfo();
+      }
     },
+    
     // 查询未读消息数量
     async queryUnreadMessageCount() {
       try {
@@ -86,28 +116,129 @@ export const useUserStore = defineStore({
         smartSentry.captureError(e);
       }
     },
-    //设置登录信息
-    setUserLoginInfo(data) {
-      // 用户基本信息
-      this.token = data.token;
-      this.employeeId = data.employeeId;
-      this.loginName = data.loginName;
-      this.actualName = data.actualName;
-      this.phone = data.phone;
-      this.departmentId = data.departmentId;
-      this.departmentName = data.departmentName;
-      this.administratorFlag = data.administratorFlag;
-      this.lastLoginIp = data.lastLoginIp;
-      this.lastLoginIpRegion = data.lastLoginIpRegion;
-      this.lastLoginUserAgent = data.lastLoginUserAgent;
-      this.lastLoginTime = data.lastLoginTime;
+    
+    // 设置基础登录信息
+    setBasicLoginInfo(loginData) {
+      this.token = loginData.token;
+      this.role = loginData.role;
+      this.isFirstLogin = loginData.isFirstLogin;
+      
+      uni.setStorageSync(USER_TOKEN, loginData.token);
+    },
+    
+    // 设置详细用户信息
+    setDetailUserInfo(detailData) {
+      console.log('Store开始设置用户详细信息:', detailData);
+      
+      if (!detailData) {
+        console.warn('setDetailUserInfo收到空数据');
+        return;
+      }
+      
+      // 设置用户基础信息
+      this.memberNo = detailData.memberNo;
+      this.actualName = detailData.actualName;
+      this.nickname = detailData.actualName; // 使用真实姓名作为昵称显示
+      this.phone = detailData.phone;
+      this.email = detailData.email;
+      this.avatar = detailData.avatarUrl;
+      this.avatarUrl = detailData.avatarUrl;
+      this.gender = detailData.gender;
+      this.birthDate = detailData.birthDate;
+      this.clubCode = detailData.clubCode;
+      this.clubName = detailData.clubName;
+      this.registrationStatus = detailData.registrationStatus;
+      this.isMembership = detailData.isMembership;
+      this.membershipStatus = detailData.membershipStatus;
+      this.membershipExpireDate = detailData.membershipExpireDate;
+      this.idCardNo = detailData.idCardNo;
+      this.riderCertNo = detailData.riderCertNo;
+      this.createdByGuardian = detailData.createdByGuardian;
+      this.defaultCoachNo = detailData.defaultCoachNo;
+      this.defaultCoachName = detailData.defaultCoachName;
+      this.defaultCourseLevel = detailData.defaultCourseLevel;
+      this.defaultCourseLevelName = detailData.defaultCourseLevelName;
+      this.lastLoginTime = detailData.lastLoginTime;
+      this.profileData = detailData.profileData;
+      
+      console.log('Store用户详细信息设置完成，当前store状态:', {
+        memberNo: this.memberNo,
+        actualName: this.actualName,
+        phone: this.phone,
+        clubCode: this.clubCode,
+        clubName: this.clubName
+      });
+      
+      // 获取未读消息数量
+      if(this.token){
+        this.queryUnreadMessageCount();
+      }
+    },
 
-      uni.setStorageSync(USER_TOKEN, data.token);
+    //设置登录信息（兼容旧方法）
+    setUserLoginInfo(data) {
+      // 如果是基础登录信息
+      if (data.token && data.role) {
+        this.setBasicLoginInfo(data);
+      }
+      
+      // 如果是详细用户信息
+      if (data.memberNo || data.actualName) {
+        this.setDetailUserInfo(data);
+      }
+      
+      // 兼容旧的字段映射
+      if (data.token) {
+        this.token = data.token;
+      }
+      if (data.role) {
+        this.role = data.role;
+      }
+      if (data.actualName) {
+        this.actualName = data.actualName;
+        this.nickname = data.actualName;
+      }
+      if (data.phone) {
+        this.phone = data.phone;
+      }
+      if (data.avatarUrl) {
+        this.avatar = data.avatarUrl;
+        this.avatarUrl = data.avatarUrl;
+      }
+      
+      uni.setStorageSync(USER_TOKEN, this.token);
 
       // 获取用户未读消息
       if(this.token){
         this.queryUnreadMessageCount();
       }
+    },
+
+    // 检查登录状态
+    async checkLoginStatus() {
+      const token = this.getToken;
+      if (!token) {
+        this.clearUserLoginInfo();
+        return false;
+      }
+
+      try {
+        // 验证token有效性 - 使用会员接口
+        await loginApi.getLoginInfo();
+        return true;
+      } catch (error) {
+        console.warn('🔐 [Store] Token验证失败:', error);
+        // token失效，清除登录信息
+        this.clearUserLoginInfo();
+        return false;
+      }
+    },
+    
+    // 检查信息是否完善
+    isProfileComplete() {
+      return this.registrationStatus === 1 && 
+             this.phone && this.phone.length > 0 && 
+             this.actualName && this.actualName.length > 0;
     },
   },
 });

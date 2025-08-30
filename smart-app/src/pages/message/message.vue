@@ -3,10 +3,17 @@
     <!-- 顶部标题 -->
     <view class="title">我的小马</view>
 
+    <!-- 加载状态 -->
+    <view class="loading-state" v-if="loading">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
     <!-- 小马列表滑动区域 -->
-    <swiper class="horse-swiper" :current="currentHorseIndex" @change="onSwiperChange" :circular="false">
-      <swiper-item v-for="(horse, index) in horseList" :key="index">
-        <view class="swiper-item-content">
+    <template v-else-if="horseList.length > 0">
+      <swiper class="horse-swiper" :current="currentHorseIndex" @change="onSwiperChange" :circular="false">
+        <swiper-item v-for="(horse, index) in horseList" :key="index">
+          <view class="swiper-item-content">
           <!-- 马匹名字卡片 -->
           <view class="horse-card">
             <view class="horse-info">
@@ -14,11 +21,11 @@
                 :src="horse.image || 'https://q7.itc.cn/q_70,c_zoom,h_1200,g_face/images01/20250530/7b6fb0c1faf5445bb05591cafdb3ca45.png'"
                 mode="aspectFill" />
               <view class="info-right">
-                <view class="horse-name">{{ horse.horseName || '马匹名字' }}</view>
-                <view class="horse-name2">寄养时间：{{ horse.boardingPeriod || '20xx年x月~20xx年x月' }}</view>
-                <view class="horse-name2">生日：{{ horse.birthDate || '2018/06/09' }}</view>
+                <view class="horse-name">{{ horse.horseName }}</view>
+                <view class="horse-name2">寄养时间：{{ horse.boardingPeriod }}</view>
+                <view class="horse-name2">生日：{{ horse.birthDate }}</view>
                 <view class="tags">
-                  <text class="tag" v-for="(item, index) in horse.careStatistics" key="index">{{ item.description
+                  <text class="tag" v-for="(item, index) in horse.careStatistics" :key="index">{{ item.description
                     }}</text>
                 </view>
               </view>
@@ -31,28 +38,28 @@
             <view class="divider" />
             <view class="info-row">
               <text class="info-label">芯片号</text>
-              <text class="info-value">{{ horse.chipNo || '26526952' }}</text>
+              <text class="info-value">{{ horse.chipNo }}</text>
             </view>
             <view class="info-row">
               <text class="info-label">血统</text>
-              <text class="info-value">{{ horse.bloodline || '汗血宝马' }}</text>
+              <text class="info-value">{{ horse.breed }}</text>
             </view>
             <view class="info-row">
               <text class="info-label">责任教练</text>
-              <text class="info-value">{{ horse.responsibleCoach || '教练1' }}</text>
+              <text class="info-value">{{ horse.responsibleCoach }}</text>
             </view>
             <view class="info-row">
               <text class="info-label">责任马工</text>
-              <text class="info-value">{{ horse.responsibleGroom || '马工' }}</text>
+              <text class="info-value">{{ horse.responsibleGroom }}</text>
             </view>
           </view>
 
           <!-- 医疗信息卡片 -->
           <view class="medical-card">
             <view class="card-title">医疗信息</view>
-            <view class="medical-row" v-for="(item, index) in horse.medicalInfo" key="index">
+            <view class="medical-row" v-for="(item, index) in horse.medicalInfo" :key="index">
               <text class="medical-label">下次{{ item.planTypeName }}时间</text>
-              <text class="medical-value">{{ horse.nextExecuteTime || '2025-07-25星期五' }}</text>
+              <text class="medical-value">{{ item.nextExecuteTime }}</text>
             </view>
           </view>
         </view>
@@ -64,11 +71,13 @@
       <view v-for="(horse, index) in horseList" :key="index" class="pagination-dot"
         :class="{ 'active': currentHorseIndex === index }" />
     </view>
+    </template>
 
     <!-- 空状态提示 -->
-    <view class="empty-state" v-if="horseList.length === 0">
+    <view class="empty-state" v-else-if="!loading">
       <image class="empty-image" src="/static/images/empty-horse.png" mode="aspectFit" />
       <text class="empty-text">暂无小马信息</text>
+      <button class="refresh-btn" @click="loadHorseList">刷新</button>
     </view>
 
     <CustomTabbar />
@@ -85,52 +94,44 @@ export default {
   },
   data() {
     return {
-      horseList: [
-        {
-          birthDate: "2019/05/20",
-          boardingPeriod: "2023年01月~2025年12月",
-          careStatistics: [
-            { planTypeName: "搓牙", completedCount: 1, description: "搓牙已完成1次" },
-            { planTypeName: "钉蹄", completedCount: 1, description: "钉蹄已完成1次" }
-          ],
-          chipNo: "CHN9840001234568",
-          horseName: "月光",
-          medicalInfo: [
-            { planTypeName: "钉蹄", nextExecuteTime: "2024-08-07 07:30:00" },
-            { planTypeName: "养护", nextExecuteTime: "2024-08-14 16:00:00" }
-          ],
-          responsibleCoach: "胡克",
-          responsibleGroom: "未知马工",
-        }, {
-          birthDate: "2017/08/10",
-          boardingPeriod: "1970年01月~1970年01月",
-          careStatistics: [],
-          chipNo: "CHN9840001234569",
-          horseName: "星辰",
-          medicalInfo: [],
-          responsibleCoach: "未知教练",
-          responsibleGroom: "未知马工"
-        },
-      ],
-      currentHorseIndex: 0, // 当前显示的小马索引
+      horseList: [],
+      currentHorseIndex: 0,
+      loading: false,
     }
   },
   async onLoad() {
-    await this.getMyHorseList1()
+    await this.loadHorseList()
   },
   methods: {
-    getMyHorseList1() {
-      getMyHorseList().then(res => {
-        if (res.code == 0) {
+    async loadHorseList() {
+      this.loading = true;
+      try {
+        const res = await getMyHorseList({});
+        console.log('获取小马列表响应:', res);
+        
+        if (res.code === 0 && res.data) {
           this.horseList = res.data;
+          console.log('小马列表加载成功:', this.horseList.length, '匹马');
+        } else {
+          console.warn('小马列表数据异常:', res);
+          this.horseList = [];
+          uni.showToast({
+            title: res.msg || '获取小马信息失败',
+            icon: 'none',
+            duration: 2000
+          });
         }
-      }).catch(err => {
-        console.error('获取小马列表失败', err);
+      } catch (error) {
+        console.error('获取小马列表失败:', error);
+        this.horseList = [];
         uni.showToast({
-          title: '加载失败',
-          icon: 'none'
+          title: '网络请求失败，请稍后重试',
+          icon: 'none',
+          duration: 2000
         });
-      });
+      } finally {
+        this.loading = false;
+      }
     },
     // swiper滑动事件
     onSwiperChange(e) {
@@ -342,6 +343,35 @@ export default {
   background-color: #B7975E;
 }
 
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  gap: 30rpx;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #f3f3f3;
+  border-top: 4rpx solid #B7975E;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
 /* 空状态 */
 .empty-state {
   display: flex;
@@ -349,17 +379,26 @@ export default {
   align-items: center;
   justify-content: center;
   height: 60vh;
+  gap: 30rpx;
 }
 
 .empty-image {
   width: 300rpx;
   height: 300rpx;
   opacity: 0.5;
-  margin-bottom: 40rpx;
 }
 
 .empty-text {
   font-size: 32rpx;
   color: #999;
+}
+
+.refresh-btn {
+  background: #B7975E;
+  color: white;
+  border: none;
+  border-radius: 30rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
 }
 </style>

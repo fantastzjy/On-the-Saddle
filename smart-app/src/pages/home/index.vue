@@ -100,8 +100,8 @@
         </view>
         <view class="course-types">
           <view v-for="(type, index) in courseTypes" :key="index" class="course-type-item"
-            :class="{ 'selected': selectedCourseType === index }"
-            @click="selectCourseType(index, type.basePrice, type.courseCode)">
+            :class="{ 'selected': selectedCourseType === index, 'disabled': !type.canBook }"
+            @click="selectCourseType(index, type.sessionFee || type.basePrice, type.courseCode, type.canBook)">
             {{ type.courseName }}
           </view>
         </view>
@@ -146,13 +146,16 @@
         <button class="confirm-btn" @click="confirmBooking">确认</button>
       </view>
     </uni-popup>
+    
+    <CustomTabbar />
   </view>
-  <CustomTabbar />
 </template>
 
 <script>
 import CustomTabbar from '@/components/custom-tabbar/custom-tabbar.vue';
-import { getCoachList, getClubInfo, getCourseList } from '@/api/home/index';
+import { getCoachList, getClubInfo, getCourseList, getFamilyMembers } from '@/api/home/index';
+import { USER_TOKEN } from '@/constants/local-storage-key-const';
+
 export default {
   components: {
     CustomTabbar
@@ -161,6 +164,9 @@ export default {
     return {
       role: 'usr',
       familyMembers: '家庭成员',
+      selectedRider: 0,
+      selectedMemberInfo: null, // 存储选中成员的完整信息
+      riders: [], // 改为空数组，通过API获取
       selectedTimes: [], // 存储选中的时间段
       basePrice: '',
       coachFee: '',
@@ -206,12 +212,6 @@ export default {
         }
       ],
       showDropdown: false,
-      selectedRider: null,
-      riders: [
-        { name: '骑手名字1', capacity: 1 },
-        { name: '骑手名字2', capacity: 1 },
-        { name: '骑手名字3', capacity: 1 }
-      ],
       courseTypes: [
         { courseCode: 'EXPERIENCE_COURSE', courseName: '体验课', basePrice: 150 },
         { courseCode: 'BASIC_COURSE', courseName: '基础课', basePrice: 200 },
@@ -262,7 +262,9 @@ export default {
     
     await this.getCoachList1()
     await this.getClubInfo1()
-    await this.getCourseList1()
+    // 移除首页加载时的课程列表查询
+    // await this.getCourseList1()
+    await this.getFamilyMembers() // 新增：获取家庭成员
     
     // 处理语音约课跳转
     if (options.from === 'voice_booking' && options.guidance) {
@@ -311,6 +313,76 @@ export default {
     uni.$off('voice-show-time-popup');
   },
   methods: {
+    // 获取家庭成员
+    async getFamilyMembers() {
+      try {
+        console.log('🏠 [家庭成员] 开始获取家庭成员数据');
+        
+        // 检查token状态
+        const token = uni.getStorageSync(USER_TOKEN);
+        console.log('🔐 [家庭成员Token调试] 当前token:', token);
+        console.log('🔐 [家庭成员Token调试] token长度:', token ? token.length : 0);
+        
+        if (!token) {
+          console.warn('🔐 [家庭成员Token调试] ⚠️ 未找到token，可能需要重新登录');
+          this.handleFamilyMembersError();
+          return;
+        }
+        
+        const res = await getFamilyMembers({});
+
+        console.log('🏠 [家庭成员] API响应:', res);
+
+        if (res.code === 0 && res.data) {
+          // 更新家庭名称显示
+          if (res.data.familyGroup && res.data.familyGroup.familyName) {
+            this.familyMembers = `家庭成员：${res.data.familyGroup.familyName}`;
+            console.log('🏠 [家庭成员] 更新家庭名称:', this.familyMembers);
+          }
+
+          // 转换API数据为UI需要的格式
+          if (res.data.members && res.data.members.length > 0) {
+            this.riders = res.data.members.map(member => ({
+              name: member.actualName,           // UI显示名称
+              age: member.age,                   // 年龄
+              memberNo: member.memberNo,         // 会员编号（订单用）
+              phone: member.phone,               // 手机号
+              isGuardian: member.isGuardian,     // 是否监护人
+              gender: member.genderDesc,         // 性别描述
+              joinDate: member.joinDate          // 加入日期
+            }));
+
+            // 默认选中第一个成员
+            this.selectedRider = 0;
+            this.selectedMemberInfo = this.riders[0];
+            
+            console.log('🏠 [家庭成员] 成员列表:', this.riders);
+            console.log('🏠 [家庭成员] 默认选中:', this.selectedMemberInfo);
+          } else {
+            // 无家庭成员
+            this.familyMembers = "家庭成员：暂无";
+            this.riders = [];
+            this.selectedMemberInfo = null;
+            console.log('🏠 [家庭成员] 无家庭成员数据');
+          }
+        } else {
+          console.error('🏠 [家庭成员] API返回错误:', res);
+          this.handleFamilyMembersError();
+        }
+      } catch (error) {
+        console.error('🏠 [家庭成员] 获取失败:', error);
+        this.handleFamilyMembersError();
+      }
+    },
+
+    // 家庭成员获取失败的处理
+    handleFamilyMembersError() {
+      this.familyMembers = "家庭成员";
+      this.riders = [];
+      this.selectedMemberInfo = null;
+      console.log('🏠 [家庭成员] 处理错误，重置为空状态');
+    },
+
     // 初始化日期时间数据
     initializeDateTimeData() {
       console.log('🏠 [时间初始化] 开始初始化日期时间数据');
@@ -406,10 +478,8 @@ export default {
       console.log('🏠 [时间初始化] 生成固定时间段:', this.availableTimes.length);
     },
     getCourseList1() {
-      console.log('🏠 [API调用] 开始获取课程列表');
-      getCourseList({
-        "clubCode": "DEMO_CLUB_001"
-      }).then(res => {
+      console.log('🏠 [API调用] 开始获取课程列表，使用Header中的俱乐部编码');
+      getCourseList({}).then(res => {
         console.log('🏠 [API调用] 课程列表响应:', res);
         if (res.code === 0 && res.data && Array.isArray(res.data)) {
           this.courseTypes = res.data;
@@ -440,9 +510,8 @@ export default {
       });
     },
     getClubInfo1() {
-      getClubInfo({
-        "clubCode": "DEMO_CLUB_001"
-      }).then(res => {
+      console.log('🏠 [API调用] 开始获取俱乐部信息，使用Header中的俱乐部编码');
+      getClubInfo({}).then(res => {
         console.log(res);
         if (res.code === 0) {
           this.clubInfo = res.data
@@ -450,9 +519,8 @@ export default {
       })
     },
     async getCoachList1() {
-      const res = await getCoachList({
-        "clubCode": "DEMO_CLUB_001"
-      })
+      console.log('🏠 [API调用] 开始获取教练列表，使用Header中的俱乐部编码');
+      const res = await getCoachList({})
       console.log(res);
       if (res.code === 0) {
         this.coachList = res.data || []
@@ -463,19 +531,58 @@ export default {
     },
     selectRider(index) {
       this.selectedRider = index;
+      this.selectedMemberInfo = this.riders[index];
       this.showDropdown = false;
-      // 这里可以添加选中后的逻辑
+      
+      console.log('🏠 [家庭成员] 选中成员:', this.selectedMemberInfo);
+      console.log('🏠 [家庭成员] 会员编号:', this.selectedMemberInfo?.memberNo);
     },
     goToDetail() {
       uni.navigateTo({ url: '/pages/support/change-log/change-log-detail' })
     },
-    showCoursePopup(coachFee, coachNo) {
+    async showCoursePopup(coachFee, coachNo) {
       console.log('🏠 [课程选择] 显示课程弹窗, 教练:', coachNo, '费用:', coachFee);
       
-      this.$refs.coursePopup.open()
       this.coachFee = coachFee
       this.coachNo = coachNo
       this.orderCreateForm.coachNo = coachNo
+      
+      // 查询该教练的课程列表
+      try {
+        console.log('🏠 [API调用] 开始获取教练课程列表，教练编号:', coachNo);
+        const res = await getCourseList({ coachNo: coachNo });
+        console.log('🏠 [API调用] 教练课程列表响应:', res);
+        
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
+          this.courseTypes = res.data;
+          console.log('🏠 [API调用] ✅ 教练课程数据已更新:', this.courseTypes);
+        } else {
+          console.warn('🏠 [API调用] ⚠️ 教练课程数据获取失败，使用默认数据');
+          // 使用兜底数据
+          this.courseTypes = [
+            { courseCode: 'EXPERIENCE_COURSE', courseName: '体验课', sessionFee: 150, coachFee: coachFee, canBook: true },
+            { courseCode: 'BASIC_COURSE', courseName: '基础课', sessionFee: 200, coachFee: coachFee, canBook: true },
+            { courseCode: 'INTERMEDIATE_COURSE', courseName: '进阶课', sessionFee: 300, coachFee: coachFee, canBook: true },
+            { courseCode: 'ADVANCED_COURSE', courseName: '高级课', sessionFee: 400, coachFee: coachFee, canBook: true },
+            { courseCode: 'MASTER_COURSE', courseName: '大师课', sessionFee: 500, coachFee: coachFee, canBook: true },
+            { courseCode: 'THEORY_COURSE', courseName: '理论课', sessionFee: 100, coachFee: coachFee, canBook: true }
+          ];
+        }
+      } catch (err) {
+        console.error('🏠 [API调用] ❌ 教练课程列表获取异常:', err);
+        // 使用兜底数据
+        this.courseTypes = [
+          { courseCode: 'EXPERIENCE_COURSE', courseName: '体验课', sessionFee: 150, coachFee: coachFee, canBook: true },
+          { courseCode: 'BASIC_COURSE', courseName: '基础课', sessionFee: 200, coachFee: coachFee, canBook: true },
+          { courseCode: 'INTERMEDIATE_COURSE', courseName: '进阶课', sessionFee: 300, coachFee: coachFee, canBook: true },
+          { courseCode: 'ADVANCED_COURSE', courseName: '高级课', sessionFee: 400, coachFee: coachFee, canBook: true },
+          { courseCode: 'MASTER_COURSE', courseName: '大师课', sessionFee: 500, coachFee: coachFee, canBook: true },
+          { courseCode: 'THEORY_COURSE', courseName: '理论课', sessionFee: 100, coachFee: coachFee, canBook: true }
+        ];
+      }
+      
+      // 显示弹窗
+      this.$refs.coursePopup.open()
       
       // 如果是语音流程且有预设课程，自动选择并跳转
       if (this.voiceGuidanceActive && this.voiceFlowType) {
@@ -506,7 +613,16 @@ export default {
     closeCoursePopup() {
       this.$refs.coursePopup.close()
     },
-    selectCourseType(index, price, courseCode) {
+    selectCourseType(index, price, courseCode, canBook) {
+      // 检查课程是否可选
+      if (!canBook) {
+        uni.showToast({
+          title: '该教练暂不教授此课程',
+          icon: 'none'
+        })
+        return
+      }
+      
       this.selectedCourseType = index
       this.basePrice = price
       this.courseCode = courseCode
@@ -641,6 +757,22 @@ export default {
       this.orderCreateForm.baseFee = this.basePrice
       this.orderCreateForm.totalAmount = (this.basePrice + this.coachFee) * this.selectedTimes.length
       
+      // 添加家庭成员信息
+      if (this.selectedMemberInfo) {
+        this.orderCreateForm.selectedMemberId = this.selectedMemberInfo.memberId
+        this.orderCreateForm.selectedMemberNo = this.selectedMemberInfo.memberNo
+        this.orderCreateForm.selectedMemberName = this.selectedMemberInfo.name
+        this.orderCreateForm.selectedMemberPhone = this.selectedMemberInfo.phone
+        this.orderCreateForm.isGuardianPurchase = this.selectedMemberInfo.isGuardian
+        
+        console.log('🏠 [预约确认] 添加家庭成员信息:', {
+          memberId: this.selectedMemberInfo.memberId,
+          memberNo: this.selectedMemberInfo.memberNo,
+          memberName: this.selectedMemberInfo.name,
+          isGuardian: this.selectedMemberInfo.isGuardian
+        });
+      }
+      
       // 添加教练名称和课程名称到订单数据 - 🔧 优先使用已设置的教练姓名
       const coachInfo = this.coachList.find(c => c.coachNo === this.coachNo) || {};
       const selectedCourse = this.courseTypes[this.selectedCourseType];
@@ -653,6 +785,10 @@ export default {
       
       // 🔧 确保使用正确的俱乐部ID
       this.orderCreateForm.clubCode = 'DEMO_CLUB_001'; // 使用正确的俱乐部编码
+      
+      // 设置手动下单标识
+      this.orderCreateForm.source = 1; // 手动下单
+      this.orderCreateForm.remarks = '手动下单订单';
 
       console.log('🏠 [预约确认] 预约参数:', this.orderCreateForm);
       
@@ -1039,6 +1175,25 @@ export default {
       this.orderCreateForm.coachFee = this.coachFee || 0;
       this.orderCreateForm.baseFee = this.basePrice || 0;
       this.orderCreateForm.totalAmount = (this.orderCreateForm.baseFee + this.orderCreateForm.coachFee) * this.selectedTimes.length;
+      
+      // 添加家庭成员信息到语音约课
+      if (this.selectedMemberInfo) {
+        this.orderCreateForm.selectedMemberId = this.selectedMemberInfo.memberId;
+        this.orderCreateForm.selectedMemberNo = this.selectedMemberInfo.memberNo;
+        this.orderCreateForm.selectedMemberName = this.selectedMemberInfo.name;
+        this.orderCreateForm.selectedMemberPhone = this.selectedMemberInfo.phone;
+        this.orderCreateForm.isGuardianPurchase = this.selectedMemberInfo.isGuardian;
+        
+        console.log('🎯 [语音引导] 添加家庭成员信息:', {
+          memberId: this.selectedMemberInfo.memberId,
+          memberNo: this.selectedMemberInfo.memberNo,
+          memberName: this.selectedMemberInfo.name
+        });
+      }
+      
+      // 设置语音约课标识
+      this.orderCreateForm.source = 2; // 语音约课
+      this.orderCreateForm.remarks = '语音约课订单';
       
       console.log('🎯 [语音引导] 完整订单数据:', this.orderCreateForm);
       
@@ -1520,6 +1675,11 @@ export default {
   border: 2rpx solid #A0762C;
   font-weight: 500;
   color: #8A5800;
+}
+
+.course-type-item.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* 确保弹窗内容正确显示 */

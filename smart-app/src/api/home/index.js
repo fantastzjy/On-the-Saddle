@@ -66,3 +66,12 @@ export const getActivityList = (data) => {
     method: 'POST',
   });
 };
+
+//获取家庭成员列表
+export const getFamilyMembers = (data) => {
+  return request({
+    url: '/app/home/family/members',
+    data,
+    method: 'POST',
+  });
+};

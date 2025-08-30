@@ -45,6 +45,10 @@
 
 <script>
 import { getLoginUserInfo } from '@/api/system/login';
+import { useUserStore } from '@/store/modules/system/user';
+import { USER_TOKEN } from '@/constants/local-storage-key-const';
+import { CLUB_CONFIG } from '@/lib/config.js';
+import { memberApi } from '@/api/member/member';
 export default {
   data() {
     return {
@@ -119,24 +123,17 @@ export default {
         const res = await this.callLoginApi(loginRes.code, userInfo);
 
         const loginResult = res.data
-        console.log(res);
-        uni.showToast({ title: JSON.stringify(res), icon: 'none' });
-        // 4. 处理登录结果
-        if (res.code === 0) {
-          // 存储token
-          uni.setStorageSync('token', loginResult.token);
-          uni.setStorageSync('userInfo', loginResult || userInfo);
-
-          // 显示登录成功提示
-          uni.showToast({ title: '登录成功', icon: 'success' });
-
-          // 跳转到首页
-          setTimeout(() => {
-            uni.navigateTo({ url: '/pages/support/change-log/change-log-list' });
-          }, 1500);
+        console.log('登录API响应:', res);
+        console.log('登录结果数据:', loginResult);
+        
+        // 4. 处理登录结果 - 使用双重验证确保成功判断
+        if ((res.code === 0 || res.code === 1) && res.ok === true && loginResult) {
+          console.log('登录成功，开始处理登录结果');
+          await this.handleLoginSuccess(loginResult);
         } else {
           // 登录失败处理
-          this.handleLoginError(loginResult.message || '登录失败');
+          console.log('登录失败，code:', res.code, 'ok:', res.ok, 'msg:', res.msg);
+          this.handleLoginError(res.msg || loginResult?.message || '登录失败');
         }
       } catch (error) {
         console.error('登录异常:', error);
@@ -172,7 +169,8 @@ export default {
 
       const res = await getLoginUserInfo({
         code: code,
-        role: this.role
+        role: this.role,
+        clubCode: CLUB_CONFIG.CLUB_CODE  // 新增俱乐部编码
       });
       return res;
       // try {
@@ -202,18 +200,179 @@ export default {
 
     // 处理登录错误
     handleLoginError(message) {
-      uni.showToast({
-        title: message,
-        icon: 'none',
-        duration: 3000
+      console.error('登录失败:', message);
+      
+      const errorMsgs = {
+        'invalid_code': '微信授权码已过期，请重试',
+        'user_not_exist': '用户不存在，请联系管理员',
+        'system_error': '系统错误，请稍后重试',
+        '会员不存在，请先注册': '账号未注册，请先注册账号',
+        '账号已被禁用': '您的账号已被停用，请联系管理员',
+        '账号未激活': '账号未激活，请联系管理员'
+      };
+      
+      const displayMessage = errorMsgs[message] || message || '登录失败';
+      
+      uni.showModal({
+        title: '登录失败',
+        content: displayMessage,
+        showCancel: false,
+        confirmText: '知道了'
       });
+    },
 
-      // 如果是token失效等特定错误，可以跳转到特定页面
-      if (message.includes('失效') || message.includes('过期')) {
+    // 登录成功后的处理
+    async handleLoginSuccess(loginResult) {
+      const { token, role, isFirstLogin } = loginResult;
+      
+      try {
+        // 1. 存储基本登录信息
+        console.log('🔐 [登录调试] 开始存储token到:', USER_TOKEN);
+        console.log('🔐 [登录调试] 存储的token值:', token);
+        uni.setStorageSync(USER_TOKEN, token);
+        
+        // 验证存储是否成功
+        const storedToken = uni.getStorageSync(USER_TOKEN);
+        console.log('🔐 [登录调试] 存储后立即读取的token:', storedToken);
+        console.log('🔐 [登录调试] 存储验证:', storedToken === token ? '✅ 成功' : '❌ 失败');
+        
+        // 2. 更新Store基础信息
+        useUserStore().setBasicLoginInfo({ token, role, isFirstLogin });
+        
+        // 3. 获取详细用户信息（如果是会员）
+        if (role === 'usr') {
+          console.log('会员登录，开始获取详细用户信息');
+          try {
+            const userInfoRes = await this.getUserDetailInfo();
+            console.log('getUserDetailInfo返回结果:', userInfoRes);
+            
+            // 验证返回数据的完整性
+            if (userInfoRes && userInfoRes.data) {
+              const detailUserInfo = userInfoRes.data;
+              console.log('解析出的用户详细信息:', detailUserInfo);
+              
+              // 4. 更新Store详细信息
+              console.log('开始更新Store用户详细信息');
+              useUserStore().setDetailUserInfo(detailUserInfo);
+              
+              // 存储到本地
+              uni.setStorageSync('userInfo', detailUserInfo);
+              console.log('用户详细信息存储到本地成功');
+              
+              console.log('用户详细信息获取和存储完成');
+            } else {
+              console.warn('用户详细信息数据结构异常:', userInfoRes);
+              // 显示警告但不阻止登录
+              uni.showToast({
+                title: '用户信息获取异常，部分功能可能受限',
+                icon: 'none',
+                duration: 3000
+              });
+            }
+          } catch (error) {
+            console.error('获取用户详细信息失败:', error);
+            console.error('错误类型:', typeof error);
+            console.error('错误消息:', error.message);
+            
+            // 显示用户友好的错误提示，但不阻止登录
+            uni.showToast({
+              title: '获取用户信息失败，部分功能可能受限',
+              icon: 'none',
+              duration: 3000
+            });
+          }
+        } else {
+          console.log('教练登录，跳过获取用户详细信息');
+        }
+        
+        // 5. 显示登录成功提示
+        uni.showToast({ title: '登录成功', icon: 'success' });
+        
+        // 6. 处理跳转
         setTimeout(() => {
-          uni.navigateTo({ url: '/pages/login/index' });
-        }, 2000);
+          if (isFirstLogin) {
+            this.handleFirstLogin();
+          } else {
+            this.smartRedirect();
+          }
+        }, 1500);
+        
+      } catch (error) {
+        console.error('登录后处理失败:', error);
+        uni.showToast({ title: '登录处理失败', icon: 'none' });
       }
+    },
+
+    // 获取用户详细信息
+    async getUserDetailInfo() {
+      console.log('开始获取用户详细信息');
+      try {
+        console.log('使用静态导入的memberApi:', memberApi);
+        
+        // 验证memberApi是否正确导入
+        if (!memberApi) {
+          throw new Error('memberApi静态导入失败');
+        }
+        
+        if (!memberApi.getUserInfo) {
+          throw new Error('memberApi.getUserInfo方法不存在');
+        }
+        
+        console.log('开始调用memberApi.getUserInfo');
+        const result = await memberApi.getUserInfo({});
+        console.log('用户详情API调用成功:', result);
+        
+        if (!result) {
+          console.warn('用户详情API返回结果为空');
+          throw new Error('用户详情数据为空');
+        }
+        
+        if (!result.data) {
+          console.warn('用户详情data字段为空:', result);
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('获取用户详细信息失败:', error);
+        console.error('错误详情:', {
+          message: error.message,
+          stack: error.stack,
+          response: error.response
+        });
+        throw error; // 重新抛出便于上层处理
+      }
+    },
+
+    // 首次登录处理
+    handleFirstLogin() {
+      uni.showModal({
+        title: '欢迎使用',
+        content: '检测到您是首次登录，您可以稍后在个人中心完善个人信息',
+        showCancel: false,
+        confirmText: '知道了',
+        success: () => {
+          this.smartRedirect();
+        }
+      });
+    },
+
+    // 智能跳转逻辑 -> 直接跳转首页
+    smartRedirect() {
+      console.log('🏠 [跳转] 登录成功，强制跳转到首页');
+      uni.switchTab({ 
+        url: '/pages/home/index',
+        success: () => console.log('🏠 [跳转] 跳转首页成功'),
+        fail: (error) => {
+          console.error('🏠 [跳转] switchTab失败:', error);
+          // 兜底方案：使用reLaunch
+          console.log('🏠 [跳转] 使用reLaunch兜底方案');
+          uni.reLaunch({ 
+            url: '/pages/home/index',
+            success: () => console.log('🏠 [跳转] reLaunch跳转成功'),
+            fail: (err) => console.error('🏠 [跳转] reLaunch也失败:', err)
+          });
+        }
+      });
     },
 
     // 跳转手机号登录

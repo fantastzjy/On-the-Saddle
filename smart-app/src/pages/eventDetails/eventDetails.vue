@@ -68,19 +68,78 @@ export default {
       activityInfo: {}
     }
   },
-  onLoad() {
-    this.getActivityDetail();
+  onLoad(options) {
+    console.log('🎪 [活动详情] 页面加载，参数:', options);
+    this.getActivityDetail(options);
   },
   methods: {
-    getActivityDetail() {
-      getActivityList({
-        "clubCode": "DEMO_CLUB_001"
-      }).then(res => {
-        if (res.code == 0) {
-          this.activityInfo = res.data[0];
-        }
+    async getActivityDetail(options = {}) {
+      try {
+        console.log('🎪 [活动详情] 获取活动详情，参数:', options);
+        
+        const res = await getActivityList({});
+        console.log('🎪 [活动详情] API响应:', res);
 
-      })
+        if (res.code === 0 && res.data && Array.isArray(res.data)) {
+          let selectedActivity = null;
+
+          // 优先级1: 使用activityId查找
+          if (options.activityId) {
+            selectedActivity = res.data.find(item => 
+              (item.activityId && item.activityId == options.activityId) ||
+              (item.id && item.id == options.activityId)
+            );
+            console.log('🎪 [活动详情] 根据activityId查找:', options.activityId, '结果:', selectedActivity);
+          }
+
+          // 优先级2: 使用activityIndex查找
+          if (!selectedActivity && options.activityIndex !== undefined) {
+            const index = parseInt(options.activityIndex);
+            if (index >= 0 && index < res.data.length) {
+              selectedActivity = res.data[index];
+              console.log('🎪 [活动详情] 根据activityIndex查找:', index, '结果:', selectedActivity);
+            }
+          }
+
+          // 优先级3: 使用activity参数模糊匹配
+          if (!selectedActivity && options.activity) {
+            selectedActivity = res.data.find(item => 
+              (item.activityName && item.activityName.includes(options.activity)) ||
+              (item.name && item.name.includes(options.activity))
+            );
+            console.log('🎪 [活动详情] 根据activity名称查找:', options.activity, '结果:', selectedActivity);
+          }
+
+          // 兜底方案: 使用第一个活动
+          if (!selectedActivity && res.data.length > 0) {
+            selectedActivity = res.data[0];
+            console.log('🎪 [活动详情] 使用第一个活动作为兜底');
+          }
+
+          if (selectedActivity) {
+            this.activityInfo = selectedActivity;
+            console.log('🎪 [活动详情] ✅ 活动信息设置成功:', this.activityInfo);
+          } else {
+            console.warn('🎪 [活动详情] ⚠️ 未找到匹配的活动');
+            uni.showToast({
+              title: '未找到活动信息',
+              icon: 'none'
+            });
+          }
+        } else {
+          console.error('🎪 [活动详情] ❌ API返回数据格式错误:', res);
+          uni.showToast({
+            title: '获取活动详情失败',
+            icon: 'none'
+          });
+        }
+      } catch (error) {
+        console.error('🎪 [活动详情] ❌ 获取活动详情异常:', error);
+        uni.showToast({
+          title: '网络错误，请重试',
+          icon: 'none'
+        });
+      }
     },
     goBack() {
       uni.navigateBack({

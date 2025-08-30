@@ -1,14 +1,16 @@
+import { USER_TOKEN } from '@/constants/local-storage-key-const';
+
 /**
  * 生成请求头
  * @param {Object} data - 请求参数
  * @returns {Object} 请求头
  */
 export function generateRequestHeader(requestHeader) {
-  // 获取openId
-  const token = uni.getStorageSync('token');
+  // 获取token
+  const token = uni.getStorageSync(USER_TOKEN);
   if (token) {
     // console.log("当前请求有token", token);
-    requestHeader.Authorization = token;
+    requestHeader.Authorization = 'Bearer ' + token;
   }
   return requestHeader;
 }
@@ -23,7 +25,7 @@ export function customResponseBody(response) {
     console.log('重新登录');
     uni.clearStorageSync('openId');
     uni.clearStorageSync('userInfo');
-    uni.clearStorageSync('token');
+    uni.clearStorageSync(USER_TOKEN);
 
     uni.showModal({
       title: '消息提醒',
