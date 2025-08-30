@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.product.dao.ProductCoachDao">
+
+    <!-- 根据产品ID查询关联教练 -->
+    <select id="selectByProductId" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductCoachEntity">
+        SELECT id, product_id, coach_id, is_default, create_by, create_time
+        FROM m_product_coach 
+        WHERE product_id = #{productId}
+        ORDER BY is_default DESC, create_time ASC
+    </select>
+    
+    <!-- 根据教练ID查询关联课程 -->
+    <select id="selectByCoachId" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductCoachEntity">
+        SELECT id, product_id, coach_id, is_default, create_by, create_time
+        FROM m_product_coach 
+        WHERE coach_id = #{coachId}
+        ORDER BY create_time DESC
+    </select>
+    
+    <!-- 根据教练ID获取关联的课程信息（连表查询，供小程序使用） -->
+    <select id="selectCoachCourseList" resultType="java.util.Map">
+        SELECT 
+            p.product_id AS productId,
+            p.product_name AS productName,
+            p.product_code AS productCode,
+            p.product_type AS productType,
+            pc.class_type AS classType,
+            pc.duration_periods AS durationPeriods,
+            pc.duration_minutes AS durationMinutes,
+            pc.max_students AS maxStudents,
+            pc.coach_fee AS coachFee,
+            pc.horse_fee AS horseFee,
+            pcoach.is_default AS isDefault,
+            CASE 
+                WHEN pc.class_type = 1 THEN '单人课'
+                WHEN pc.class_type = 2 THEN '小组课'
+                ELSE '未知类型'
+            END AS classTypeName,
+            (pc.coach_fee + pc.horse_fee) AS basePrice
+        FROM m_product_coach pcoach
+        LEFT JOIN m_product p ON pcoach.product_id = p.product_id
+        LEFT JOIN m_product_course pc ON p.product_id = pc.product_id
+        WHERE pcoach.coach_id = #{coachId}
+        AND p.club_id = #{clubId}
+        AND p.status = 1
+        AND p.is_delete = 0
+        ORDER BY pcoach.is_default DESC, p.create_time DESC
+    </select>
+    
+    <!-- 获取产品关联的教练详细信息（连表查询） -->
+    <select id="selectProductCoachDetails" resultType="java.util.Map">
+        SELECT 
+            pcoach.id AS id,
+            pcoach.product_id AS productId,
+            pcoach.coach_id AS coachId,
+            pcoach.is_default AS isDefault,
+            pcoach.create_time AS createTime,
+            c.actual_name AS coachName,
+            c.coach_no AS coachNo,
+            c.phone AS phone,
+            c.coach_star_level AS starLevel,
+            c.coach_fee AS defaultCoachFee,
+            c.specialties AS specialties
+        FROM m_product_coach pcoach
+        LEFT JOIN m_coach c ON pcoach.coach_id = c.coach_id
+        WHERE pcoach.product_id = #{productId}
+        AND c.is_valid = 1
+        AND c.is_delete = 0
+        ORDER BY pcoach.is_default DESC, pcoach.create_time ASC
+    </select>
+    
+    <!-- 批量插入教练产品关联 -->
+    <insert id="insertBatch">
+        INSERT INTO m_product_coach (product_id, coach_id, is_default, create_by, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.productId}, #{item.coachId}, #{item.isDefault}, #{item.createBy}, #{item.createTime})
+        </foreach>
+    </insert>
+    
+    <!-- 删除产品的所有教练关联 -->
+    <delete id="deleteByProductId">
+        DELETE FROM m_product_coach WHERE product_id = #{productId}
+    </delete>
+</mapper>

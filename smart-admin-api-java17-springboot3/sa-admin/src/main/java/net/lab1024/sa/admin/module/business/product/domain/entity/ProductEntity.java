@@ -52,3 +52,4 @@ public class ProductEntity {
     @TableField(value = "is_delete")
     private Boolean isDelete;//TODO
 }
+

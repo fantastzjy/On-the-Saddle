@@ -1,5 +1,6 @@
 package net.lab1024.sa.admin.module.business.selector.domain.form;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,5 +16,8 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class CoachSelectorQueryForm extends BaseSelectorQueryForm {
-    // 继承基础查询即可
+    
+    @Schema(description = "是否显示教练费")
+    private Boolean showCoachFee;
+    
 }

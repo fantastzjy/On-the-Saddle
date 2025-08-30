@@ -3,6 +3,7 @@ package net.lab1024.sa.admin.module.business.product.service;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
+import net.lab1024.sa.admin.module.business.product.domain.vo.CoachPriceConfigVO;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.stereotype.Service;
@@ -35,8 +36,8 @@ public class PriceCalculationService {
      *
      * @param productId 商品ID
      * @param quantity 数量
-     * @param coachId 教练ID（单人课/多人课）
-     * @param participantCount 参与人数（多人课）
+     * @param coachId 教练ID（单人课/小组课）
+     * @param participantCount 参与人数（小组课）
      * @param memberLevel 会员等级
      * @param couponCode 优惠券代码
      * @return 价格计算结果
@@ -219,21 +220,20 @@ public class PriceCalculationService {
     }
 
     /**
-     * 计算课程价格
-     * 严格按照数据库设计：base_price = coach_fee + horse_fee (计算字段)
+     * 计算课程价格（只使用课时费）
      */
     private Map<String, BigDecimal> calculateCoursePrice(Long productId, Integer quantity,
                                                         Long coachId, Integer participantCount) {
         Map<String, BigDecimal> result = new HashMap<>();
 
-        // 获取课程配置（从dynamicConfig或数据库）
+        // 获取课程配置
         Map<String, Object> courseConfig = getCourseConfig(productId);
-        BigDecimal coachFee = (BigDecimal) courseConfig.get("coachFee");
-        BigDecimal horseFee = (BigDecimal) courseConfig.get("horseFee");
+        
+        // 只使用课时费作为基础价格
+        BigDecimal sessionFee = extractBigDecimal(courseConfig, "sessionFee", BigDecimal.valueOf(300));
+        BigDecimal basePrice = sessionFee;
+        
         Integer classType = (Integer) courseConfig.get("classType");
-
-        // 严格按照数据库设计计算 base_price = coach_fee + horse_fee
-        BigDecimal basePrice = coachFee.add(horseFee);
         BigDecimal unitPrice = basePrice;
 
         if (classType == 2 && participantCount != null && participantCount > 1) {
@@ -246,7 +246,7 @@ public class PriceCalculationService {
 
         result.put("originalPrice", totalPrice);
         result.put("totalPrice", totalPrice);
-        result.put("basePrice", basePrice); // 严格对应数据库计算字段
+        result.put("basePrice", basePrice);
         return result;
     }
 
@@ -314,7 +314,7 @@ public class PriceCalculationService {
                     return basePrice.multiply(BigDecimal.valueOf(0.7));
             }
         } catch (Exception e) {
-            log.warn("解析多人课价格配置失败，使用默认折扣", e);
+            log.warn("解析小组课价格配置失败，使用默认折扣", e);
             return basePrice.multiply(BigDecimal.valueOf(0.8));
         }
     }
@@ -426,14 +426,15 @@ public class PriceCalculationService {
     }
 
     /**
-     * 获取课程价格预估
+     * 获取课程价格预估（只使用课时费）
      */
     private Map<String, Object> getCourseEstimate(Long productId) {
         Map<String, Object> estimate = new HashMap<>();
         Map<String, Object> courseConfig = getCourseConfig(productId);
 
-        BigDecimal basePrice = ((BigDecimal) courseConfig.get("coachFee"))
-            .add((BigDecimal) courseConfig.get("horseFee"));
+        // 只使用课时费
+        BigDecimal sessionFee = extractBigDecimal(courseConfig, "sessionFee", BigDecimal.valueOf(300));
+        BigDecimal basePrice = sessionFee;
 
         estimate.put("minPrice", basePrice.multiply(BigDecimal.valueOf(0.8))); // 最低8折
         estimate.put("maxPrice", basePrice.multiply(BigDecimal.valueOf(1.1))); // 最高涨价10%
@@ -480,19 +481,20 @@ public class PriceCalculationService {
     // 以下为辅助方法，实际应该从数据库获取配置
 
     /**
-     * 获取课程配置 - 严格按照数据库表 m_product_course 字段
+     * 获取课程配置（只使用课时费）
      */
     private Map<String, Object> getCourseConfig(Long productId) {
         Map<String, Object> config = new HashMap<>();
         // 模拟数据库查询结果，实际应从数据库获取
-        config.put("classType", 1); // 1-单人课 2-多人课
+        config.put("classType", 1); // 1-单人课 2-小组课
         config.put("durationMinutes", 60);
         config.put("durationPeriods", 1.0);
         config.put("maxStudents", 1);
-        config.put("coachFee", BigDecimal.valueOf(200));
-        config.put("horseFee", BigDecimal.valueOf(100));
-        // base_price = coach_fee + horse_fee (数据库计算字段，不需要手动设置)
-        config.put("multiPriceConfig", null); // 多人课才有此配置
+        
+        // 只使用课时费
+        config.put("sessionFee", BigDecimal.valueOf(300));
+        
+        config.put("multiPriceConfig", null); // 小组课才有此配置
         return config;
     }
 
@@ -544,13 +546,15 @@ public class PriceCalculationService {
             BigDecimal finalPrice = BigDecimal.ZERO;
 
             if (productType == 1) {
-                // 课程价格计算 - 严格按照数据库字段
-                BigDecimal coachFee = extractBigDecimal(dynamicConfig, "coachFee", BigDecimal.valueOf(200));
-                BigDecimal horseFee = extractBigDecimal(dynamicConfig, "horseFee", BigDecimal.valueOf(100));
-
-                // 数据库计算字段：base_price = coach_fee + horse_fee
-                basePrice = coachFee.add(horseFee);
+                // 课程价格计算 - 只使用课时费
+                BigDecimal sessionFee = extractBigDecimal(dynamicConfig, "sessionFee", BigDecimal.valueOf(300));
+                basePrice = sessionFee;
                 finalPrice = basePrice;
+                
+                // 构建价格明细
+                List<Map<String, Object>> priceDetails = new ArrayList<>();
+                priceDetails.add(Map.of("label", "课时费", "value", sessionFee, "important", true));
+                priceResult.put("priceDetails", priceDetails);
 
                 Integer classType = extractInteger(dynamicConfig, "classType", 1);
                 if (classType == 2) {
@@ -559,14 +563,6 @@ public class PriceCalculationService {
                     Integer participantCount = extractInteger(priceParams, "participantCount", 2);
                     finalPrice = calculateMultiPersonPriceFromConfig(multiPriceConfig, null, participantCount, basePrice);
                 }
-
-                // 构建价格明细
-                List<Map<String, Object>> priceDetails = new ArrayList<>();
-                priceDetails.add(Map.of("label", "教练费", "value", coachFee, "important", false));
-                priceDetails.add(Map.of("label", "马匹费", "value", horseFee, "important", false));
-                priceDetails.add(Map.of("label", "基础单价", "value", basePrice, "important", true));
-
-                priceResult.put("priceDetails", priceDetails);
 
             } else if (productType == 2) {
                 // 课时包价格
@@ -667,5 +663,146 @@ public class PriceCalculationService {
         details.put("memberLevelDiscount", priceData.get("memberDiscount"));
         details.put("appliedCoupon", priceData.get("couponDiscount"));
         return details;
+    }
+
+    // ========================================
+    // 新增：教练个性化定价功能
+    // ========================================
+
+    /**
+     * 计算小组课教练个性化价格（新功能）
+     */
+    public BigDecimal calculateGroupCoachPrice(
+        Map<String, Object> courseConfig, 
+        Long coachId, 
+        int participantCount
+    ) {
+        // 1. 获取基础课时费（作为fallback）
+        BigDecimal sessionFee = extractBigDecimal(courseConfig, "sessionFee", BigDecimal.valueOf(400));
+        
+        // 2. 解析教练价格配置
+        String multiPriceConfigJson = getStringFromConfig(courseConfig, "multiPriceConfig");
+        CoachPriceConfigVO priceConfig = CoachPriceConfigVO.fromJson(multiPriceConfigJson);
+        
+        // 3. 查找教练指定人数的价格
+        BigDecimal coachPrice = priceConfig.getPrice(coachId, participantCount);
+        if (coachPrice != null) {
+            log.debug("使用教练个性化价格 - 教练ID: {}, 人数: {}, 价格: {}", coachId, participantCount, coachPrice);
+            return coachPrice;
+        }
+        
+        // 4. 如果没有教练个性化价格，返回基础课时费
+        log.warn("教练ID: {} 未配置{}人小组课价格，使用基础课时费: {}", coachId, participantCount, sessionFee);
+        return sessionFee;
+    }
+    
+    /**
+     * 获取教练在指定课程的所有配置价格
+     */
+    public Map<Integer, BigDecimal> getCoachAllPrices(Map<String, Object> courseConfig, Long coachId) {
+        String multiPriceConfigJson = getStringFromConfig(courseConfig, "multiPriceConfig");
+        CoachPriceConfigVO priceConfig = CoachPriceConfigVO.fromJson(multiPriceConfigJson);
+        
+        return priceConfig.getCoachAllPrices(coachId);
+    }
+    
+    /**
+     * 验证教练是否可以接受指定人数的小组课
+     */
+    public boolean canCoachAcceptGroupSize(Map<String, Object> courseConfig, Long coachId, Integer participantCount) {
+        if (participantCount == null || participantCount < 2) {
+            return true; // 单人课不需要检查
+        }
+        
+        String multiPriceConfigJson = getStringFromConfig(courseConfig, "multiPriceConfig");
+        CoachPriceConfigVO priceConfig = CoachPriceConfigVO.fromJson(multiPriceConfigJson);
+        
+        BigDecimal price = priceConfig.getPrice(coachId, participantCount);
+        return price != null && price.compareTo(BigDecimal.ZERO) > 0;
+    }
+    
+    /**
+     * 获取课程的所有教练价格配置摘要
+     */
+    public String getCoachPriceConfigSummary(Map<String, Object> courseConfig) {
+        String multiPriceConfigJson = getStringFromConfig(courseConfig, "multiPriceConfig");
+        CoachPriceConfigVO priceConfig = CoachPriceConfigVO.fromJson(multiPriceConfigJson);
+        
+        return priceConfig.getConfigSummary();
+    }
+    
+    /**
+     * 预览小组课所有人数的教练价格
+     * @param courseConfig 课程配置
+     * @param coachId 教练ID
+     * @return 人数-价格映射
+     */
+    public Map<String, Object> previewCoachPricesForAllCounts(Map<String, Object> courseConfig, Long coachId) {
+        Map<String, Object> preview = new HashMap<>();
+        
+        BigDecimal sessionFee = extractBigDecimal(courseConfig, "sessionFee", BigDecimal.valueOf(400));
+        String multiPriceConfigJson = getStringFromConfig(courseConfig, "multiPriceConfig");
+        CoachPriceConfigVO priceConfig = CoachPriceConfigVO.fromJson(multiPriceConfigJson);
+        
+        Map<Integer, BigDecimal> coachPrices = priceConfig.getCoachAllPrices(coachId);
+        
+        List<Map<String, Object>> priceList = new ArrayList<>();
+        for (int count = 2; count <= 6; count++) {
+            Map<String, Object> priceItem = new HashMap<>();
+            priceItem.put("participantCount", count);
+            
+            BigDecimal price = coachPrices.get(count);
+            if (price != null) {
+                priceItem.put("price", price);
+                priceItem.put("priceSource", "COACH_CUSTOM");
+                priceItem.put("displayText", count + "人: ¥" + price + "/人");
+            } else {
+                priceItem.put("price", sessionFee);
+                priceItem.put("priceSource", "BASE_PRICE");
+                priceItem.put("displayText", count + "人: ¥" + sessionFee + "/人 (基础价格)");
+            }
+            priceList.add(priceItem);
+        }
+        
+        preview.put("coachId", coachId);
+        preview.put("priceList", priceList);
+        preview.put("hasCustomPricing", !coachPrices.isEmpty());
+        preview.put("configuredCount", coachPrices.size());
+        
+        return preview;
+    }
+    
+    /**
+     * 批量获取多个教练的价格预览
+     */
+    public Map<String, Object> batchPreviewCoachPrices(Map<String, Object> courseConfig, List<Long> coachIds) {
+        Map<String, Object> batchPreview = new HashMap<>();
+        
+        Map<String, Map<String, Object>> coachPreviews = new HashMap<>();
+        for (Long coachId : coachIds) {
+            Map<String, Object> preview = previewCoachPricesForAllCounts(courseConfig, coachId);
+            coachPreviews.put(coachId.toString(), preview);
+        }
+        
+        batchPreview.put("coachPreviews", coachPreviews);
+        batchPreview.put("totalCoaches", coachIds.size());
+        
+        // 统计配置完整度
+        long configuredCoaches = coachPreviews.values().stream()
+            .mapToLong(preview -> (Boolean) preview.get("hasCustomPricing") ? 1 : 0)
+            .sum();
+            
+        batchPreview.put("configuredCoaches", configuredCoaches);
+        batchPreview.put("configurationRate", coachIds.isEmpty() ? 0 : (double) configuredCoaches / coachIds.size());
+        
+        return batchPreview;
+    }
+    
+    /**
+     * 辅助方法：从配置Map中获取字符串值
+     */
+    private String getStringFromConfig(Map<String, Object> configData, String key) {
+        Object value = configData.get(key);
+        return value != null ? value.toString() : null;
     }
 }

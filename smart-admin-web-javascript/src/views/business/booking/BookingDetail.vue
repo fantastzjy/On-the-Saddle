@@ -67,11 +67,10 @@
                 ¥{{ bookingDetail.totalFee || 0 }}
               </span>
             </a-descriptions-item>
-            <a-descriptions-item label="教练费用">
-              ¥{{ bookingDetail.actualCoachFee || 0 }}
-            </a-descriptions-item>
-            <a-descriptions-item label="马匹费用">
-              ¥{{ bookingDetail.actualHorseFee || 0 }}
+            <a-descriptions-item label="课时费">
+              <span style="font-size: 18px; font-weight: bold; color: #ff4d4f;">
+                ¥{{ bookingDetail.actualSessionFee || 0 }}
+              </span>
             </a-descriptions-item>
             <a-descriptions-item label="付费方式">
               {{ bookingDetail.paymentMethod || '未设置' }}

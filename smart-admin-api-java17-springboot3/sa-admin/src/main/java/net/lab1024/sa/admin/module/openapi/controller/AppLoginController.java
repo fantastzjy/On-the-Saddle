@@ -17,6 +17,8 @@ import net.lab1024.sa.base.common.annoation.NoNeedLogin;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 /**
  * 小程序统一API控制器
  * 支持会员(usr)和教练(cc)登录
@@ -33,7 +35,13 @@ public class AppLoginController {
     @NoNeedLogin
     @PostMapping("/wxLogin")
     @Operation(summary = "微信小程序统一登录", description = "支持会员(usr)和教练(cc)登录")
-    public ResponseDTO<AppLoginVO> wxLogin(@RequestBody @Valid MemberAppLoginForm form) {
+    public ResponseDTO<AppLoginVO> wxLogin(@RequestBody @Valid MemberAppLoginForm form, HttpServletRequest request) {
+        // 从Header获取俱乐部编码作为备用
+        String clubCodeHeader = request.getHeader("X-Club-Code");
+        if (form.getClubCode() == null && clubCodeHeader != null) {
+            form.setClubCode(clubCodeHeader);
+        }
+        
         return appLoginService.wxLogin(form);
     }
 

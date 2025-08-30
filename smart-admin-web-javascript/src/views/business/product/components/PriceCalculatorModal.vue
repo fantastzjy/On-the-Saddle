@@ -63,7 +63,7 @@
                   :min="1" 
                   :max="10"
                   style="width: 100%"
-                  placeholder="多人课时设置"
+                  placeholder="小组课时设置"
                   @change="onParamChange"
                 />
               </a-form-item>

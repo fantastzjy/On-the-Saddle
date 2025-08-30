@@ -72,23 +72,35 @@ public class AdminInterceptor implements HandlerInterceptor {
             // --------------- 第一步： 根据token 获取用户 ---------------
 
             String tokenValue = StpUtil.getTokenValue();
+            log.info("🔐 [Token调试] 拦截器获取到的tokenValue: {}", tokenValue);
+            log.info("🔐 [Token调试] tokenValue长度: {}", tokenValue != null ? tokenValue.length() : 0);
 
             // 判断是否为会员或教练token
             boolean isMemberToken = tokenValue != null && tokenValue.startsWith(MemberAppConst.MEMBER_TOKEN_PREFIX);
             boolean isCoachToken = tokenValue != null && tokenValue.startsWith(CoachAppConst.COACH_TOKEN_PREFIX);
+            
+            log.info("🔐 [Token调试] isMemberToken: {}, isCoachToken: {}", isMemberToken, isCoachToken);
+            log.info("🔐 [Token调试] MEMBER_TOKEN_PREFIX: {}", MemberAppConst.MEMBER_TOKEN_PREFIX);
+            log.info("🔐 [Token调试] COACH_TOKEN_PREFIX: {}", CoachAppConst.COACH_TOKEN_PREFIX);
 
             String loginId = null;
             if (isMemberToken) {
                 // 会员token：去掉前缀后用StpUtil验证
                 String actualToken = tokenValue.substring(MemberAppConst.MEMBER_TOKEN_PREFIX.length());
+                log.info("🔐 [Token调试] 会员token去除前缀后: {}", actualToken);
                 loginId = (String) StpUtil.getLoginIdByToken(actualToken);
+                log.info("🔐 [Token调试] 会员loginId: {}", loginId);
             } else if (isCoachToken) {
                 // 教练token：去掉前缀后用StpUtil验证
                 String actualToken = tokenValue.substring(CoachAppConst.COACH_TOKEN_PREFIX.length());
+                log.info("🔐 [Token调试] 教练token去除前缀后: {}", actualToken);
                 loginId = (String) StpUtil.getLoginIdByToken(actualToken);
+                log.info("🔐 [Token调试] 教练loginId: {}", loginId);
             } else {
                 // 员工token：直接用StpUtil验证
+                log.info("🔐 [Token调试] 作为员工token处理");
                 loginId = (String) StpUtil.getLoginIdByToken(tokenValue);
+                log.info("🔐 [Token调试] 员工loginId: {}", loginId);
             }
 
             Object requestUser = null;

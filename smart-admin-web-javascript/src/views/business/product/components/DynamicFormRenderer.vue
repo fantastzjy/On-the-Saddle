@@ -13,26 +13,41 @@
       </div>
       
       <a-form v-else :model="formData" :rules="dynamicRules" ref="formRef" v-bind="formProps">
-        <!-- 将字段按行分组 -->
-        <template v-for="(rowFields, rowIndex) in groupedFields" :key="rowIndex">
-          <a-row :gutter="16">
-            <template v-for="field in rowFields" :key="field.key">
-              <!-- 分组标题 -->
-              <a-col :span="24" v-if="field.type === 'group'">
-                <a-divider orientation="left">
-                  <span class="group-title">{{ field.label }}</span>
-                </a-divider>
-              </a-col>
-              
-              <!-- 表单项 -->
-              <a-col :span="getFieldSpan(field)" v-else>
-                <a-form-item 
-                  :label="field.label"
-                  :name="field.key"
-                  :required="field.required"
-                  :help="field.help"
-                  :extra="field.extra"
-                >
+        <div class="form-content-wrapper">
+          <!-- 将字段按行分组 -->
+          <template v-for="(rowFields, rowIndex) in groupedFields" :key="rowIndex">
+            <a-row :gutter="16" justify="center">
+              <template v-for="field in rowFields" :key="field.key">
+                <!-- 分组标题 -->
+                <a-col :span="24" v-if="field.type === 'group'">
+                  <a-divider orientation="left">
+                    <span class="group-title">{{ field.label }}</span>
+                  </a-divider>
+                </a-col>
+                
+                <!-- 小组课价格配置 - 特殊处理，占用整行并居中显示 -->
+                <a-col :span="24" v-else-if="field.type === 'multi-price-config'">
+                  <div class="multi-price-center-wrapper">
+                    <MultiClassPriceConfig
+                      v-model:value="formData[field.key]"
+                      :base-price="getBasePrice()"
+                      :max-students="formData.maxStudents || 5"
+                      :disabled="field.disabled"
+                    />
+                  </div>
+                </a-col>
+                
+                <!-- 普通表单项 -->
+                <a-col :span="18" :md="16" :lg="14" :xl="12" v-else>
+                  <a-form-item 
+                    :label="field.label"
+                    :name="field.key"
+                    :required="field.required"
+                    :help="field.help"
+                    :extra="field.extra"
+                    :label-col="{ span: 8 }"
+                    :wrapper-col="{ span: 16 }"
+                  >
             <!-- 输入框 -->
             <a-input
               v-if="field.type === FORM_FIELD_TYPE_ENUM.INPUT"
@@ -157,15 +172,6 @@
               :disabled="field.disabled"
             />
             
-            <!-- 多人课价格配置 -->
-            <MultiClassPriceConfig
-              v-else-if="field.type === 'multi-price-config'"
-              v-model:value="formData[field.key]"
-              :base-price="getBasePrice()"
-              :max-students="formData.maxStudents || 5"
-              :disabled="field.disabled"
-            />
-            
             <!-- 活动详情图片上传 -->
             <ActivityDetailImageUpload
               v-else-if="field.type === FORM_FIELD_TYPE_ENUM.ACTIVITY_DETAIL_IMAGES || 
@@ -200,6 +206,7 @@
             </template>
           </a-row>
         </template>
+        </div>
       </a-form>
     </a-spin>
   </div>
@@ -604,7 +611,10 @@ defineExpose({
   padding: 8px 0;
 }
 
-/* 输入框宽度控制样式 */
+/* 表单内容包装器 */
+.form-content-wrapper {
+  width: 100%;
+}
 .number-input {
   width: 100%;
   max-width: 200px; /* 数字输入框适中宽度，移除!important */
@@ -633,6 +643,26 @@ defineExpose({
   .datetime-input {
     max-width: none;
     width: 100%;
+  }
+}
+
+/* 小组课价格配置居中样式 */
+.multi-price-center-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0 24px;
+}
+
+.multi-price-center-wrapper > * {
+  width: 100%;
+  max-width: 900px;
+}
+
+/* 响应式设计：小屏幕下减少内边距 */
+@media (max-width: 768px) {
+  .multi-price-center-wrapper {
+    padding: 0 16px;
   }
 }
 

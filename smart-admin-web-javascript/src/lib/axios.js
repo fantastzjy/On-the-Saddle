@@ -75,7 +75,15 @@ smartAxios.interceptors.response.use(
     }
 
     const res = response.data;
-    if (res.code && res.code !== 1) {
+    console.log('Web管理端axios响应处理:', res);
+    
+    // 优化响应判断逻辑 - 使用双重验证
+    // 支持 code=0(标准成功) 或 code=1(兼容) 且 ok=true
+    const isSuccess = (res.code === 0 || res.code === 1) && res.ok === true;
+    
+    if (!isSuccess && res.code) {
+      console.log('Web请求失败，code:', res.code, 'ok:', res.ok, 'msg:', res.msg);
+      
       // `token` 过期或者账号已在别处登录
       if (res.code === 30007 || res.code === 30008) {
         message.destroy();
@@ -107,6 +115,7 @@ smartAxios.interceptors.response.use(
       message.error(res.msg);
       return Promise.reject(response);
     } else {
+      console.log('Web请求成功');
       return Promise.resolve(res);
     }
   },

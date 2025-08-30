@@ -16,6 +16,7 @@ import net.lab1024.sa.admin.module.business.member.domain.vo.ClubInfoVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachListVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CoachSimpleProfileVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.CourseListVO;
+import net.lab1024.sa.admin.module.business.member.domain.vo.TimeSlotInfo;
 import net.lab1024.sa.admin.module.business.member.domain.vo.ClubTypeVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.UnavailableTimeSlotVO;
 import net.lab1024.sa.admin.module.business.member.domain.vo.OrderCreateVO;
@@ -38,9 +39,12 @@ import net.lab1024.sa.admin.module.business.schedule.service.ResourceScheduleSer
 import net.lab1024.sa.admin.module.business.product.dao.ProductDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductCourseDao;
 import net.lab1024.sa.admin.module.business.product.dao.ProductActivityDao;
+import net.lab1024.sa.admin.module.business.product.dao.ProductCoachDao;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCourseEntity;
 import net.lab1024.sa.admin.module.business.product.domain.entity.ProductActivityEntity;
+import net.lab1024.sa.admin.module.business.product.domain.entity.ProductCoachEntity;
+import net.lab1024.sa.admin.module.business.product.service.ProductService;
 import net.lab1024.sa.admin.module.business.horse.dao.HorseDao;
 import net.lab1024.sa.admin.module.business.horse.dao.HorseHealthPlanDao;
 import net.lab1024.sa.admin.module.business.horse.dao.HorseHealthRecordDao;
@@ -76,6 +80,8 @@ import net.lab1024.sa.admin.module.business.product.constant.ProductTypeEnum;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * 小程序首页服务
@@ -99,6 +105,12 @@ public class HomeService {
 
     @Resource
     private ProductCourseDao productCourseDao;
+
+    @Resource
+    private ProductCoachDao productCoachDao;
+
+    @Resource
+    private ProductService productService;
 
     @Resource
     private ProductActivityDao productActivityDao;
@@ -365,7 +377,7 @@ public class HomeService {
     /**
      * 获取课程列表
      */
-    public ResponseDTO<List<CourseListVO>> getCourseList(String clubCode) {
+    public ResponseDTO<List<CourseListVO>> getCourseList(String clubCode, String coachNo) {
         try {
             if (StrUtil.isBlank(clubCode)) {
                 return ResponseDTO.error(UserErrorCode.PARAM_ERROR, "俱乐部编码不能为空");
@@ -388,6 +400,12 @@ public class HomeService {
                     .orderBy(true, true, ProductEntity::getProductId)
             );
 
+            // 查询教练可教授的课程（如果传入了教练参数）
+            Set<Long> coachProductIds = new HashSet<>();
+            if (StrUtil.isNotBlank(coachNo)) {
+                coachProductIds = getCoachProductIds(coachNo);
+            }
+
             // 转换为VO对象
             List<CourseListVO> result = new ArrayList<>();
             for (ProductEntity product : products) {
@@ -402,10 +420,22 @@ public class HomeService {
                 vo.setCourseName(product.getProductName());
 
                 if (courseConfig != null) {
-                    vo.setBasePrice(courseConfig.getBasePrice() != null ? courseConfig.getBasePrice() : BigDecimal.ZERO);
+                    vo.setSessionFee(courseConfig.getSessionFee() != null ? courseConfig.getSessionFee() : BigDecimal.ZERO);
+                    vo.setCoachFee(courseConfig.getCoachFee() != null ? courseConfig.getCoachFee() : BigDecimal.ZERO);
                 } else {
-                    vo.setBasePrice(BigDecimal.ZERO);
+                    vo.setSessionFee(BigDecimal.ZERO);
+                    vo.setCoachFee(BigDecimal.ZERO);
                 }
+
+                // 判断该教练是否可以教授此课程
+                if (StrUtil.isNotBlank(coachNo)) {
+                    vo.setCanBook(coachProductIds.contains(product.getProductId()));
+                } else {
+                    vo.setCanBook(true); // 未指定教练时，所有课程都可选
+                }
+
+                // 获取课程可选时间列表（复用现有逻辑）
+                vo.setAvailableTimeSlots(getCourseAvailableTimeSlots(product.getProductId(), coachNo));
 
                 result.add(vo);
             }
@@ -776,6 +806,14 @@ public class HomeService {
         order.setCoachId(validation.getCoach().getCoachId());
         order.setPreferredTimes(JSONUtil.toJsonStr(form.getTimes()));
 
+        // 设置家庭成员信息
+        order.setSelectedMemberId(form.getSelectedMemberId());
+        order.setSelectedMemberNo(form.getSelectedMemberNo());
+        order.setSelectedMemberName(form.getSelectedMemberName());
+        order.setSelectedMemberPhone(form.getSelectedMemberPhone());
+        order.setIsGuardianPurchase(form.getIsGuardianPurchase());
+        order.setOrderSource(form.getSource());
+
         order.setCreateBy("member");
         order.setCreateTime(LocalDateTime.now());
         return order;
@@ -805,6 +843,7 @@ public class HomeService {
      */
     private OrderCreateVO buildOrderCreateVO(OrderEntity order) {
         OrderCreateVO vo = new OrderCreateVO();
+        vo.setOrderId(order.getOrderId());  // 新增：设置订单主键ID
         vo.setOrderNo(order.getOrderNo());
         vo.setStatus(order.getOrderStatus());
         vo.setCreateTime(order.getCreateTime());
@@ -1235,6 +1274,64 @@ public class HomeService {
                 return GenderEnum.WOMAN.getDesc();
             default:
                 return GenderEnum.UNKNOWN.getDesc();
+        }
+    }
+
+    /**
+     * 根据教练ID获取关联课程（供小程序使用）
+     */
+    public ResponseDTO<List<Map<String, Object>>> getCoachCourses(Long coachId, Long clubId) {
+        return productService.getCoachCourses(coachId, clubId);
+    }
+
+    /**
+     * 获取教练可教授的课程ID列表
+     */
+    private Set<Long> getCoachProductIds(String coachNo) {
+        Set<Long> productIds = new HashSet<>();
+        
+        try {
+            // 根据教练编号查询教练信息
+            CoachEntity coach = coachDao.selectByCoachNo(coachNo);
+            if (coach == null) {
+                log.warn("教练不存在，coachNo: {}", coachNo);
+                return productIds;
+            }
+
+            // 查询教练可教授的课程
+            List<ProductCoachEntity> coachProducts = productCoachDao.selectList(
+                new LambdaQueryWrapper<ProductCoachEntity>()
+                    .eq(ProductCoachEntity::getCoachId, coach.getCoachId())
+            );
+            
+            for (ProductCoachEntity coachProduct : coachProducts) {
+                productIds.add(coachProduct.getProductId());
+            }
+            
+        } catch (Exception e) {
+            log.error("查询教练可教授课程失败，coachNo: {}", coachNo, e);
+        }
+        
+        return productIds;
+    }
+
+    /**
+     * 获取课程可选时间列表（复用现有逻辑）
+     */
+    private List<TimeSlotInfo> getCourseAvailableTimeSlots(Long productId, String coachNo) {
+        try {
+            // 这里需要根据现有的时间槽查询逻辑来实现
+            // 暂时返回空列表，后续可以根据实际的时间槽逻辑来完善
+            List<TimeSlotInfo> timeSlots = new ArrayList<>();
+            
+            // TODO: 实现具体的时间槽查询逻辑
+            // 可能需要查询 m_schedule 表或其他相关表
+            // 查询未来7天的时间槽，根据教练和课程过滤
+            
+            return timeSlots;
+        } catch (Exception e) {
+            log.error("获取课程时间槽失败，productId: {}, coachNo: {}", productId, coachNo, e);
+            return new ArrayList<>();
         }
     }
 }

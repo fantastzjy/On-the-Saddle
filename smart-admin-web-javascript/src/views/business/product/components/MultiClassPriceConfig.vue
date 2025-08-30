@@ -1,5 +1,5 @@
 <!--
-  * 多人课价格配置组件 - 动态配置版本
+  * 小组课价格配置组件 - 动态配置版本
   *
   * @Author: 1024创新实验室
   * @Date: 2024-08-16
@@ -389,7 +389,7 @@ function parseConfigValue(value) {
       }
     }
   } catch (e) {
-    console.warn('解析多人课价格配置失败:', e);
+    console.warn('解析小组课价格配置失败:', e);
     resetConfigs();
   }
 }

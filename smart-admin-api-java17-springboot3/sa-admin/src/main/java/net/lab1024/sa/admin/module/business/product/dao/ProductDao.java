@@ -49,6 +49,11 @@ public interface ProductDao extends BaseMapper<ProductEntity> {
     Page<ProductListVO> queryProductList(Page<ProductEntity> page, @Param("queryForm") ProductQueryForm queryForm);
 
     /**
+     * 分页查询商品列表（增强版 - 关联课程和课时包详情）
+     */
+    Page<ProductListVO> queryProductListWithDetails(Page<ProductEntity> page, @Param("queryForm") ProductQueryForm queryForm);
+
+    /**
      * 查询商品详情（关联查询相关配置信息）
      */
     ProductDetailVO getProductDetail(@Param("productId") Long productId);

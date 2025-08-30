@@ -54,14 +54,9 @@
                 {{ scheduleDetail.lessonStatusName }}
               </a-tag>
             </a-descriptions-item>
-            <a-descriptions-item label="教练费用">
+            <a-descriptions-item label="课时费">
               <span style="font-size: 18px; font-weight: bold; color: #ff4d4f;">
-                ¥{{ scheduleDetail.actualCoachFee || 0 }}
-              </span>
-            </a-descriptions-item>
-            <a-descriptions-item label="马匹费用">
-              <span style="font-size: 16px; color: #666;">
-                ¥{{ scheduleDetail.actualHorseFee || 0 }}
+                ¥{{ scheduleDetail.actualSessionFee || 0 }}
               </span>
             </a-descriptions-item>
           </a-descriptions>

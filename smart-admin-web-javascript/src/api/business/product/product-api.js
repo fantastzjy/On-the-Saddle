@@ -109,8 +109,8 @@ export const productApi = {
   },
 
   // 更新商品教练关联
-  updateProductCoaches: (productId, coachIds) => {
-    return postRequest('/api/admin/product/coaches/update', { productId, coachIds });
+  updateProductCoaches: (data) => {
+    return postRequest('/api/admin/product/coaches/update', data);
   },
 
   // ==================== 数据统计 ====================

@@ -47,7 +47,10 @@ public class ProductCourseEntity {
     @DataTracerFieldLabel("基础单价")
     private BigDecimal basePrice;
 
-    @DataTracerFieldLabel("多人课价格配置")
+    @DataTracerFieldLabel("课时费")
+    private BigDecimal sessionFee;
+
+    @DataTracerFieldLabel("小组课价格配置")
     private String multiPriceConfig;
 
     private String createBy;

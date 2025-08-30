@@ -90,6 +90,28 @@
           </a-tag>
         </template>
 
+        <template v-if="column.dataIndex === 'classType'">
+          <a-tag v-if="text" :color="getClassTypeColor(text)">
+            {{ getClassTypeDesc(text) }}
+          </a-tag>
+          <span v-else>-</span>
+        </template>
+
+        <template v-if="column.dataIndex === 'priceDisplay'">
+          <div style="text-align: left; max-width: 240px;">
+            <span v-if="text">{{ text }}</span>
+            <span v-else>-</span>
+          </div>
+        </template>
+
+        <template v-if="column.dataIndex === 'durationCapacity'">
+          <div style="font-size: 12px; line-height: 1.4;">
+            <div v-if="record.durationDisplay">{{ record.durationDisplay }}</div>
+            <div v-if="record.capacityDisplay" style="color: #666;">{{ record.capacityDisplay }}</div>
+            <span v-if="!record.durationDisplay && !record.capacityDisplay">-</span>
+          </div>
+        </template>
+
         <template v-if="column.dataIndex === 'images'">
           <!-- 图片字段已移除 -->
         </template>
@@ -168,7 +190,8 @@ import { productApi } from '/@/api/business/product/product-api';
 import {
   PRODUCT_MANAGEMENT_TYPE_ENUM,
   PRODUCT_TABLE_COLUMNS,
-  PRODUCT_SEARCH_FORM
+  PRODUCT_SEARCH_FORM,
+  COURSE_CLASS_TYPE_ENUM
 } from '/@/constants/business/product/product-const';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
@@ -295,6 +318,18 @@ function getProductTypeColor(value) {
   const colorMap = {
     [PRODUCT_MANAGEMENT_TYPE_ENUM.COURSE.value]: 'blue',
     [PRODUCT_MANAGEMENT_TYPE_ENUM.PACKAGE.value]: 'green'
+  };
+  return colorMap[value] || 'default';
+}
+
+function getClassTypeDesc(value) {
+  return Object.values(COURSE_CLASS_TYPE_ENUM).find(item => item.value === value)?.desc || '-';
+}
+
+function getClassTypeColor(value) {
+  const colorMap = {
+    [COURSE_CLASS_TYPE_ENUM.SINGLE.value]: 'cyan',
+    [COURSE_CLASS_TYPE_ENUM.MULTI.value]: 'orange'
   };
   return colorMap[value] || 'default';
 }

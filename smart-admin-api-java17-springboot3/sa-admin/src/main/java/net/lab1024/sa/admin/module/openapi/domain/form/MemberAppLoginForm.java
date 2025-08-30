@@ -29,6 +29,9 @@ public class MemberAppLoginForm {
     @Schema(description = "俱乐部ID")
     private Long clubId;
 
+    @Schema(description = "俱乐部编码")
+    private String clubCode;
+
     @Schema(description = "登录角色类型：usr=会员, cc=教练")
     @NotBlank(message = "登录角色不能为空")
     private String role;

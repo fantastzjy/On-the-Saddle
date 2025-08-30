@@ -2,6 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.lab1024.sa.admin.module.business.product.dao.ProductDao">
 
+    <!-- === 基础查询 === -->
+
     <!-- 根据俱乐部ID查询商品列表 -->
     <select id="selectByClubId" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
         SELECT * FROM m_product
@@ -23,11 +25,154 @@
         LIMIT 1
     </select>
 
+    <!-- === 商品管理功能查询 === -->
+
+    <!-- 分页查询商品列表（基础版） -->
+    <select id="queryProductList" resultType="net.lab1024.sa.admin.module.business.product.domain.vo.ProductListVO">
+        SELECT
+            p.product_id,
+            p.club_id,
+            p.product_name,
+            p.product_code,
+            p.product_type,
+            p.sub_type,
+            p.create_by,
+            p.create_time,
+            p.update_by,
+            p.update_time
+        FROM m_product p
+        WHERE p.is_delete = 0
+        AND p.product_type IN (1, 2)  -- 只查询课程和课时包
+        <if test="queryForm.clubId != null">
+            AND p.club_id = #{queryForm.clubId}
+        </if>
+        <if test="queryForm.productName != null and queryForm.productName != ''">
+            AND p.product_name LIKE CONCAT('%', #{queryForm.productName}, '%')
+        </if>
+        <if test="queryForm.productCode != null and queryForm.productCode != ''">
+            AND p.product_code LIKE CONCAT('%', #{queryForm.productCode}, '%')
+        </if>
+        <if test="queryForm.productType != null">
+            AND p.product_type = #{queryForm.productType}
+        </if>
+        <if test="queryForm.keyword != null and queryForm.keyword != ''">
+            AND (p.product_name LIKE CONCAT('%', #{queryForm.keyword}, '%')
+                OR p.product_code LIKE CONCAT('%', #{queryForm.keyword}, '%'))
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <!-- 分页查询商品列表（增强版 - 关联课程和课时包详情） -->
+    <select id="queryProductListWithDetails" resultType="net.lab1024.sa.admin.module.business.product.domain.vo.ProductListVO">
+        SELECT
+            p.product_id,
+            p.club_id,
+            p.product_name,
+            p.product_code,
+            p.product_type,
+            p.sub_type,
+            p.create_by,
+            p.create_time,
+            p.update_by,
+            p.update_time,
+
+            -- 课程相关字段
+            pc.class_type,
+            pc.session_fee,
+            pc.duration_periods,
+            pc.duration_minutes,
+            pc.max_students,
+            pc.multi_price_config,
+
+            -- 课时包相关字段
+            pp.total_sessions,
+            pp.validity_days,
+            pp.stock_quantity,
+            pp.price as package_price
+
+        FROM m_product p
+        LEFT JOIN m_product_course pc ON p.product_id = pc.product_id AND p.product_type = 1
+        LEFT JOIN m_product_package pp ON p.product_id = pp.product_id AND p.product_type = 2
+        WHERE p.is_delete = 0
+        AND p.product_type IN (1, 2)  -- 只查询课程和课时包
+        <if test="queryForm.clubId != null">
+            AND p.club_id = #{queryForm.clubId}
+        </if>
+        <if test="queryForm.productName != null and queryForm.productName != ''">
+            AND p.product_name LIKE CONCAT('%', #{queryForm.productName}, '%')
+        </if>
+        <if test="queryForm.productCode != null and queryForm.productCode != ''">
+            AND p.product_code LIKE CONCAT('%', #{queryForm.productCode}, '%')
+        </if>
+        <if test="queryForm.productType != null">
+            AND p.product_type = #{queryForm.productType}
+        </if>
+        <if test="queryForm.keyword != null and queryForm.keyword != ''">
+            AND (p.product_name LIKE CONCAT('%', #{queryForm.keyword}, '%')
+                OR p.product_code LIKE CONCAT('%', #{queryForm.keyword}, '%'))
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <!-- 查询商品详情 -->
+    <select id="getProductDetail" resultType="net.lab1024.sa.admin.module.business.product.domain.vo.ProductDetailVO">
+        SELECT
+            p.*,
+            pc.class_type,
+            pc.session_fee,
+            pc.duration_periods,
+            pc.duration_minutes,
+            pc.max_students,
+            pc.multi_price_config,
+            pp.total_sessions,
+            pp.validity_days,
+            pp.stock_quantity,
+            pp.price as package_price
+        FROM m_product p
+        LEFT JOIN m_product_course pc ON p.product_id = pc.product_id
+        LEFT JOIN m_product_package pp ON p.product_id = pp.product_id
+        WHERE p.product_id = #{productId} AND p.is_delete = 0
+    </select>
+
+    <!-- 统计商品数量 -->
+    <select id="countProductsByClub" resultType="int">
+        SELECT COUNT(*) FROM m_product
+        WHERE club_id = #{clubId} AND is_delete = 0
+    </select>
+
+    <!-- 查询热门商品 -->
+    <select id="getPopularProducts" resultType="net.lab1024.sa.admin.module.business.product.domain.vo.ProductListVO">
+        SELECT
+            p.product_id,
+            p.product_name,
+            p.product_code,
+            p.product_type,
+            pc.session_fee,
+            pp.price as package_price
+        FROM m_product p
+        LEFT JOIN m_product_course pc ON p.product_id = pc.product_id
+        LEFT JOIN m_product_package pp ON p.product_id = pp.product_id
+        WHERE p.club_id = #{clubId} AND p.is_delete = 0
+        ORDER BY p.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 检查商品编码是否存在 -->
+    <select id="checkProductCodeExists" resultType="int">
+        SELECT COUNT(*) FROM m_product
+        WHERE product_code = #{productCode}
+        AND club_id = #{clubId}
+        AND is_delete = 0
+        <if test="excludeId != null">
+            AND product_id != #{excludeId}
+        </if>
+    </select>
+
     <!-- === AI服务专用查询 === -->
-    
+
     <!-- 查询课程类产品（AI候选数据用） -->
     <select id="selectCourseProducts" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
-        SELECT 
+        SELECT
             product_id,
             club_id,
             product_code,
@@ -36,51 +181,51 @@
             sub_type,
             create_time
         FROM m_product
-        WHERE is_delete = 0 
+        WHERE is_delete = 0
         AND is_valid = 1
-        AND product_type IN (1, 2, 3, 4, 5, 6)  -- 课程类产品类型
+        AND product_type IN (1, 2)  -- 课程类产品类型
         <if test="clubId != null">
             AND club_id = #{clubId}
         </if>
         ORDER BY create_time DESC
         LIMIT 50
     </select>
-    
+
     <!-- 根据课程编码查询产品 -->
     <select id="selectByCourseCode" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
         SELECT * FROM m_product
-        WHERE product_code = #{courseCode} 
-        AND is_delete = 0 
+        WHERE product_code = #{courseCode}
+        AND is_delete = 0
         AND is_valid = 1
         <if test="clubId != null">
             AND club_id = #{clubId}
         </if>
         LIMIT 1
     </select>
-    
+
     <!-- 根据课程名称查询产品 -->
     <select id="selectByCourseName" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
         SELECT * FROM m_product
-        WHERE product_name = #{courseName} 
-        AND is_delete = 0 
+        WHERE product_name = #{courseName}
+        AND is_delete = 0
         AND is_valid = 1
         <if test="clubId != null">
             AND club_id = #{clubId}
         </if>
         LIMIT 1
     </select>
-    
+
     <!-- 根据课程名称模糊查询产品 -->
     <select id="selectByFuzzyCourseName" resultType="net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity">
         SELECT * FROM m_product
         WHERE product_name LIKE CONCAT('%', #{courseName}, '%')
-        AND is_delete = 0 
+        AND is_delete = 0
         AND is_valid = 1
         <if test="clubId != null">
             AND club_id = #{clubId}
         </if>
-        ORDER BY 
-            CASE 
+        ORDER BY
+            CASE
                 WHEN product_name = #{courseName} THEN 1
                 WHEN product_name LIKE CONCAT(#{courseName}, '%') THEN 2
                 ELSE 3

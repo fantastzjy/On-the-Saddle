@@ -48,4 +48,22 @@ public class OrderCreateForm {
     @Schema(description = "总计", required = true)
     @NotNull(message = "总计不能为空")
     private BigDecimal totalAmount;
+
+    @Schema(description = "被服务会员ID")
+    private Long selectedMemberId;
+
+    @Schema(description = "被服务会员编号")
+    private String selectedMemberNo;
+
+    @Schema(description = "被服务会员姓名")
+    private String selectedMemberName;
+
+    @Schema(description = "被服务会员手机号")
+    private String selectedMemberPhone;
+
+    @Schema(description = "是否为监护人购买：false-否 true-是")
+    private Boolean isGuardianPurchase;
+
+    @Schema(description = "订单来源：1-手动下单 2-语音约课")
+    private Integer source;
 }

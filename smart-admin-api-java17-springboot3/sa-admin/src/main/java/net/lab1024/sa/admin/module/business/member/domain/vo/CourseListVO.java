@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 课程列表信息VO
@@ -22,6 +23,15 @@ public class CourseListVO {
     @Schema(description = "课程编码")
     private String courseCode;
 
-    @Schema(description = "基础单价")
-    private BigDecimal basePrice;
+    @Schema(description = "课时费")
+    private BigDecimal sessionFee;
+
+    @Schema(description = "教练费")
+    private BigDecimal coachFee;
+
+    @Schema(description = "该教练是否可以教授此课程")
+    private Boolean canBook;
+
+    @Schema(description = "课程可选时间列表")
+    private List<TimeSlotInfo> availableTimeSlots;
 }

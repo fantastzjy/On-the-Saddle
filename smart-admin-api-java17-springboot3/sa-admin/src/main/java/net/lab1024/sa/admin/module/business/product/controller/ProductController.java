@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductUpdateForm;
+import net.lab1024.sa.admin.module.business.product.domain.form.UpdateProductCoachesForm;
 import net.lab1024.sa.admin.module.business.product.domain.vo.ProductDetailVO;
 import net.lab1024.sa.admin.module.business.product.domain.vo.ProductListVO;
 import net.lab1024.sa.admin.module.business.product.service.DynamicFormConfigService;
@@ -218,16 +219,13 @@ public class ProductController extends SupportBaseController {
     @Operation(summary = "获取商品关联教练")
     @GetMapping("/coaches/{productId}")
     public ResponseDTO<List<Map<String, Object>>> getProductCoaches(@PathVariable Long productId) {
-        // 简化实现，返回基础数据
-        List<Map<String, Object>> coaches = new ArrayList<>();
-        return ResponseDTO.ok(coaches);
+        return productService.getProductCoaches(productId);
     }
 
     @Operation(summary = "更新商品教练关联")
     @PostMapping("/coaches/update")
-    public ResponseDTO<String> updateProductCoaches(@RequestBody Map<String, Object> params) {
-        // 简化实现
-        return ResponseDTO.ok("更新成功");
+    public ResponseDTO<String> updateProductCoaches(@Valid @RequestBody UpdateProductCoachesForm form) {
+        return productService.updateProductCoaches(form.getProductId(), form.getCoachIds(), form.getOperator());
     }
 
     @Operation(summary = "商品统计信息")

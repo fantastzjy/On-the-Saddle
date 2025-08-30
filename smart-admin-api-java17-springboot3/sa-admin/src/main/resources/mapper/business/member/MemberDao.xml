@@ -270,4 +270,14 @@
         ORDER BY m.birth_date DESC
     </select>
 
+    <!-- 查询指定前缀的最大会员编号 -->
+    <select id="selectMaxMemberNoByPrefix" resultType="java.lang.String">
+        SELECT member_no 
+        FROM m_member 
+        WHERE member_no LIKE CONCAT(#{prefix}, '%') 
+          AND is_delete = 0
+        ORDER BY member_no DESC 
+        LIMIT 1
+    </select>
+
 </mapper>

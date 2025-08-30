@@ -27,7 +27,12 @@ public interface MemberDao extends BaseMapper<MemberEntity> {
     List<MemberVO> queryPage(Page<?> page, @Param("queryForm") MemberQueryForm queryForm);
 
     /**
-     * 根据会员编号查询
+     * 查询指定前缀的最大会员编号
+     */
+    String selectMaxMemberNoByPrefix(@Param("prefix") String prefix);
+
+    /**
+     * 根据会员编号查询会员
      */
     MemberEntity selectByMemberNo(@Param("memberNo") String memberNo);
 

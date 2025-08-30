@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 @Schema(description = "订单创建响应信息")
 public class OrderCreateVO {
 
+    @Schema(description = "订单ID")
+    private Long orderId;
+
     @Schema(description = "订单号")
     private String orderNo;
 

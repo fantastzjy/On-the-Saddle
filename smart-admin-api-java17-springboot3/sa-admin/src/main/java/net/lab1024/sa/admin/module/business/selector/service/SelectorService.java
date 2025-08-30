@@ -155,7 +155,15 @@ public class SelectorService {
             vo.setCoachId(coach.getCoachId());
             vo.setUserName(coach.getActualName());
             vo.setCoachNo(coach.getCoachNo());
-            vo.setDisplayLabel(coach.getActualName() + " (" + coach.getCoachNo() + ")");
+            
+            // 根据参数决定显示格式：教练费 或 教练编号
+            if (Boolean.TRUE.equals(form.getShowCoachFee()) && coach.getCoachFee() != null) {
+                String feeDisplay = "¥" + coach.getCoachFee().setScale(0, java.math.RoundingMode.HALF_UP);
+                vo.setDisplayLabel(coach.getActualName() + " (" + feeDisplay + ")");
+            } else {
+                vo.setDisplayLabel(coach.getActualName() + " (" + coach.getCoachNo() + ")");
+            }
+            
             return vo;
         }).collect(Collectors.toList());
     }

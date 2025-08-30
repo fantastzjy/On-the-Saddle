@@ -10,6 +10,7 @@ import net.lab1024.sa.admin.module.business.product.domain.entity.*;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductUpdateForm;
+import net.lab1024.sa.admin.module.business.product.domain.form.CoachPriceFormItem;
 import net.lab1024.sa.admin.module.business.product.domain.vo.ProductDetailVO;
 import net.lab1024.sa.admin.module.business.product.domain.vo.ProductListVO;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -52,6 +53,9 @@ public class ProductService {
     private ProductActivityDao productActivityDao;
 
     @Autowired
+    private ProductCoachDao productCoachDao;
+
+    @Autowired
     private FileService fileService;
 
     @Autowired
@@ -67,15 +71,14 @@ public class ProductService {
     public ResponseDTO<PageResult<ProductListVO>> queryProductList(ProductQueryForm queryForm) {
         try {
             Page<ProductEntity> page = new Page<>(queryForm.getPageNum(), queryForm.getPageSize());
-            LambdaQueryWrapper<ProductEntity> queryWrapper = buildQueryWrapper(queryForm);
+            
+            // 使用增强版查询，直接获取包含课程和课时包详情的数据
+            Page<ProductListVO> pageResult = productDao.queryProductListWithDetails(page, queryForm);
 
-            IPage<ProductEntity> pageResult = productDao.selectPage(page, queryWrapper);
+            // 转换为PageResult
+            PageResult<ProductListVO> result = SmartPageUtil.convert2PageResult(pageResult, pageResult.getRecords(), ProductListVO.class);
 
-            // 创建一个新的Page对象来传递给SmartPageUtil
-            Page<ProductEntity> resultPage = new Page<>(pageResult.getCurrent(), pageResult.getSize(), pageResult.getTotal());
-            PageResult<ProductListVO> result = SmartPageUtil.convert2PageResult(resultPage, pageResult.getRecords(), ProductListVO.class);
-
-            // 补充额外信息
+            // 补充额外信息（增强价格显示等）
             enhanceProductListData(result.getList());
 
             log.info("查询商品列表成功，共{}条记录", result.getTotal());
@@ -117,6 +120,9 @@ public class ProductService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> addProduct(ProductAddForm addForm, Long operatorId) {
         try {
+            // 验证教练价格配置（小组课）
+            validateCoachPriceConfig(addForm);
+            
             // 设置默认俱乐部ID（如果没有提供）
             if (addForm.getClubId() == null) {
                 addForm.setClubId(1L); // 设置默认俱乐部ID，后续可以从用户信息中获取
@@ -147,6 +153,11 @@ public class ProductService {
 
             // 保存商品扩展配置 - 优先使用表单中的直接字段
             saveProductExtendedConfigFromForm(productEntity.getProductId(), addForm);
+            
+            // 保存教练课程关联关系（课程类型）
+            if (addForm.getProductType() == 1 && addForm.getCoachIds() != null && !addForm.getCoachIds().isEmpty()) {
+                saveProductCoachAssociations(productEntity.getProductId(), addForm.getCoachIds(), operatorId.toString());
+            }
 
             log.info("新增商品成功，商品ID: {}", productEntity.getProductId());
             return ResponseDTO.ok();
@@ -163,6 +174,9 @@ public class ProductService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<String> updateProduct(ProductUpdateForm updateForm, Long operatorId) {
         try {
+            // 验证教练价格配置（小组课）
+            validateCoachPriceConfig(updateForm);
+            
             ProductEntity existProduct = productDao.selectById(updateForm.getProductId());
             if (existProduct == null || existProduct.getIsDelete().equals(1)) {
                 return ResponseDTO.userErrorParam("商品不存在");
@@ -184,6 +198,16 @@ public class ProductService {
 
             // 更新商品扩展配置 - 优先使用表单中的直接字段
             saveProductExtendedConfigFromForm(updateForm.getProductId(), updateForm);
+            
+            // 更新教练课程关联关系（课程类型）
+            if (updateForm.getProductType() == 1) {
+                if (updateForm.getCoachIds() != null && !updateForm.getCoachIds().isEmpty()) {
+                    saveProductCoachAssociations(updateForm.getProductId(), updateForm.getCoachIds(), operatorId.toString());
+                } else {
+                    // 如果没有教练ID，删除所有关联
+                    productCoachDao.deleteByProductId(updateForm.getProductId());
+                }
+            }
 
             log.info("编辑商品成功，商品ID: {}", updateForm.getProductId());
             return ResponseDTO.ok();
@@ -365,7 +389,7 @@ public class ProductService {
         LambdaQueryWrapper<ProductEntity> wrapper = new LambdaQueryWrapper<>();
 
         wrapper.eq(ProductEntity::getIsDelete, false);
-        
+
         // 产品管理只支持课程(1)和课时包(2)，过滤掉活动类型(3)
         wrapper.in(ProductEntity::getProductType, 1, 2);
 
@@ -502,7 +526,7 @@ public class ProductService {
     }
 
     /**
-     * 从表单保存课程配置
+     * 从表单保存课程配置（支持教练价格配置）
      */
     private void saveCourseConfigFromForm(Long productId, Object form) {
         try {
@@ -515,30 +539,43 @@ public class ProductService {
             ProductCourseEntity courseEntity = new ProductCourseEntity();
             courseEntity.setProductId(productId);
 
-            // 从表单对象提取字段值
+            // 从表单对象提取字段值（只处理课时费）
             if (form instanceof ProductAddForm) {
                 ProductAddForm addForm = (ProductAddForm) form;
                 courseEntity.setClassType(addForm.getClassType());
                 courseEntity.setDurationMinutes(addForm.getDurationMinutes());
                 courseEntity.setDurationPeriods(addForm.getDurationPeriods());
                 courseEntity.setMaxStudents(addForm.getMaxStudents());
-                courseEntity.setCoachFee(addForm.getCoachFee());
-                courseEntity.setHorseFee(addForm.getHorseFee());
-                courseEntity.setMultiPriceConfig(addForm.getMultiPriceConfig());
+                courseEntity.setSessionFee(addForm.getSessionFee());
+                
+                // 处理教练价格配置（小组课专用）
+                if (addForm.getClassType() != null && addForm.getClassType() == 2) {
+                    String coachPriceConfigJson = buildCoachPriceConfigJson(addForm.getCoachPriceList());
+                    courseEntity.setMultiPriceConfig(coachPriceConfigJson);
+                } else {
+                    courseEntity.setMultiPriceConfig(null);
+                }
+                
             } else if (form instanceof ProductUpdateForm) {
                 ProductUpdateForm updateForm = (ProductUpdateForm) form;
                 courseEntity.setClassType(updateForm.getClassType());
                 courseEntity.setDurationMinutes(updateForm.getDurationMinutes());
                 courseEntity.setDurationPeriods(updateForm.getDurationPeriods());
                 courseEntity.setMaxStudents(updateForm.getMaxStudents());
-                courseEntity.setCoachFee(updateForm.getCoachFee());
-                courseEntity.setHorseFee(updateForm.getHorseFee());
-                courseEntity.setMultiPriceConfig(updateForm.getMultiPriceConfig());
+                courseEntity.setSessionFee(updateForm.getSessionFee());
+                
+                // 处理教练价格配置（小组课专用）
+                if (updateForm.getClassType() != null && updateForm.getClassType() == 2) {
+                    String coachPriceConfigJson = buildCoachPriceConfigJson(updateForm.getCoachPriceList());
+                    courseEntity.setMultiPriceConfig(coachPriceConfigJson);
+                } else {
+                    courseEntity.setMultiPriceConfig(null);
+                }
             }
 
-            // 计算基础价格：coach_fee + horse_fee
-            if (courseEntity.getCoachFee() != null && courseEntity.getHorseFee() != null) {
-                courseEntity.setBasePrice(courseEntity.getCoachFee().add(courseEntity.getHorseFee()));
+            // 基础价格直接等于课时费
+            if (courseEntity.getSessionFee() != null) {
+                courseEntity.setBasePrice(courseEntity.getSessionFee());
             }
 
             courseEntity.setCreateTime(LocalDateTime.now());
@@ -719,14 +756,16 @@ public class ProductService {
             courseEntity.setDurationMinutes(getIntegerFromConfig(configData, "durationMinutes"));
             courseEntity.setDurationPeriods(getBigDecimalFromConfig(configData, "durationPeriods"));
             courseEntity.setMaxStudents(getIntegerFromConfig(configData, "maxStudents"));
-            courseEntity.setCoachFee(getBigDecimalFromConfig(configData, "coachFee"));
-            courseEntity.setHorseFee(getBigDecimalFromConfig(configData, "horseFee"));
-            courseEntity.setMultiPriceConfig(getStringFromConfig(configData, "multiPriceConfig"));
 
-            // 计算基础价格：coach_fee + horse_fee
-            if (courseEntity.getCoachFee() != null && courseEntity.getHorseFee() != null) {
-                courseEntity.setBasePrice(courseEntity.getCoachFee().add(courseEntity.getHorseFee()));
+            // 处理课时费（只使用课时费）
+            BigDecimal sessionFee = getBigDecimalFromConfig(configData, "sessionFee");
+            if (sessionFee == null) {
+                sessionFee = BigDecimal.valueOf(0); // 默认值
             }
+            courseEntity.setSessionFee(sessionFee);
+            courseEntity.setBasePrice(sessionFee);
+
+            courseEntity.setMultiPriceConfig(getStringFromConfig(configData, "multiPriceConfig"));
 
             courseEntity.setCreateTime(LocalDateTime.now());
             courseEntity.setUpdateTime(LocalDateTime.now());
@@ -844,16 +883,148 @@ public class ProductService {
     }
 
     /**
-     * 补充商品列表数据
+     * 补充商品列表数据（增强版，支持课程详情和价格配置）
      */
     private void enhanceProductListData(List<ProductListVO> productList) {
         for (ProductListVO product : productList) {
             // 设置类型名称
             product.setProductTypeName(getProductTypeName(product.getProductType()));
 
-            // 设置价格信息和库存信息（示例）
-            product.setPriceInfo("¥200起");
-            product.setStockInfo(product.getProductType() == 2 ? "库存100" : "无限");
+            // 根据商品类型设置详细信息
+            if (product.getProductType() == 1) { // 课程
+                enhanceCourseData(product);
+            } else if (product.getProductType() == 2) { // 课时包
+                enhancePackageData(product);
+            }
+
+            // 设置兼容的旧字段
+            product.setPriceInfo(product.getPriceDisplay());
+            product.setStockInfo(product.getCapacityDisplay());
+        }
+    }
+
+    /**
+     * 增强课程数据
+     */
+    private void enhanceCourseData(ProductListVO product) {
+        // 设置课程分类名称
+        product.setClassTypeName(getClassTypeName(product.getClassType()));
+        
+        // 根据课程分类设置价格显示
+        if (product.getClassType() != null && product.getClassType() == 2) {
+            // 小组课：解析多人价格配置
+            parseMultiPriceConfig(product);
+        } else {
+            // 单人课：简单显示课时费
+            if (product.getSessionFee() != null) {
+                product.setPriceDisplay("¥" + product.getSessionFee() + "/节");
+            }
+        }
+        
+        // 设置时长显示
+        if (product.getDurationMinutes() != null && product.getDurationMinutes() > 0) {
+            product.setDurationDisplay(product.getDurationMinutes() + "分钟");
+        } else if (product.getDurationPeriods() != null) {
+            product.setDurationDisplay(product.getDurationPeriods() + "鞍时");
+        }
+        
+        // 设置容量显示
+        if (product.getMaxStudents() != null) {
+            product.setCapacityDisplay("最多" + product.getMaxStudents() + "人");
+        }
+    }
+
+    /**
+     * 增强课时包数据
+     */
+    private void enhancePackageData(ProductListVO product) {
+        // 设置价格显示
+        if (product.getPackagePrice() != null) {
+            product.setPriceDisplay("¥" + product.getPackagePrice() + "/包");
+        }
+        
+        // 设置时长显示
+        if (product.getTotalSessions() != null) {
+            product.setDurationDisplay(product.getTotalSessions() + "课时");
+        }
+        
+        // 设置容量显示（库存）
+        if (product.getStockQuantity() != null) {
+            product.setCapacityDisplay("库存" + product.getStockQuantity());
+        }
+    }
+
+    /**
+     * 解析小组课多人价格配置
+     */
+    private void parseMultiPriceConfig(ProductListVO product) {
+        if (product.getMultiPriceConfig() == null || product.getMultiPriceConfig().trim().isEmpty()) {
+            // 没有多人价格配置，使用基础课时费
+            if (product.getSessionFee() != null) {
+                product.setPriceDisplay("¥" + product.getSessionFee() + "/节");
+            }
+            return;
+        }
+        
+        try {
+            // 解析JSON配置
+            @SuppressWarnings("unchecked")
+            Map<String, Object> priceConfigMap = JSON.parseObject(product.getMultiPriceConfig(), Map.class);
+            
+            List<ProductListVO.PriceConfigItem> priceItems = new ArrayList<>();
+            StringBuilder priceDisplay = new StringBuilder();
+            
+            // 按人数排序处理
+            priceConfigMap.entrySet().stream()
+                .sorted(Map.Entry.<String, Object>comparingByKey((k1, k2) -> {
+                    try {
+                        return Integer.compare(Integer.valueOf(k1), Integer.valueOf(k2));
+                    } catch (NumberFormatException e) {
+                        return k1.compareTo(k2);
+                    }
+                }))
+                .forEach(entry -> {
+                    try {
+                        Integer count = Integer.valueOf(entry.getKey());
+                        BigDecimal price = new BigDecimal(entry.getValue().toString());
+                        
+                        ProductListVO.PriceConfigItem item = new ProductListVO.PriceConfigItem();
+                        item.setParticipantCount(count);
+                        item.setPricePerPerson(price);
+                        item.setDisplayText(count + "人¥" + price + "/人");
+                        priceItems.add(item);
+                        
+                        if (priceDisplay.length() > 0) {
+                            priceDisplay.append("；");
+                        }
+                        priceDisplay.append(item.getDisplayText());
+                    } catch (Exception e) {
+                        log.warn("解析价格配置项失败: {}", entry, e);
+                    }
+                });
+            
+            product.setPriceConfigs(priceItems);
+            product.setMultiPriceDisplay(priceDisplay.toString());
+            product.setPriceDisplay("小组课：" + priceDisplay.toString());
+            
+        } catch (Exception e) {
+            log.error("解析小组课价格配置失败，商品ID: {}, 配置: {}", product.getProductId(), product.getMultiPriceConfig(), e);
+            // 解析失败，使用基础价格
+            if (product.getSessionFee() != null) {
+                product.setPriceDisplay("¥" + product.getSessionFee() + "/节");
+            }
+        }
+    }
+
+    /**
+     * 获取课程分类名称
+     */
+    private String getClassTypeName(Integer classType) {
+        if (classType == null) return null;
+        switch (classType) {
+            case 1: return "单人课";
+            case 2: return "小组课";
+            default: return "未知";
         }
     }
 
@@ -905,8 +1076,7 @@ public class ProductService {
                 courseDetails.put("durationMinutes", courseEntity.getDurationMinutes());
                 courseDetails.put("durationPeriods", courseEntity.getDurationPeriods());
                 courseDetails.put("maxStudents", courseEntity.getMaxStudents());
-                courseDetails.put("coachFee", courseEntity.getCoachFee());
-                courseDetails.put("horseFee", courseEntity.getHorseFee());
+                courseDetails.put("sessionFee", courseEntity.getSessionFee());
                 courseDetails.put("basePrice", courseEntity.getBasePrice());
                 courseDetails.put("multiPriceConfig", courseEntity.getMultiPriceConfig());
             }
@@ -985,6 +1155,212 @@ public class ProductService {
         } catch (Exception e) {
             log.error("获取活动详情失败，商品ID: {}", productId, e);
             return new HashMap<>();
+        }
+    }
+
+    // ========================================
+    // 教练课程绑定相关方法 (新增功能)
+    // ========================================
+
+    /**
+     * 获取产品关联的教练列表
+     */
+    public ResponseDTO<List<Map<String, Object>>> getProductCoaches(Long productId) {
+        try {
+            List<Map<String, Object>> coaches = productCoachDao.selectProductCoachDetails(productId);
+            return ResponseDTO.ok(coaches);
+        } catch (Exception e) {
+            log.error("获取产品教练失败，productId: {}", productId, e);
+            return ResponseDTO.userErrorParam("获取产品教练失败");
+        }
+    }
+
+    /**
+     * 更新产品教练关联
+     */
+    @Transactional
+    public ResponseDTO<String> updateProductCoaches(Long productId, List<Long> coachIds, String operator) {
+        try {
+            // 1. 删除原有关联
+            productCoachDao.deleteByProductId(productId);
+
+            // 2. 批量插入新关联
+            if (coachIds != null && !coachIds.isEmpty()) {
+                List<ProductCoachEntity> entities = new ArrayList<>();
+                for (int i = 0; i < coachIds.size(); i++) {
+                    ProductCoachEntity entity = new ProductCoachEntity();
+                    entity.setProductId(productId);
+                    entity.setCoachId(coachIds.get(i));
+                    entity.setIsDefault(i == 0 ? 1 : 0); // 第一个设为默认教练
+                    entity.setCreateBy(operator);
+                    entity.setCreateTime(LocalDateTime.now());
+                    entities.add(entity);
+                }
+                productCoachDao.insertBatch(entities);
+            }
+
+            return ResponseDTO.ok("更新成功");
+        } catch (Exception e) {
+            log.error("更新产品教练关联失败，productId: {}, coachIds: {}", productId, coachIds, e);
+            return ResponseDTO.userErrorParam("更新失败");
+        }
+    }
+
+    /**
+     * 根据教练ID获取关联课程（供小程序使用）
+     */
+    public ResponseDTO<List<Map<String, Object>>> getCoachCourses(Long coachId, Long clubId) {
+        try {
+            List<Map<String, Object>> courses = productCoachDao.selectCoachCourseList(coachId, clubId);
+            return ResponseDTO.ok(courses);
+        } catch (Exception e) {
+            log.error("获取教练课程失败，coachId: {}, clubId: {}", coachId, clubId, e);
+            return ResponseDTO.userErrorParam("获取教练课程失败");
+        }
+    }
+    
+    // ========================================
+    // 新增：教练价格配置相关方法
+    // ========================================
+    
+    /**
+     * 构建教练价格配置JSON字符串
+     */
+    private String buildCoachPriceConfigJson(java.util.List<CoachPriceFormItem> coachPriceList) {
+        if (coachPriceList == null || coachPriceList.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            net.lab1024.sa.admin.module.business.product.domain.vo.CoachPriceConfigVO config = 
+                new net.lab1024.sa.admin.module.business.product.domain.vo.CoachPriceConfigVO();
+            
+            java.util.Map<Long, net.lab1024.sa.admin.module.business.product.domain.vo.CoachPriceConfigVO.CoachPriceInfo> coachPricing = 
+                new java.util.HashMap<>();
+            
+            for (CoachPriceFormItem formItem : coachPriceList) {
+                if (formItem.getCoachId() != null && formItem.getPrices() != null && !formItem.getPrices().isEmpty()) {
+                    net.lab1024.sa.admin.module.business.product.domain.vo.CoachPriceConfigVO.CoachPriceInfo priceInfo = 
+                        formItem.toCoachPriceInfo();
+                    coachPricing.put(formItem.getCoachId(), priceInfo);
+                }
+            }
+            
+            config.setCoachPricing(coachPricing);
+            return config.toJson();
+            
+        } catch (Exception e) {
+            log.error("构建教练价格配置JSON失败", e);
+            return null;
+        }
+    }
+    
+    /**
+     * 验证教练价格配置的完整性
+     */
+    private void validateCoachPriceConfig(Object form) {
+        try {
+            Integer classType = null;
+            java.util.List<Long> coachIds = null;
+            java.util.List<CoachPriceFormItem> coachPriceList = null;
+            
+            if (form instanceof ProductAddForm) {
+                ProductAddForm addForm = (ProductAddForm) form;
+                classType = addForm.getClassType();
+                coachIds = addForm.getCoachIds();
+                coachPriceList = addForm.getCoachPriceList();
+            } else if (form instanceof ProductUpdateForm) {
+                ProductUpdateForm updateForm = (ProductUpdateForm) form;
+                classType = updateForm.getClassType();
+                coachIds = updateForm.getCoachIds();
+                coachPriceList = updateForm.getCoachPriceList();
+            }
+            
+            // 只有小组课才需要验证教练价格配置
+            if (classType == null || classType != 2) {
+                return;
+            }
+            
+            // 验证教练ID不为空
+            if (coachIds == null || coachIds.isEmpty()) {
+                throw new RuntimeException("小组课必须选择授课教练");
+            }
+            
+            // 验证教练价格配置不为空
+            if (coachPriceList == null || coachPriceList.isEmpty()) {
+                throw new RuntimeException("小组课必须配置教练价格");
+            }
+            
+            // 验证每个选择的教练都有价格配置
+            java.util.Set<Long> selectedCoachIds = new java.util.HashSet<>(coachIds);
+            java.util.Set<Long> configuredCoachIds = coachPriceList.stream()
+                .map(CoachPriceFormItem::getCoachId)
+                .collect(java.util.stream.Collectors.toSet());
+            
+            if (!selectedCoachIds.equals(configuredCoachIds)) {
+                throw new RuntimeException("所有选择的教练都必须配置价格");
+            }
+            
+            // 验证每个教练的价格配置完整性
+            for (CoachPriceFormItem item : coachPriceList) {
+                if (!item.isConfigComplete()) {
+                    throw new RuntimeException("教练 " + item.getCoachName() + " 的价格配置不完整，必须配置2-6人的所有价格");
+                }
+                
+                // 验证价格合理性
+                for (int count = 2; count <= 6; count++) {
+                    BigDecimal price = item.getPrice(count);
+                    if (price != null) {
+                        if (price.compareTo(BigDecimal.valueOf(10)) < 0) {
+                            throw new RuntimeException("教练 " + item.getCoachName() + " 的" + count + "人价格不能低于10元");
+                        }
+                        if (price.compareTo(BigDecimal.valueOf(10000)) > 0) {
+                            throw new RuntimeException("教练 " + item.getCoachName() + " 的" + count + "人价格不能超过10000元");
+                        }
+                    }
+                }
+            }
+            
+            log.info("教练价格配置验证通过，配置了{}个教练的价格", coachPriceList.size());
+            
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("验证教练价格配置失败", e);
+            throw new RuntimeException("教练价格配置验证失败");
+        }
+    }
+    
+    /**
+     * 保存教练课程关联关系
+     */
+    private void saveProductCoachAssociations(Long productId, java.util.List<Long> coachIds, String operator) {
+        try {
+            if (coachIds == null || coachIds.isEmpty()) {
+                return;
+            }
+            
+            // 先删除原有关联
+            productCoachDao.deleteByProductId(productId);
+            
+            // 批量插入新关联
+            java.util.List<ProductCoachEntity> entities = new java.util.ArrayList<>();
+            for (int i = 0; i < coachIds.size(); i++) {
+                ProductCoachEntity entity = new ProductCoachEntity();
+                entity.setProductId(productId);
+                entity.setCoachId(coachIds.get(i));
+                entity.setIsDefault(i == 0 ? 1 : 0); // 第一个设为默认教练
+                entity.setCreateBy(operator);
+                entity.setCreateTime(LocalDateTime.now());
+                entities.add(entity);
+            }
+            
+            productCoachDao.insertBatch(entities);
+            log.info("保存教练课程关联成功，产品ID: {}, 关联教练数: {}", productId, coachIds.size());
+            
+        } catch (Exception e) {
+            log.error("保存教练课程关联失败，产品ID: {}, 教练ID: {}", productId, coachIds, e);
+            throw new RuntimeException("保存教练课程关联失败");
         }
     }
 

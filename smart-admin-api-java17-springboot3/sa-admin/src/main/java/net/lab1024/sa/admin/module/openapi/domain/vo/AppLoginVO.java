@@ -20,4 +20,7 @@ public class AppLoginVO {
 
     @Schema(description = "角色类型：usr=会员, cc=教练")
     private String role;
+    
+    @Schema(description = "是否首次登录")
+    private Boolean isFirstLogin;
 }

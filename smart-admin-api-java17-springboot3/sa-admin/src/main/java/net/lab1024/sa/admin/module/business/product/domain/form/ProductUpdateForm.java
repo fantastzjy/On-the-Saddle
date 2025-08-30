@@ -45,7 +45,7 @@ public class ProductUpdateForm {
     // 课程商品字段 m_product_course (productType=1时有效)
     // ========================================
     
-    @Schema(description = "课程分类: 1-单人课 2-多人课")
+    @Schema(description = "课程分类: 1-单人课 2-小组课")
     private Integer classType;
 
     @Schema(description = "时长（分钟）")
@@ -63,7 +63,10 @@ public class ProductUpdateForm {
     @Schema(description = "马匹费用")
     private BigDecimal horseFee;
 
-    @Schema(description = "多人课价格配置JSON（仅多人课）")
+    @Schema(description = "课时费")
+    private BigDecimal sessionFee;
+
+    @Schema(description = "小组课价格配置JSON（仅小组课）")
     private String multiPriceConfig;
 
     // ========================================
@@ -129,6 +132,16 @@ public class ProductUpdateForm {
     @Schema(description = "理论课-最大人数")
     private Integer theoryCourse_maxStudents;
 
+    // ========================================
+    // 教练关联和价格配置 (新增功能)
+    // ========================================
+    
+    @Schema(description = "关联的教练ID列表")
+    private java.util.List<Long> coachIds;
+    
+    @Schema(description = "教练价格配置列表（小组课专用）")
+    private java.util.List<CoachPriceFormItem> coachPriceList;
+    
     // ========================================
     // 动态配置字段（兼容旧版本）
     // ========================================

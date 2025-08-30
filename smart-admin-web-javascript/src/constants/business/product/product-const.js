@@ -61,7 +61,7 @@ export const COURSE_CLASS_TYPE_ENUM = {
   },
   MULTI: {
     value: 2,
-    desc: '多人课'
+    desc: '小组课'
   }
 };
 
@@ -181,26 +181,49 @@ export const PRODUCT_DEFAULT_CONFIG = {
 // ==================== 表格列配置 ====================
 export const PRODUCT_TABLE_COLUMNS = [
   {
-    title: '课程名称',
+    title: '商品名称',
     dataIndex: 'productName',
     ellipsis: true,
-    align: 'center'
+    align: 'left',
+    width: 200
   },
   {
-    title: '课程类型',
+    title: '商品类型',
     dataIndex: 'productType',
-    align: 'center'
+    align: 'center',
+    width: 100
+  },
+  {
+    title: '课程分类',
+    dataIndex: 'classType',
+    align: 'center',
+    width: 100
+  },
+  {
+    title: '价格配置',
+    dataIndex: 'priceDisplay',
+    align: 'center',
+    width: 250
+  },
+  {
+    title: '时长/容量',
+    dataIndex: 'durationCapacity',
+    align: 'center',
+    width: 120
   },
   {
     title: '创建时间',
     dataIndex: 'createTime',
     sorter: true,
-    align: 'center'
+    align: 'center',
+    width: 180
   },
   {
     title: '操作',
     dataIndex: 'action',
-    align: 'center'
+    align: 'center',
+    width: 150,
+    fixed: 'right'
   }
 ];
 
@@ -215,6 +238,9 @@ export const PRODUCT_FORM_RULES = {
   ],
   productType: [
     { required: true, message: '请选择课程类型', trigger: 'change' }
+  ],
+  'dynamicConfig.classType': [
+    { required: true, message: '请选择课程分类', trigger: 'change' }
   ]
 };
 
